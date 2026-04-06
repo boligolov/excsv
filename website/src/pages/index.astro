@@ -47,19 +47,6 @@ date,event,count
     </div>
   </section>
 
-  <!-- Install -->
-  <section class="install">
-    <h2>Python library</h2>
-    <p>Parse, create, and manipulate ExCSV files programmatically.</p>
-    <pre><code>pip install excsv</code></pre>
-    <pre><code>{`import excsv
-
-doc = excsv.load("data.excsv")
-print(doc.meta["source"])        # analytics_db.events
-print(doc.column_names)          # ['date', 'event', 'count']
-print(doc.get_aggregation("sum"))  # {'date': None, 'event': None, 'count': '1250'}`}</code></pre>
-  </section>
-
   <!-- Why -->
   <section class="why">
     <h2>Why ExCSV?</h2>
@@ -150,14 +137,6 @@ print(doc.get_aggregation("sum"))  # {'date': None, 'event': None, 'count': '125
     color: var(--color-muted);
     font-size: 0.92rem;
     margin-bottom: 0;
-  }
-
-  .install {
-    padding-bottom: 2rem;
-  }
-  .install h2 {
-    border: none;
-    padding: 0;
   }
 
   .why {
