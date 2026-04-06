@@ -1,37 +1,502 @@
 ---
 import Base from '../layouts/Base.astro';
-import fs from 'node:fs';
-import path from 'node:path';
-import { marked } from 'marked';
-
-const readmePath = path.resolve(process.cwd(), '..', 'README.md');
-const markdown = fs.readFileSync(readmePath, 'utf-8');
-let htmlContent = await marked.parse(markdown);
-
-htmlContent = htmlContent.replace(
-  /(<code[^>]*>)([\s\S]*?)(<\/code>)/g,
-  (_match, open, content, close) => {
-    const highlighted = content
-      .split('\n')
-      .map((line: string) => {
-        const stripped = line.replace(/^\s*/, '');
-        if (stripped.startsWith('#')) {
-          return `<span class="hl-meta">${line}</span>`;
-        }
-        return line;
-      })
-      .join('\n');
-    return `${open}${highlighted}${close}`;
-  }
-);
 ---
 
 <Base title="ExCSV Specification v0.1" description="Full ExCSV format specification — header line, meta lines, column schema, aggregations, and more.">
-  <article class="spec" set:html={htmlContent} />
+  <article class="spec">
+    <h1>ExCSV v0.1 — Specification</h1>
+    <p><strong>Extended Comma-Separated Values (ExCSV)</strong></p>
+
+    <table>
+      <tbody>
+        <tr><td><strong>Version</strong></td><td>0.1</td></tr>
+        <tr><td><strong>Status</strong></td><td>Draft / Experimental</td></tr>
+        <tr><td><strong>File extension</strong></td><td><code>.excsv</code></td></tr>
+        <tr><td><strong>MIME type</strong></td><td><code>text/excsv</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Quick Example</h3>
+    <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma header=1</span>
+<span class="hl-meta">#column name=id type=int</span>
+<span class="hl-meta">#column name=name type=string</span>
+<span class="hl-meta">#column name=price type=decimal unit=USD</span>
+id,name,price
+1,Widget,9.99
+2,Gadget,24.50</code></pre>
+    <p>It's just CSV with a self-describing header. See the <a href="#full-example">full example</a> for schema, metadata, and aggregations.</p>
+
+    <hr />
+
+    <h2>1. Introduction</h2>
+    <p>ExCSV is a self-describing, line-oriented tabular data format backward-compatible with plain CSV/TSV.</p>
+    <p>It extends CSV with:</p>
+    <ul>
+      <li>An inline metadata header</li>
+      <li>Column schema annotations</li>
+      <li>Optional aggregation metadata</li>
+      <li>Optional embedded <a href="https://www.w3.org/TR/tabular-data-primer/">CSVW</a> compatibility</li>
+    </ul>
+    <p>ExCSV is designed for CLI workflows, data interchange, human readability, and minimal parsing complexity.</p>
+
+    <h3>1.1 Design Goals (Non-Normative)</h3>
+    <ul>
+      <li>Remain fully backward-compatible with CSV — any CSV reader can consume the data section.</li>
+      <li>Support CLI processing with tools like <code>grep</code>, <code>awk</code>, <code>cut</code>, and <code>head</code>.</li>
+      <li>Avoid mandatory JSON — metadata is line-oriented key-value, not a nested structure.</li>
+      <li>Allow progressive enhancement — start with plain CSV, add schema and aggregations as needed.</li>
+    </ul>
+
+    <h3>1.2 Terminology</h3>
+    <p>The key words <strong>MUST</strong>, <strong>MUST NOT</strong>, <strong>SHOULD</strong>, <strong>SHOULD NOT</strong>, and <strong>MAY</strong> in this document are to be interpreted as described in <a href="https://datatracker.ietf.org/doc/html/rfc2119">RFC 2119</a>.</p>
+
+    <hr />
+
+    <h2>2. File Structure</h2>
+    <p>An ExCSV file <strong>MUST</strong> consist of, in order:</p>
+    <pre><code>┌─────────────────────────┐
+│  Header Line            │  ← zero or one, optional
+├─────────────────────────┤
+│  Meta Lines             │  ← zero or more
+├─────────────────────────┤
+│  Data Section           │  ← standard CSV/TSV rows
+└─────────────────────────┘</code></pre>
+    <p>An ExCSV document <strong>MAY</strong> omit the header line. If the header line is missing, the document <strong>MUST</strong> be interpreted as a minimal ExCSV document with default parameters (<code>delim=comma</code>, <code>quote=double</code>, <code>header=1</code>, <code>encoding=UTF-8</code>).</p>
+    <p>The smallest valid ExCSV file is an empty file, or a single header line: <code>#!excsv version=0.1</code>.</p>
+
+    <h3>2.1 Line Endings and BOM</h3>
+    <ul>
+      <li>Files <strong>MAY</strong> use LF or CRLF line endings. Parsers <strong>MUST</strong> accept both.</li>
+      <li>Parsers <strong>MUST</strong> ignore UTF-8 BOM (<code>U+FEFF</code>) at start of file.</li>
+    </ul>
+
+    <hr />
+
+    <h2>3. Header Line</h2>
+
+    <h3>3.1 Syntax</h3>
+    <p>If present, the header line <strong>MUST</strong> be line 1, <strong>MUST</strong> begin with <code>#!excsv</code>, and <strong>MUST</strong> contain at least the <code>version</code> field.</p>
+    <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma header=1</span></code></pre>
+
+    <h3>3.2 Key-Value Pairs</h3>
+    <ul>
+      <li>Header fields <strong>MUST</strong> be encoded as <code>key=value</code>.</li>
+      <li>Pairs <strong>MUST</strong> be separated by one or more spaces.</li>
+      <li>Parsing <strong>MUST</strong> split on the <strong>first</strong> <code>=</code> character (values may contain <code>=</code>).</li>
+      <li>Unknown keys <strong>MUST</strong> be ignored by conforming parsers.</li>
+    </ul>
+
+    <h3>3.3 Value Rules</h3>
+    <ul>
+      <li>Values without spaces <strong>MUST NOT</strong> be quoted.</li>
+      <li>Values with spaces <strong>MUST</strong> be wrapped in double quotes (<code>"</code>).</li>
+      <li>Inside quoted values, double quote <strong>MUST</strong> be escaped by doubling (<code>""</code>).</li>
+      <li>No other escape sequences are allowed.</li>
+    </ul>
+
+    <h3>3.4 Header Fields</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>version</code></td><td><strong>MUST</strong></td><td>Format version (<code>0.1</code>)</td></tr>
+        <tr><td><code>delim</code></td><td>SHOULD</td><td>Delimiter — a known name <strong>or</strong> a literal character/sequence. Default: <code>comma</code></td></tr>
+        <tr><td><code>quote</code></td><td>SHOULD</td><td>Quote — a known name <strong>or</strong> a literal character. Default: <code>none</code></td></tr>
+        <tr><td><code>header</code></td><td>SHOULD</td><td><code>1</code> if the first data row is a header row, <code>0</code> otherwise. Default: <code>1</code></td></tr>
+        <tr><td><code>null</code></td><td>MAY</td><td>Additional non-empty string representing null. Empty fields are <strong>always</strong> null by default.</td></tr>
+        <tr><td><code>rows</code></td><td>MAY</td><td>Total number of data rows (excluding header)</td></tr>
+        <tr><td><code>checksum</code></td><td>MAY</td><td>Checksum of the data section (see Section 7)</td></tr>
+        <tr><td><code>csvw</code></td><td>MAY</td><td>CSVW embedding mode (see Section 8)</td></tr>
+        <tr><td><code>encoding</code></td><td>MAY</td><td>Character encoding (default <code>UTF-8</code>)</td></tr>
+        <tr><td><code>schema</code></td><td>MAY</td><td>Schema precedence: <code>excsv</code> (default) or <code>csvw</code></td></tr>
+      </tbody>
+    </table>
+
+    <h4>Delimiter Values</h4>
+    <p>The <code>delim</code> field accepts either a <strong>well-known name</strong> or a <strong>literal character/sequence</strong>.</p>
+    <p><strong>Well-known names:</strong></p>
+    <table>
+      <thead><tr><th>Name</th><th>Character</th></tr></thead>
+      <tbody>
+        <tr><td><code>comma</code></td><td><code>,</code></td></tr>
+        <tr><td><code>tab</code></td><td><code>\t</code></td></tr>
+        <tr><td><code>pipe</code></td><td><code>|</code></td></tr>
+        <tr><td><code>semicolon</code></td><td><code>;</code></td></tr>
+      </tbody>
+    </table>
+    <p>Any value that is not a well-known name <strong>MUST</strong> be treated as the literal delimiter string. Parsers <strong>MUST</strong> first check against the well-known name table; if no match, treat the value as a literal.</p>
+
+    <h4>Quote Values</h4>
+    <p>The <code>quote</code> field accepts either a <strong>well-known name</strong> or a <strong>literal character</strong>.</p>
+    <table>
+      <thead><tr><th>Name</th><th>Character</th></tr></thead>
+      <tbody>
+        <tr><td><code>none</code></td><td>No quoting (default)</td></tr>
+        <tr><td><code>double</code></td><td><code>"</code> (double quote)</td></tr>
+        <tr><td><code>single</code></td><td><code>'</code> (single quote)</td></tr>
+      </tbody>
+    </table>
+    <p>Any value that is not a well-known name <strong>MUST</strong> be treated as the literal quote character.</p>
+
+    <hr />
+
+    <h2>4. Meta Lines</h2>
+    <p>Meta lines appear after the header line and before the data section.</p>
+
+    <h3>4.1 General Rules</h3>
+    <ul>
+      <li>Meta lines <strong>MUST</strong> start with <code>#</code>.</li>
+      <li>Meta lines <strong>MUST</strong> precede the data section.</li>
+      <li>Parsing of meta lines <strong>MUST</strong> stop at the first non-<code>#</code> line.</li>
+      <li>Unrecognized <code>#</code> lines <strong>MUST</strong> be ignored.</li>
+      <li>Recommended order: <code>#@</code> metadata first, then <code>#column</code>, then <code>#csvw</code>, then <code>#%</code> aggregations. Parsers <strong>MUST</strong> accept any order.</li>
+    </ul>
+
+    <h3>4.2 Types of Meta Lines</h3>
+    <table>
+      <thead><tr><th>Prefix</th><th>Purpose</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>#@key: value</code></td><td>File-level metadata</td><td><code>#@source: sales_db.orders</code></td></tr>
+        <tr><td><code>#column ...</code></td><td>Column annotation</td><td><code>#column name=id type=int</code></td></tr>
+        <tr><td><code>#%&lt;name&gt;: ...</code></td><td>Aggregation values</td><td><code>#%sum: ,, 42.5</code></td></tr>
+        <tr><td><code>#csvw ...</code></td><td>CSVW payload</td><td><code>#csvw {`{"tableSchema": ...}`}</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.3 File-Level Metadata Values</h3>
+    <p>The value is <strong>raw text</strong> to the end of the line. One optional space after <code>:</code> is skipped. No quoting or escaping — taken as-is.</p>
+    <table>
+      <thead><tr><th>Key</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>source</code></td><td>Origin system, table, or file</td><td><code>#@source: sales_db.orders</code></td></tr>
+        <tr><td><code>author</code></td><td>Creator contact or name</td><td><code>#@author: alex@example.com</code></td></tr>
+        <tr><td><code>comment</code></td><td>Free-text description of the dataset</td><td><code>#@comment: demo dataset</code></td></tr>
+        <tr><td><code>created</code></td><td>Creation timestamp (ISO 8601)</td><td><code>#@created: 2026-03-24T12:00:00Z</code></td></tr>
+        <tr><td><code>exported</code></td><td>Export timestamp</td><td><code>#@exported: 2026-03-24T14:30:00Z</code></td></tr>
+        <tr><td><code>license</code></td><td>Data license identifier</td><td><code>#@license: CC-BY-4.0</code></td></tr>
+        <tr><td><code>query</code></td><td>SQL or query that produced the data</td><td><code>#@query: SELECT * FROM orders</code></td></tr>
+        <tr><td><code>tool</code></td><td>Tool/version that generated the file</td><td><code>#@tool: excsv-cli/0.1.0</code></td></tr>
+        <tr><td><code>tags</code></td><td>Comma-separated tags</td><td><code>#@tags: sales,Q1,2026</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>Example:</p>
+    <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma header=1</span>
+<span class="hl-meta">#@author: alex@example.com</span>
+<span class="hl-meta">#@comment: demo dataset for onboarding docs</span>
+<span class="hl-meta">#@source: analytics_db.page_views</span>
+<span class="hl-meta">#@created: 2026-03-24T10:00:00Z</span>
+<span class="hl-meta">#@tags: demo,analytics</span>
+<span class="hl-meta">#column name=page type=string</span>
+<span class="hl-meta">#column name=views type=int</span>
+page,views
+/home,14200
+/pricing,8700</code></pre>
+
+    <hr />
+
+    <h2>5. Column Schema</h2>
+
+    <h3>5.1 Column Definition</h3>
+    <p>Column annotations are <strong>OPTIONAL</strong>. A file without any <code>#column</code> lines is valid (schema-less mode). Partial coverage is also valid. If present, each column is described with one <code>#column</code> line:</p>
+    <pre><code><span class="hl-meta">#column name=id type=int unique=1</span>
+<span class="hl-meta">#column name=email type=string required=1 len_max=254</span>
+<span class="hl-meta">#column name=amount type=decimal format=0.00 unit=USD</span></code></pre>
+
+    <h3>5.2 Required Fields</h3>
+    <table>
+      <thead><tr><th>Field</th><th><code>header=1</code></th><th><code>header=0</code></th></tr></thead>
+      <tbody>
+        <tr><td><code>name</code></td><td><strong>MUST</strong></td><td>MAY</td></tr>
+        <tr><td><code>index</code></td><td>not used</td><td><strong>MUST</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.3 Name Rules</h3>
+    <ul>
+      <li><code>name</code> <strong>MUST NOT</strong> contain spaces.</li>
+      <li><code>name</code> <strong>SHOULD</strong> match the regex <code>[A-Za-z_][A-Za-z0-9_-]*</code>.</li>
+    </ul>
+
+    <h3>5.4 Header Mapping</h3>
+    <p><strong>When <code>header=1</code>:</strong></p>
+    <ul>
+      <li>A data header row <strong>MUST</strong> exist as the first row of the data section.</li>
+      <li>If <code>title</code> is present, the header cell <strong>MUST</strong> match <code>title</code>. Otherwise it <strong>MUST</strong> match <code>name</code>.</li>
+      <li>Missing or extra columns <strong>MUST</strong> be treated as a validation error.</li>
+    </ul>
+    <p><strong>When <code>header=0</code>:</strong></p>
+    <ul>
+      <li>Each <code>#column</code> <strong>MUST</strong> have <code>index</code> (zero-based) to define its position.</li>
+      <li><code>name</code> is optional — if omitted, the column is referenced by index only.</li>
+    </ul>
+
+    <h3>5.5 Column Attributes</h3>
+
+    <h4>Identity</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>name</code></td><td><strong>MUST</strong> if <code>header=1</code>, MAY if <code>header=0</code></td><td>Column identifier</td></tr>
+        <tr><td><code>title</code></td><td>MAY</td><td>Human-readable display name (must be quoted if contains spaces)</td></tr>
+        <tr><td><code>description</code></td><td>MAY</td><td>Free-text description (quoted)</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Type System</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>type</code></td><td>SHOULD</td><td>Data type (see below)</td></tr>
+        <tr><td><code>format</code></td><td>MAY</td><td>Display/parse format hint</td></tr>
+      </tbody>
+    </table>
+    <p>Allowed types:</p>
+    <table>
+      <thead><tr><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>string</code></td><td>Text in the file's encoding</td></tr>
+        <tr><td><code>int</code></td><td>32-bit signed integer</td></tr>
+        <tr><td><code>long</code></td><td>64-bit signed integer</td></tr>
+        <tr><td><code>float</code></td><td>32-bit IEEE 754</td></tr>
+        <tr><td><code>double</code></td><td>64-bit IEEE 754</td></tr>
+        <tr><td><code>decimal</code></td><td>Arbitrary-precision decimal</td></tr>
+        <tr><td><code>boolean</code></td><td>Canonical lexical forms: <code>true</code>, <code>false</code>, <code>1</code>, <code>0</code></td></tr>
+        <tr><td><code>date</code></td><td>ISO 8601 date (<code>YYYY-MM-DD</code>)</td></tr>
+        <tr><td><code>time</code></td><td>ISO 8601 time (<code>HH:MM:SS</code>)</td></tr>
+        <tr><td><code>datetime</code></td><td>ISO 8601 datetime</td></tr>
+        <tr><td><code>uuid</code></td><td>Textual UUID representation</td></tr>
+        <tr><td><code>binary</code></td><td>Base64-encoded binary</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Default / Required</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>default</code></td><td>MAY</td><td>Default value for missing fields</td></tr>
+        <tr><td><code>required</code></td><td>MAY</td><td><code>1</code> = field must not be null, <code>0</code> = nullable. If <code>default</code> is also set, the default satisfies the requirement.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Constraints</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>min</code></td><td>MAY</td><td>Minimum value (numeric / date)</td></tr>
+        <tr><td><code>max</code></td><td>MAY</td><td>Maximum value (numeric / date)</td></tr>
+        <tr><td><code>len_min</code></td><td>MAY</td><td>Minimum string length</td></tr>
+        <tr><td><code>len_max</code></td><td>MAY</td><td>Maximum string length</td></tr>
+        <tr><td><code>pattern</code></td><td>MAY</td><td>Regex pattern for validation (default dialect: ECMAScript)</td></tr>
+        <tr><td><code>regexp_dialect</code></td><td>MAY</td><td>Regex dialect for <code>pattern</code>: <code>ecmascript</code> (default), <code>pcre</code>, <code>posix_ere</code>, <code>re2</code></td></tr>
+      </tbody>
+    </table>
+
+    <h4>Keys</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>unique</code></td><td>MAY</td><td><code>1</code> = all values must be unique</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Semantics</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>order</code></td><td>MAY</td><td><code>none</code>, <code>asc</code>, or <code>desc</code></td></tr>
+        <tr><td><code>unit</code></td><td>MAY</td><td>Unit of measurement (e.g. <code>USD</code>, <code>kg</code>, <code>ms</code>)</td></tr>
+        <tr><td><code>separator</code></td><td>MAY</td><td>Sub-field separator within the value</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Positional</h4>
+    <table>
+      <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>index</code></td><td><strong>MUST</strong> if <code>header=0</code></td><td>Zero-based column position</td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.6 Unknown Attributes</h3>
+    <ul>
+      <li>Unknown attributes <strong>MUST</strong> be ignored by parsers.</li>
+      <li>Custom attributes <strong>SHOULD</strong> use the prefix <code>x-</code> (e.g. <code>x-source=erp</code>).</li>
+    </ul>
+
+    <hr />
+
+    <h2>6. Aggregations</h2>
+
+    <h3>6.1 Aggregation Values</h3>
+    <pre><code><span class="hl-meta">#%count_nonnull: ,98,100</span>
+<span class="hl-meta">#%sum: ,,154280.50</span>
+<span class="hl-meta">#%avg: ,,1542.81</span></code></pre>
+    <ul>
+      <li><code>&lt;name&gt;</code> <strong>MUST</strong> be a well-known aggregation name (see Section 6.2).</li>
+      <li>One optional space after <code>:</code> is skipped. The remaining payload <strong>MUST</strong> be parsed using the file's CSV dialect.</li>
+      <li>Value count <strong>MUST</strong> equal the number of columns.</li>
+      <li>Aggregation line order does not matter. Parsers <strong>MUST</strong> accept any order.</li>
+    </ul>
+
+    <h3>6.2 Standard Aggregations</h3>
+    <p><strong>Universal</strong> (any type):</p>
+    <table>
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>count_nonnull</code></td><td>Count of non-null values</td></tr>
+        <tr><td><code>count_null</code></td><td>Count of null values</td></tr>
+        <tr><td><code>count_distinct</code></td><td>Count of distinct values</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Numeric</strong> (<code>int</code>, <code>long</code>, <code>float</code>, <code>double</code>, <code>decimal</code>):</p>
+    <table>
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>sum</code></td><td>Sum of values</td></tr>
+        <tr><td><code>avg</code></td><td>Arithmetic mean</td></tr>
+        <tr><td><code>min</code></td><td>Minimum value</td></tr>
+        <tr><td><code>max</code></td><td>Maximum value</td></tr>
+      </tbody>
+    </table>
+    <p><strong>String</strong> (<code>string</code>):</p>
+    <table>
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>len_min</code></td><td>Length of shortest string</td></tr>
+        <tr><td><code>len_max</code></td><td>Length of longest string</td></tr>
+      </tbody>
+    </table>
+
+    <h3>6.3 Null Handling</h3>
+    <p>Aggregations follow SQL semantics: null values are <strong>excluded</strong> from computation.</p>
+    <ul>
+      <li><code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>, <code>len_min</code>, <code>len_max</code> — nulls are skipped.</li>
+      <li><code>count_nonnull</code> — counts non-null values only.</li>
+      <li><code>count_null</code> — counts null values only.</li>
+      <li><code>count_distinct</code> — counts distinct <strong>non-null</strong> values only.</li>
+    </ul>
+
+    <h3>6.4 Type Compatibility</h3>
+    <ul>
+      <li>Implementations <strong>SHOULD</strong> validate aggregation compatibility with the column type.</li>
+      <li>Implementations <strong>MAY</strong> ignore invalid combinations with a warning.</li>
+    </ul>
+
+    <h3>6.5 Missing Values</h3>
+    <p>An empty field in an aggregation row <strong>MUST</strong> mean "not applicable" or "not computed."</p>
+
+    <hr />
+
+    <h2>7. Checksum</h2>
+    <p>If present in the header line:</p>
+    <pre><code>checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924...</code></pre>
+    <ul>
+      <li>The checksum <strong>MUST</strong> apply to the <strong>entire data section</strong> (everything after the last meta line), including the header row if <code>header=1</code> and the trailing newline if present.</li>
+      <li>Newlines <strong>MUST</strong> be normalized to <code>\n</code> (LF) before computing.</li>
+      <li>Format: <code>&lt;algorithm&gt;:&lt;hex-digest&gt;</code>.</li>
+    </ul>
+
+    <hr />
+
+    <h2>8. CSVW Compatibility</h2>
+
+    <h3>8.1 Declaration</h3>
+    <table>
+      <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>csvw=inline-json</code></td><td>CSVW metadata is inline JSON</td></tr>
+        <tr><td><code>csvw=base64url</code></td><td>CSVW metadata is Base64URL-encoded JSON</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.2 Payload</h3>
+    <pre><code><span class="hl-meta">#csvw {`{"tableSchema": {"columns": [...]}}`}</span></code></pre>
+    <p><code>#csvw</code> followed by a space and value to end of line.</p>
+    <ul>
+      <li>The payload <strong>MUST</strong> be valid JSON (after decoding if <code>base64url</code>).</li>
+      <li>Readers <strong>MAY</strong> ignore CSVW metadata entirely.</li>
+    </ul>
+
+    <h3>8.3 Schema Precedence</h3>
+    <table>
+      <thead><tr><th><code>schema</code> value</th><th>Behavior</th></tr></thead>
+      <tbody>
+        <tr><td><code>excsv</code> (default)</td><td>ExCSV <code>#column</code> annotations take precedence</td></tr>
+        <tr><td><code>csvw</code></td><td>CSVW <code>tableSchema</code> takes precedence</td></tr>
+      </tbody>
+    </table>
+
+    <hr />
+
+    <h2>9. Data Section</h2>
+    <ul>
+      <li>The data section <strong>MUST</strong> follow the CSV dialect defined in the header (<code>delim</code>, <code>quote</code>, etc.).</li>
+      <li>Quoted values <strong>MUST NOT</strong> contain raw newlines. All values are single-line.</li>
+      <li>If the first field of the first data row begins with <code>#</code> (unquoted), it is ambiguous with meta lines. If quoting is enabled, the value <strong>MUST</strong> be quoted. If <code>quote=none</code>, the first field <strong>MUST NOT</strong> start with <code>#</code>.</li>
+      <li>If <code>quote=none</code>, values <strong>MUST NOT</strong> contain delimiter characters.</li>
+      <li>A trailing newline after the last data row is <strong>OPTIONAL</strong>. If present, it is included in checksum computation.</li>
+    </ul>
+
+    <hr />
+
+    <h2>10. Error Handling</h2>
+    <p>Implementations <strong>MUST</strong> fail on:</p>
+    <ul>
+      <li>Malformed <code>#!excsv</code> header line (if present)</li>
+      <li>Malformed <code>key=value</code> pairs in the header</li>
+      <li>Column count mismatch in aggregation rows</li>
+    </ul>
+    <p>Implementations <strong>SHOULD</strong> warn on:</p>
+    <ul>
+      <li>Unknown attributes in column definitions</li>
+      <li>Aggregation types incompatible with column types</li>
+    </ul>
+
+    <hr />
+
+    <h2 id="full-example">11. Full Example</h2>
+    <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:a1b2c3d4e5f6</span>
+<span class="hl-meta">#@author: author@example.com</span>
+<span class="hl-meta">#@source: sales_db.orders</span>
+<span class="hl-meta">#@comment: Quarterly sales export with all column features demonstrated</span>
+<span class="hl-meta">#@created: 2026-01-01T00:00:00Z</span>
+<span class="hl-meta">#@exported: 2026-03-24T12:00:00Z</span>
+<span class="hl-meta">#@license: CC-BY-4.0</span>
+<span class="hl-meta">#@query: SELECT * FROM orders WHERE quarter = 'Q1'</span>
+<span class="hl-meta">#@tool: excsv-cli/0.1.0</span>
+<span class="hl-meta">#@tags: sales,Q1,2026,demo</span>
+<span class="hl-meta">#column name=id type=int unique=1 title="Order ID" description="Auto-incremented order identifier"</span>
+<span class="hl-meta">#column name=customer type=string required=1 len_min=1 len_max=100 title="Customer Name"</span>
+<span class="hl-meta">#column name=email type=string required=1 len_max=254 pattern=^[^@]+@[^@]+$</span>
+<span class="hl-meta">#column name=amount type=decimal format=0.00 unit=USD min=0 max=999999.99 default=0.00 order=desc</span>
+<span class="hl-meta">#column name=status type=string default=pending</span>
+<span class="hl-meta">#column name=tags type=string separator=| title="Order Tags"</span>
+<span class="hl-meta">#column name=created_at type=datetime title="Created At" description="UTC timestamp of order creation"</span>
+<span class="hl-meta">#column name=note type=string x-ui-widget=textarea</span>
+<span class="hl-meta">#%count_nonnull: 4,4,4,4,4,3,4,2</span>
+<span class="hl-meta">#%count_null: 0,0,0,0,0,1,0,2</span>
+<span class="hl-meta">#%count_distinct: 4,3,3,4,2,3,4,2</span>
+<span class="hl-meta">#%sum: ,,,1050.50,,,,</span>
+<span class="hl-meta">#%avg: ,,,262.625,,,,</span>
+<span class="hl-meta">#%min: ,,,50.00,,,,</span>
+<span class="hl-meta">#%max: ,,,500.00,,,,</span>
+<span class="hl-meta">#%len_min: ,,15,,,6,,20</span>
+<span class="hl-meta">#%len_max: ,,18,,,16,,21</span>
+id,customer,email,amount,status,tags,created_at,note
+1,Acme Corp,acme@example.com,500.00,completed,urgent|wholesale,2026-01-15T09:30:00Z,Large wholesale order
+2,Globex Inc,globex@example.com,300.50,completed,retail,2026-02-20T14:00:00Z,"Paid in full, net-30"
+3,Initech,info@initech.io,200.00,pending,urgent|retail,2026-03-01T11:45:00Z,
+4,Acme Corp,acme@example.com,50.00,pending,,2026-03-10T16:20:00Z,</code></pre>
+
+    <hr />
+
+    <h2>License</h2>
+    <p>This specification is released under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>.</p>
+  </article>
 </Base>
 
 <style>
-  .spec :global(h1:first-child) {
+  .spec h1:first-child {
     margin-top: 0;
   }
 </style>
