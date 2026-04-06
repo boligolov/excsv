@@ -1,0 +1,158 @@
+---
+import Base from '../layouts/Base.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+---
+
+<Base title="ExCSV Examples" description="Annotated ExCSV examples covering common use cases: minimal files, typed columns, aggregations, tab-delimited exports, and more.">
+  <h1>Examples</h1>
+  <p class="intro">Real-world patterns showing how ExCSV builds on plain CSV. Each example is a valid <code>.excsv</code> file.</p>
+
+  <section class="example">
+    <CodeBlock title="1. Minimal" description="Just the header line. Everything else is standard CSV.">
+{`#!excsv version=0.1
+name,age,city
+Alice,32,Berlin
+Bob,28,Tokyo
+Carol,45,Lagos`}
+    </CodeBlock>
+    <p class="note">Any CSV reader ignores the <code>#</code> line and reads the data normally.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="2. Typed columns with constraints" description="Column schema defines types, validation rules, and display hints.">
+{`#!excsv version=0.1 delim=comma header=1
+#column name=id type=int unique=1
+#column name=email type=string required=1 len_max=254 pattern=^[^@]+@[^@]+$
+#column name=score type=decimal min=0 max=100 format=0.0
+#column name=active type=boolean default=true
+id,email,score,active
+1,alice@example.com,92.5,true
+2,bob@example.com,87.3,true
+3,carol@example.com,64.0,false`}
+    </CodeBlock>
+    <p class="note">Parsers can validate data against <code>pattern</code>, <code>min</code>/<code>max</code>, and <code>required</code> constraints.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="3. Tab-delimited with metadata" description="A TSV export from a database, with provenance metadata.">
+{`#!excsv version=0.1 delim=tab header=1 encoding=UTF-8
+#@source: warehouse_db.inventory
+#@author: ops-team@company.com
+#@exported: 2026-03-20T08:00:00Z
+#@query: SELECT sku, name, qty FROM inventory WHERE qty > 0
+#@tool: pg_dump/16.2
+#column name=sku type=string unique=1
+#column name=name type=string
+#column name=qty type=int min=0
+sku	name	qty
+WDG-001	Widget Pro	1200
+WDG-002	Widget Lite	3400
+GDG-001	Gadget X	870`}
+    </CodeBlock>
+    <p class="note">The <code>#@query</code> value is raw text to end of line — spaces, quotes, and SQL syntax are preserved as-is.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="4. Aggregations" description="Pre-computed statistics embedded in the file.">
+{`#!excsv version=0.1 delim=comma header=1
+#column name=region type=string
+#column name=product type=string
+#column name=revenue type=decimal unit=USD
+#column name=units type=int
+#%count_nonnull: 5,5,5,5
+#%sum: ,,48250.00,1450
+#%avg: ,,9650.00,290
+#%min: ,,3200.00,120
+#%max: ,,18500.00,520
+region,product,revenue,units
+North,Widget,18500.00,520
+South,Widget,12000.00,380
+North,Gadget,8750.00,210
+South,Gadget,5800.00,220
+West,Widget,3200.00,120`}
+    </CodeBlock>
+    <p class="note">Aggregation lines use the file's delimiter. Empty fields mean "not applicable" for that column.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="5. No header row (header=0)" description="Columns defined by index instead of matching header names.">
+{`#!excsv version=0.1 delim=comma header=0
+#column index=0 type=datetime
+#column index=1 name=level type=string
+#column index=2 name=message type=string
+2026-03-24T10:15:32Z,INFO,Application started
+2026-03-24T10:15:33Z,INFO,Connected to database
+2026-03-24T10:15:35Z,WARN,Cache miss ratio above threshold
+2026-03-24T10:16:01Z,ERROR,Connection timeout on retry 3`}
+    </CodeBlock>
+    <p class="note">With <code>header=0</code>, <code>index</code> is required. <code>name</code> is optional — the first column here is anonymous.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="6. Custom attributes (x- prefix)" description="Application-specific metadata using the x- convention.">
+{`#!excsv version=0.1 delim=comma header=1
+#@tool: my-crm/2.4.0
+#@comment: Customer export for marketing sync
+#column name=id type=int unique=1 x-crm-entity=contact
+#column name=name type=string title="Full Name" x-crm-field=display_name
+#column name=email type=string required=1 x-crm-field=primary_email
+#column name=segment type=string x-crm-field=market_segment separator=|
+#column name=ltv type=decimal unit=USD x-dashboard-widget=sparkline
+id,Full Name,email,segment,ltv
+101,Alice Park,alice@acme.co,enterprise|active,12400.00
+102,Bob Chen,bob@globex.io,smb,3200.50
+103,Carol Diaz,carol@initech.com,enterprise|churned,8750.00`}
+    </CodeBlock>
+    <p class="note">Custom <code>x-</code> attributes are ignored by generic parsers but carry meaning for specific tools.
+      Note how the header row uses <code>title</code> ("Full Name") for columns that have it.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="7. CSVW compatibility" description="Embedding a CSVW JSON-LD annotation alongside ExCSV schema.">
+{`#!excsv version=0.1 delim=comma header=1 csvw=inline-json schema=excsv
+#@source: hr_db.employees
+#column name=id type=int unique=1
+#column name=name type=string
+#column name=dept type=string
+#csvw {"tableSchema":{"columns":[{"name":"id","datatype":"integer"},{"name":"name","datatype":"string"},{"name":"dept","datatype":"string"}]}}
+id,name,dept
+1,Alice,Engineering
+2,Bob,Marketing
+3,Carol,Design`}
+    </CodeBlock>
+    <p class="note">The <code>#csvw</code> line carries a JSON-LD payload. With <code>schema=excsv</code> (default), <code>#column</code> definitions take precedence; set <code>schema=csvw</code> to let the CSVW schema win.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="8. Null handling" description="Default null (empty field) vs custom null marker.">
+{`#!excsv version=0.1 delim=comma header=1 null=NA
+#column name=sensor type=string
+#column name=reading type=decimal
+#column name=status type=string
+sensor,reading,status
+TMP-01,22.5,ok
+TMP-02,,offline
+TMP-03,NA,ok
+TMP-04,19.8,NA`}
+    </CodeBlock>
+    <p class="note">Both empty fields and <code>NA</code> are treated as null. Without <code>null=NA</code>, only empty fields would be null.</p>
+  </section>
+</Base>
+
+<style>
+  .intro {
+    color: var(--color-muted);
+    font-size: 1.05rem;
+    margin-bottom: 2.5rem;
+  }
+  .example {
+    margin-bottom: 3rem;
+  }
+  .note {
+    font-size: 0.9rem;
+    color: var(--color-muted);
+    margin-top: -0.5rem;
+    padding-left: 1rem;
+    border-left: 3px solid var(--color-border);
+  }
+</style>

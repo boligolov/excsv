@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+import { marked } from 'marked';
+
+const readmePath = path.resolve(process.cwd(), '..', 'README.md');
+const markdown = fs.readFileSync(readmePath, 'utf-8');
+let htmlContent = await marked.parse(markdown);
+
+htmlContent = htmlContent.replace(
+  /(<code[^>]*>)([\s\S]*?)(<\/code>)/g,
+  (_match, open, content, close) => {
+    const highlighted = content
+      .split('\n')
+      .map((line: string) => {
+        const stripped = line.replace(/^\s*/, '');
+        if (stripped.startsWith('#')) {
+          return `<span class="hl-meta">${line}</span>`;
+        }
+        return line;
+      })
+      .join('\n');
+    return `${open}${highlighted}${close}`;
+  }
+);
+---
+
+<Base title="ExCSV Specification v0.1" description="Full ExCSV format specification — header line, meta lines, column schema, aggregations, and more.">
+  <article class="spec" set:html={htmlContent} />
+</Base>
+
+<style>
+  .spec :global(h1:first-child) {
+    margin-top: 0;
+  }
+</style>

@@ -1,0 +1,191 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="ExCSV — CSV, but self-describing" wide>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-text">
+      <h1>CSV, but self-describing</h1>
+      <p class="tagline">
+        ExCSV adds inline schema, metadata, and aggregations to plain CSV.
+        Zero dependencies. CLI-friendly. Backward-compatible.
+      </p>
+      <div class="cta-row">
+        <a href="/spec/" class="btn btn-primary">Read the spec</a>
+        <a href="/examples/" class="btn btn-secondary">See examples</a>
+      </div>
+    </div>
+    <div class="hero-code">
+      <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma header=1</span>
+<span class="hl-meta">#@source: analytics_db.events</span>
+<span class="hl-meta">#column name=date type=date</span>
+<span class="hl-meta">#column name=event type=string</span>
+<span class="hl-meta">#column name=count type=int</span>
+<span class="hl-meta">#%sum: ,,1250</span>
+date,event,count
+2026-01-15,signup,320
+2026-01-15,purchase,180
+2026-01-16,signup,410
+2026-01-16,purchase,340</code></pre>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="card">
+      <h3>Schema annotations</h3>
+      <p>Define column types, constraints, defaults, and validation patterns right inside the file. No sidecar schema needed.</p>
+    </div>
+    <div class="card">
+      <h3>Built-in aggregations</h3>
+      <p>Embed sum, avg, count, min/max, and more as metadata rows. Consumers get stats without scanning the data.</p>
+    </div>
+    <div class="card">
+      <h3>CLI-friendly</h3>
+      <p>All metadata lines start with <code>#</code>, so <code>grep</code>, <code>awk</code>, <code>head</code>, and <code>cut</code> work on the data section out of the box.</p>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section class="install">
+    <h2>Python library</h2>
+    <p>Parse, create, and manipulate ExCSV files programmatically.</p>
+    <pre><code>pip install excsv</code></pre>
+    <pre><code>{`import excsv
+
+doc = excsv.load("data.excsv")
+print(doc.meta["source"])        # analytics_db.events
+print(doc.column_names)          # ['date', 'event', 'count']
+print(doc.get_aggregation("sum"))  # {'date': None, 'event': None, 'count': '1250'}`}</code></pre>
+  </section>
+
+  <!-- Why -->
+  <section class="why">
+    <h2>Why ExCSV?</h2>
+    <div class="grid-2">
+      <div>
+        <h4>Progressive enhancement</h4>
+        <p>Start with plain CSV. Add a header line. Add column types when you need them. Add aggregations when you want them. Every layer is optional.</p>
+      </div>
+      <div>
+        <h4>No JSON required</h4>
+        <p>Metadata is line-oriented key-value, not a nested structure. Easy to read, easy to write, easy to diff.</p>
+      </div>
+      <div>
+        <h4>Backward-compatible</h4>
+        <p>Any CSV reader can consume the data section. Metadata lines are comments. Nothing breaks.</p>
+      </div>
+      <div>
+        <h4>Self-describing files</h4>
+        <p>The file carries its own schema, provenance, and statistics. No external metadata files, no guessing column types.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    padding: 3rem 0 4rem;
+  }
+  .hero h1 {
+    font-size: 2.5rem;
+    margin-top: 0;
+    letter-spacing: -0.03em;
+  }
+  .tagline {
+    font-size: 1.1rem;
+    color: var(--color-muted);
+    line-height: 1.7;
+  }
+  .cta-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  .btn {
+    display: inline-block;
+    padding: 0.6em 1.4em;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { text-decoration: none; opacity: 0.85; }
+  .btn-primary {
+    background: var(--color-accent);
+    color: #fff;
+  }
+  .btn-secondary {
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+  .hero-code pre {
+    font-size: 0.82rem;
+    margin: 0;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding-bottom: 3rem;
+  }
+  .card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+  .card h3 {
+    margin-top: 0;
+    font-size: 1.05rem;
+  }
+  .card p {
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    margin-bottom: 0;
+  }
+
+  .install {
+    padding-bottom: 2rem;
+  }
+  .install h2 {
+    border: none;
+    padding: 0;
+  }
+
+  .why {
+    padding-bottom: 2rem;
+  }
+  .why h2 {
+    border: none;
+    padding: 0;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .grid-2 h4 { margin-top: 0; }
+  .grid-2 p {
+    color: var(--color-muted);
+    font-size: 0.92rem;
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      padding: 2rem 0 3rem;
+    }
+    .hero h1 { font-size: 1.8rem; }
+    .features { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
