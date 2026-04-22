@@ -206,7 +206,8 @@ The following `#@key: value` keys are conventional. Implementations **MAY** use 
 | `created`  | Creation timestamp (ISO 8601)        | `#@created: 2026-03-24T12:00:00Z`  |
 | `exported` | Export timestamp                     | `#@exported: 2026-03-24T14:30:00Z` |
 | `license`  | Data license identifier              | `#@license: CC-BY-4.0`             |
-| `query`    | SQL or query that produced the data  | `#@query: SELECT * FROM orders`    |
+| `sql-query`| SQL or query that produced the data  | `#@sql-query: SELECT * FROM orders`    |
+| `sql-ddl`  | DDL statement to recreate the table  | `#@sql-ddl: CREATE TABLE orders (...)` |
 | `tool`     | Tool/version that generated the file | `#@tool: excsv-cli/0.1.0`          |
 | `tags`     | Comma-separated tags                 | `#@tags: sales,Q1,2026`            |
 
@@ -513,7 +514,8 @@ Implementations **SHOULD** warn on:
 #@created: 2026-01-01T00:00:00Z
 #@exported: 2026-03-24T12:00:00Z
 #@license: CC-BY-4.0
-#@query: SELECT * FROM orders WHERE quarter = 'Q1'
+#@sql-query: SELECT * FROM orders WHERE quarter = 'Q1'
+#@sql-ddl: CREATE TABLE orders (id INT PRIMARY KEY, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL, amount DECIMAL(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMP, note TEXT)
 #@tool: excsv-cli/0.1.0
 #@tags: sales,Q1,2026,demo
 #column name=id type=int unique=1 title="Order ID" description="Auto-incremented order identifier"
@@ -544,4 +546,4 @@ id,customer,email,amount,status,tags,created_at,note
 
 ## License
 
-This specification is released under [CC0 1.0](https://creativecommons.org/publiccomain/zero/1.0/).
+This specification is released under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
