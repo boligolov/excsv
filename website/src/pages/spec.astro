@@ -2,29 +2,36 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="ExCSV Specification v0.1" description="Full ExCSV format specification — header line, meta lines, column schema, aggregations, and more.">
+<Base title="ExCSV Specification v0.2" description="Full ExCSV format specification — header line, meta lines, SQL companions, column schema, aggregations, and ZIP container.">
   <article class="spec">
-    <h1>ExCSV v0.1 — Specification</h1>
+    <h1>ExCSV v0.2 — Specification</h1>
     <p><strong>Extended Comma-Separated Values (ExCSV)</strong></p>
 
     <table>
       <tbody>
-        <tr><td><strong>Version</strong></td><td>0.1</td></tr>
+        <tr><td><strong>Version</strong></td><td>0.2</td></tr>
         <tr><td><strong>Status</strong></td><td>Draft / Experimental</td></tr>
-        <tr><td><strong>File extension</strong></td><td><code>.excsv</code></td></tr>
-        <tr><td><strong>MIME type</strong></td><td><code>text/excsv</code></td></tr>
+        <tr><td><strong>File extensions</strong></td><td><code>.excsv</code>, <code>.ecsv</code> (plain); <code>.excsv.zip</code>, <code>.ecsv.zip</code> (zipped)</td></tr>
+        <tr><td><strong>MIME types</strong></td><td><code>text/excsv</code> (plain); <code>application/excsv+zip</code> (zipped)</td></tr>
       </tbody>
     </table>
 
+    <h3>What's new in 0.2</h3>
+    <ul>
+      <li>New meta line kind <code>#$</code> for SQL companions (DDL and DQL).</li>
+      <li>New header field <code>sql-dialect</code> setting a default SQL dialect for <code>#$</code> lines.</li>
+      <li>ZIP container format (<code>.excsv.zip</code>) with a required <code>original-size</code> header field and an in-comment summary for unzipped inspection.</li>
+    </ul>
+
     <h3>Quick Example</h3>
-    <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma header=1</span>
+    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1</span>
 <span class="hl-meta">#column name=id type=int</span>
 <span class="hl-meta">#column name=name type=string</span>
 <span class="hl-meta">#column name=price type=decimal unit=USD</span>
 id,name,price
 1,Widget,9.99
 2,Gadget,24.50</code></pre>
-    <p>It's just CSV with a self-describing header. See the <a href="#full-example">full example</a> for schema, metadata, and aggregations.</p>
+    <p>It's just CSV with a self-describing header. See the <a href="#full-example">full example</a> for schema, metadata, SQL, and aggregations.</p>
 
     <hr />
 
@@ -35,7 +42,9 @@ id,name,price
       <li>An inline metadata header</li>
       <li>Column schema annotations</li>
       <li>Optional aggregation metadata</li>
+      <li>Optional SQL companions (DDL/DQL with dialect tagging)</li>
       <li>Optional embedded <a href="https://www.w3.org/TR/tabular-data-primer/">CSVW</a> compatibility</li>
+      <li>Optional ZIP container with summary in the archive comment</li>
     </ul>
     <p>ExCSV is designed for CLI workflows, data interchange, human readability, and minimal parsing complexity.</p>
 
@@ -44,7 +53,8 @@ id,name,price
       <li>Remain fully backward-compatible with CSV — any CSV reader can consume the data section.</li>
       <li>Support CLI processing with tools like <code>grep</code>, <code>awk</code>, <code>cut</code>, and <code>head</code>.</li>
       <li>Avoid mandatory JSON — metadata is line-oriented key-value, not a nested structure.</li>
-      <li>Allow progressive enhancement — start with plain CSV, add schema and aggregations as needed.</li>
+      <li>Allow progressive enhancement — start with plain CSV, add schema, aggregations, and SQL as needed.</li>
+      <li>Make zipped distribution first-class: integrity fields and summary metadata travel inside the archive itself.</li>
     </ul>
 
     <h3>1.2 Terminology</h3>
@@ -62,7 +72,7 @@ id,name,price
 │  Data Section           │  ← standard CSV/TSV rows
 └─────────────────────────┘</code></pre>
     <p>An ExCSV document <strong>MAY</strong> omit the header line. If the header line is missing, the document <strong>MUST</strong> be interpreted as a minimal ExCSV document with default parameters (<code>delim=comma</code>, <code>quote=double</code>, <code>header=1</code>, <code>encoding=UTF-8</code>).</p>
-    <p>The smallest valid ExCSV file is an empty file, or a single header line: <code>#!excsv version=0.1</code>.</p>
+    <p>The smallest valid ExCSV file is an empty file, or a single header line: <code>#!excsv version=0.2</code>.</p>
 
     <h3>2.1 Line Endings and BOM</h3>
     <ul>
@@ -76,7 +86,7 @@ id,name,price
 
     <h3>3.1 Syntax</h3>
     <p>If present, the header line <strong>MUST</strong> be line 1, <strong>MUST</strong> begin with <code>#!excsv</code>, and <strong>MUST</strong> contain at least the <code>version</code> field.</p>
-    <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma header=1</span></code></pre>
+    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1</span></code></pre>
 
     <h3>3.2 Key-Value Pairs</h3>
     <ul>
@@ -98,16 +108,18 @@ id,name,price
     <table>
       <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
       <tbody>
-        <tr><td><code>version</code></td><td><strong>MUST</strong></td><td>Format version (<code>0.1</code>)</td></tr>
+        <tr><td><code>version</code></td><td><strong>MUST</strong></td><td>Format version (<code>0.2</code>)</td></tr>
         <tr><td><code>delim</code></td><td>SHOULD</td><td>Delimiter — a known name <strong>or</strong> a literal character/sequence. Default: <code>comma</code></td></tr>
         <tr><td><code>quote</code></td><td>SHOULD</td><td>Quote — a known name <strong>or</strong> a literal character. Default: <code>none</code></td></tr>
         <tr><td><code>header</code></td><td>SHOULD</td><td><code>1</code> if the first data row is a header row, <code>0</code> otherwise. Default: <code>1</code></td></tr>
         <tr><td><code>null</code></td><td>MAY</td><td>Additional non-empty string representing null. Empty fields are <strong>always</strong> null by default.</td></tr>
         <tr><td><code>rows</code></td><td>MAY</td><td>Total number of data rows (excluding header)</td></tr>
-        <tr><td><code>checksum</code></td><td>MAY</td><td>Checksum of the data section (see Section 7)</td></tr>
-        <tr><td><code>csvw</code></td><td>MAY</td><td>CSVW embedding mode (see Section 8)</td></tr>
+        <tr><td><code>checksum</code></td><td>MAY</td><td>Checksum of the data section (see Section 8)</td></tr>
+        <tr><td><code>csvw</code></td><td>MAY</td><td>CSVW embedding mode (see Section 9)</td></tr>
         <tr><td><code>encoding</code></td><td>MAY</td><td>Character encoding (default <code>UTF-8</code>)</td></tr>
         <tr><td><code>schema</code></td><td>MAY</td><td>Schema precedence: <code>excsv</code> (default) or <code>csvw</code></td></tr>
+        <tr><td><code>sql-dialect</code></td><td>MAY</td><td>Default SQL dialect for unqualified <code>#$</code> lines (see Section 5)</td></tr>
+        <tr><td><code>original-size</code></td><td><strong>MUST</strong> if zipped</td><td>Uncompressed byte size of the inner <code>.excsv</code> file. Must match the ZIP central directory <code>uncompressed_size</code> (see Section 10).</td></tr>
       </tbody>
     </table>
 
@@ -148,17 +160,19 @@ id,name,price
       <li>Meta lines <strong>MUST</strong> precede the data section.</li>
       <li>Parsing of meta lines <strong>MUST</strong> stop at the first non-<code>#</code> line.</li>
       <li>Unrecognized <code>#</code> lines <strong>MUST</strong> be ignored.</li>
-      <li>Recommended order: <code>#@</code> metadata first, then <code>#column</code>, then <code>#csvw</code>, then <code>#%</code> aggregations. Parsers <strong>MUST</strong> accept any order.</li>
+      <li>Recommended order: <code>#@</code> metadata first, then <code>#column</code>, then <code>#csvw</code>, then <code>#$</code> SQL, then <code>#%</code> aggregations. Parsers <strong>MUST</strong> accept any order.</li>
     </ul>
 
     <h3>4.2 Types of Meta Lines</h3>
+    <p>Five recognized kinds, by prefix:</p>
     <table>
       <thead><tr><th>Prefix</th><th>Purpose</th><th>Example</th></tr></thead>
       <tbody>
         <tr><td><code>#@key: value</code></td><td>File-level metadata</td><td><code>#@source: sales_db.orders</code></td></tr>
         <tr><td><code>#column ...</code></td><td>Column annotation</td><td><code>#column name=id type=int</code></td></tr>
-        <tr><td><code>#%&lt;name&gt;: ...</code></td><td>Aggregation values</td><td><code>#%sum: ,, 42.5</code></td></tr>
         <tr><td><code>#csvw ...</code></td><td>CSVW payload</td><td><code>#csvw {`{"tableSchema": ...}`}</code></td></tr>
+        <tr><td><code>#$&lt;verb&gt;[-&lt;dialect&gt;]: ...</code></td><td>SQL companion</td><td><code>#$ddl-mysql: CREATE TABLE orders (...)</code></td></tr>
+        <tr><td><code>#%&lt;name&gt;: ...</code></td><td>Aggregation values</td><td><code>#%sum: ,, 42.5</code></td></tr>
       </tbody>
     </table>
 
@@ -173,15 +187,14 @@ id,name,price
         <tr><td><code>created</code></td><td>Creation timestamp (ISO 8601)</td><td><code>#@created: 2026-03-24T12:00:00Z</code></td></tr>
         <tr><td><code>exported</code></td><td>Export timestamp</td><td><code>#@exported: 2026-03-24T14:30:00Z</code></td></tr>
         <tr><td><code>license</code></td><td>Data license identifier</td><td><code>#@license: CC-BY-4.0</code></td></tr>
-        <tr><td><code>sql-query</code></td><td>SQL or query that produced the data</td><td><code>#@sql-query: SELECT * FROM orders</code></td></tr>
-        <tr><td><code>sql-ddl</code></td><td>DDL statement to recreate the table</td><td><code>#@sql-ddl: CREATE TABLE orders (...)</code></td></tr>
-        <tr><td><code>tool</code></td><td>Tool/version that generated the file</td><td><code>#@tool: excsv-cli/0.1.0</code></td></tr>
+        <tr><td><code>tool</code></td><td>Tool/version that generated the file</td><td><code>#@tool: excsv-cli/0.2.0</code></td></tr>
         <tr><td><code>tags</code></td><td>Comma-separated tags</td><td><code>#@tags: sales,Q1,2026</code></td></tr>
       </tbody>
     </table>
+    <p>SQL companions (<code>ddl</code>, <code>dql</code>) are encoded as <code>#$</code> lines, not <code>#@</code>. See Section 5.</p>
 
     <p>Example:</p>
-    <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma header=1</span>
+    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1</span>
 <span class="hl-meta">#@author: alex@example.com</span>
 <span class="hl-meta">#@comment: demo dataset for onboarding docs</span>
 <span class="hl-meta">#@source: analytics_db.page_views</span>
@@ -195,15 +208,94 @@ page,views
 
     <hr />
 
-    <h2>5. Column Schema</h2>
+    <h2>5. SQL Companions</h2>
+    <p>A file <strong>MAY</strong> carry SQL statements alongside its data: DDL to recreate the schema, and DQL (SELECT queries) for provenance or example use.</p>
 
-    <h3>5.1 Column Definition</h3>
+    <h3>5.1 Syntax</h3>
+    <pre><code><span class="hl-meta">#$&lt;verb&gt;[-&lt;dialect&gt;[-&lt;version&gt;]]: &lt;payload&gt;</span></code></pre>
+    <ul>
+      <li><code>&lt;verb&gt;</code> is one of:
+        <ul>
+          <li><strong><code>ddl</code></strong> — Data Definition Language. <code>CREATE TABLE</code>, <code>CREATE INDEX</code>, <code>ALTER</code>, <code>GRANT</code>, seed <code>INSERT</code>, etc. <strong>Repeatable, ordered.</strong> Statements <strong>MUST</strong> be executed in file order, top → bottom.</li>
+          <li><strong><code>dql</code></strong> — Data Query Language. <code>SELECT</code> and friends. Informational provenance — <strong>NOT</strong> executed automatically. Repeatable, order has no execution meaning.</li>
+        </ul>
+      </li>
+      <li><code>&lt;dialect&gt;</code> is a lowercase ASCII token, optionally followed by a version suffix (e.g. <code>mysql-8</code>, <code>postgres-15</code>).</li>
+      <li>Payload is <strong>raw text to end of line</strong>, exactly like <code>#@</code> values. One optional space after <code>:</code> is skipped. <strong>One line = one statement.</strong> Embedded newlines are <strong>NOT</strong> supported; split multi-statement DDL into multiple <code>#$ddl</code> lines.</li>
+    </ul>
+
+    <h3>5.2 Well-Known Dialect Tokens</h3>
+    <p>Parsers <strong>SHOULD</strong> recognize these; any other lowercase ASCII identifier <strong>MUST</strong> be accepted as-is.</p>
+    <table>
+      <thead><tr><th>Token</th><th>Database</th></tr></thead>
+      <tbody>
+        <tr><td><code>ansi</code></td><td>ANSI / ISO standard SQL (default)</td></tr>
+        <tr><td><code>mysql</code></td><td>MySQL</td></tr>
+        <tr><td><code>mariadb</code></td><td>MariaDB</td></tr>
+        <tr><td><code>postgres</code></td><td>PostgreSQL (read alias: <code>postgresql</code>, <code>pg</code>)</td></tr>
+        <tr><td><code>mssql</code></td><td>Microsoft SQL Server (read alias: <code>sqlserver</code>)</td></tr>
+        <tr><td><code>sqlite</code></td><td>SQLite</td></tr>
+        <tr><td><code>oracle</code></td><td>Oracle Database</td></tr>
+        <tr><td><code>db2</code></td><td>IBM Db2</td></tr>
+        <tr><td><code>clickhouse</code></td><td>ClickHouse</td></tr>
+        <tr><td><code>snowflake</code></td><td>Snowflake</td></tr>
+        <tr><td><code>bigquery</code></td><td>Google BigQuery</td></tr>
+        <tr><td><code>duckdb</code></td><td>DuckDB</td></tr>
+      </tbody>
+    </table>
+    <p>Anything else (e.g. <code>redshift</code>, <code>trino</code>, <code>cockroachdb</code>, <code>bigquery-standard</code>, your in-house engine) is <strong>also valid</strong> — parsers <strong>MUST</strong> accept any lowercase ASCII identifier as a dialect token. The list above is only the set parsers <strong>SHOULD</strong> recognize by name for nicer warnings; it isn't a closed enumeration.</p>
+    <p>Writers <strong>SHOULD</strong> emit the canonical token (left column) when one exists. Readers <strong>MUST</strong> treat aliases as equivalent but <strong>SHOULD NOT</strong> emit aliases.</p>
+
+    <h3>5.3 Dialect Resolution</h3>
+    <p>For each <code>#$</code> line, the <strong>effective dialect</strong> is determined as:</p>
+    <ol>
+      <li>If the key has an explicit suffix (e.g. <code>#$ddl-mysql</code>), the effective dialect is that suffix.</li>
+      <li>Else if the header sets <code>sql-dialect=X</code>, the effective dialect is <code>X</code>.</li>
+      <li>Else the effective dialect is <code>ansi</code> (portable SQL).</li>
+    </ol>
+    <p>When applying SQL to a target dialect <code>D</code>:</p>
+    <ol>
+      <li><strong>Exact match</strong>: lines whose effective dialect equals <code>D</code>.</li>
+      <li><strong>Family match</strong>: if <code>D</code> is versioned (<code>&lt;family&gt;-&lt;version&gt;</code>) and the line's effective dialect equals <code>&lt;family&gt;</code> (or vice versa), it is a match — implementations <strong>MAY</strong> warn.</li>
+      <li><strong>No match</strong>: skip the line. If no line matches <code>D</code> for a given verb, implementations <strong>MAY</strong> warn.</li>
+    </ol>
+
+    <h3>5.4 DDL Execution Order</h3>
+    <p>When applying DDL to a target dialect <code>D</code>:</p>
+    <ul>
+      <li>Iterate <strong>all <code>#$ddl</code> lines in file order</strong>.</li>
+      <li>For each line, compute its effective dialect.</li>
+      <li>If effective dialect matches <code>D</code> → execute the statement. Else → skip.</li>
+    </ul>
+    <p>Dialect-specific and portable DDL <strong>MAY</strong> be interleaved. Only matching lines are executed; their relative order is preserved.</p>
+
+    <h3>5.5 Examples</h3>
+    <p><strong>Single dialect via header:</strong></p>
+    <pre><code><span class="hl-meta">#!excsv version=0.2 sql-dialect=mysql</span>
+<span class="hl-meta">#$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(254) NOT NULL) ENGINE=InnoDB</span>
+<span class="hl-meta">#$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)</span>
+<span class="hl-meta">#$ddl: GRANT SELECT ON orders TO readonly</span>
+<span class="hl-meta">#$dql: SELECT * FROM orders WHERE id &gt; 100</span></code></pre>
+
+    <p><strong>Multi-dialect side-by-side:</strong></p>
+    <pre><code><span class="hl-meta">#!excsv version=0.2</span>
+<span class="hl-meta">#$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(8,2))</span>
+<span class="hl-meta">#$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB</span>
+<span class="hl-meta">#$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))</span>
+<span class="hl-meta">#$ddl-clickhouse: CREATE TABLE orders (id UInt64, amount Decimal(8,2)) ENGINE = MergeTree() ORDER BY id</span>
+<span class="hl-meta">#$dql-postgres: WITH base AS (SELECT * FROM orders WHERE amount &gt; 0) SELECT * FROM base</span></code></pre>
+
+    <hr />
+
+    <h2>6. Column Schema</h2>
+
+    <h3>6.1 Column Definition</h3>
     <p>Column annotations are <strong>OPTIONAL</strong>. A file without any <code>#column</code> lines is valid (schema-less mode). Partial coverage is also valid. If present, each column is described with one <code>#column</code> line:</p>
     <pre><code><span class="hl-meta">#column name=id type=int unique=1</span>
 <span class="hl-meta">#column name=email type=string required=1 len_max=254</span>
 <span class="hl-meta">#column name=amount type=decimal format=0.00 unit=USD</span></code></pre>
 
-    <h3>5.2 Required Fields</h3>
+    <h3>6.2 Required Fields</h3>
     <table>
       <thead><tr><th>Field</th><th><code>header=1</code></th><th><code>header=0</code></th></tr></thead>
       <tbody>
@@ -212,13 +304,13 @@ page,views
       </tbody>
     </table>
 
-    <h3>5.3 Name Rules</h3>
+    <h3>6.3 Name Rules</h3>
     <ul>
       <li><code>name</code> <strong>MUST NOT</strong> contain spaces.</li>
       <li><code>name</code> <strong>SHOULD</strong> match the regex <code>[A-Za-z_][A-Za-z0-9_-]*</code>.</li>
     </ul>
 
-    <h3>5.4 Header Mapping</h3>
+    <h3>6.4 Header Mapping</h3>
     <p><strong>When <code>header=1</code>:</strong></p>
     <ul>
       <li>A data header row <strong>MUST</strong> exist as the first row of the data section.</li>
@@ -231,7 +323,7 @@ page,views
       <li><code>name</code> is optional — if omitted, the column is referenced by index only.</li>
     </ul>
 
-    <h3>5.5 Column Attributes</h3>
+    <h3>6.5 Column Attributes</h3>
 
     <h4>Identity</h4>
     <table>
@@ -318,7 +410,7 @@ page,views
       </tbody>
     </table>
 
-    <h3>5.6 Unknown Attributes</h3>
+    <h3>6.6 Unknown Attributes</h3>
     <ul>
       <li>Unknown attributes <strong>MUST</strong> be ignored by parsers.</li>
       <li>Custom attributes <strong>SHOULD</strong> use the prefix <code>x-</code> (e.g. <code>x-source=erp</code>).</li>
@@ -326,20 +418,20 @@ page,views
 
     <hr />
 
-    <h2>6. Aggregations</h2>
+    <h2>7. Aggregations</h2>
 
-    <h3>6.1 Aggregation Values</h3>
+    <h3>7.1 Aggregation Values</h3>
     <pre><code><span class="hl-meta">#%count_nonnull: ,98,100</span>
 <span class="hl-meta">#%sum: ,,154280.50</span>
 <span class="hl-meta">#%avg: ,,1542.81</span></code></pre>
     <ul>
-      <li><code>&lt;name&gt;</code> <strong>MUST</strong> be a well-known aggregation name (see Section 6.2).</li>
+      <li><code>&lt;name&gt;</code> <strong>MUST</strong> be a well-known aggregation name (see Section 7.2).</li>
       <li>One optional space after <code>:</code> is skipped. The remaining payload <strong>MUST</strong> be parsed using the file's CSV dialect.</li>
       <li>Value count <strong>MUST</strong> equal the number of columns.</li>
       <li>Aggregation line order does not matter. Parsers <strong>MUST</strong> accept any order.</li>
     </ul>
 
-    <h3>6.2 Standard Aggregations</h3>
+    <h3>7.2 Standard Aggregations</h3>
     <p><strong>Universal</strong> (any type):</p>
     <table>
       <thead><tr><th>Name</th><th>Description</th></tr></thead>
@@ -368,7 +460,7 @@ page,views
       </tbody>
     </table>
 
-    <h3>6.3 Null Handling</h3>
+    <h3>7.3 Null Handling</h3>
     <p>Aggregations follow SQL semantics: null values are <strong>excluded</strong> from computation.</p>
     <ul>
       <li><code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>, <code>len_min</code>, <code>len_max</code> — nulls are skipped.</li>
@@ -377,31 +469,32 @@ page,views
       <li><code>count_distinct</code> — counts distinct <strong>non-null</strong> values only.</li>
     </ul>
 
-    <h3>6.4 Type Compatibility</h3>
+    <h3>7.4 Type Compatibility</h3>
     <ul>
       <li>Implementations <strong>SHOULD</strong> validate aggregation compatibility with the column type.</li>
       <li>Implementations <strong>MAY</strong> ignore invalid combinations with a warning.</li>
     </ul>
 
-    <h3>6.5 Missing Values</h3>
+    <h3>7.5 Missing Values</h3>
     <p>An empty field in an aggregation row <strong>MUST</strong> mean "not applicable" or "not computed."</p>
 
     <hr />
 
-    <h2>7. Checksum</h2>
+    <h2>8. Checksum</h2>
     <p>If present in the header line:</p>
     <pre><code>checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924...</code></pre>
     <ul>
       <li>The checksum <strong>MUST</strong> apply to the <strong>entire data section</strong> (everything after the last meta line), including the header row if <code>header=1</code> and the trailing newline if present.</li>
       <li>Newlines <strong>MUST</strong> be normalized to <code>\n</code> (LF) before computing.</li>
       <li>Format: <code>&lt;algorithm&gt;:&lt;hex-digest&gt;</code>.</li>
+      <li>This is <strong>semantic</strong> content integrity, covering the data section regardless of how the file is packaged or transported.</li>
     </ul>
 
     <hr />
 
-    <h2>8. CSVW Compatibility</h2>
+    <h2>9. CSVW Compatibility</h2>
 
-    <h3>8.1 Declaration</h3>
+    <h3>9.1 Declaration</h3>
     <table>
       <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
       <tbody>
@@ -410,7 +503,7 @@ page,views
       </tbody>
     </table>
 
-    <h3>8.2 Payload</h3>
+    <h3>9.2 Payload</h3>
     <pre><code><span class="hl-meta">#csvw {`{"tableSchema": {"columns": [...]}}`}</span></code></pre>
     <p><code>#csvw</code> followed by a space and value to end of line.</p>
     <ul>
@@ -418,7 +511,7 @@ page,views
       <li>Readers <strong>MAY</strong> ignore CSVW metadata entirely.</li>
     </ul>
 
-    <h3>8.3 Schema Precedence</h3>
+    <h3>9.3 Schema Precedence</h3>
     <table>
       <thead><tr><th><code>schema</code> value</th><th>Behavior</th></tr></thead>
       <tbody>
@@ -429,7 +522,52 @@ page,views
 
     <hr />
 
-    <h2>9. Data Section</h2>
+    <h2>10. ZIP Container</h2>
+    <p>An ExCSV document <strong>MAY</strong> be shipped inside a standard ZIP archive with the extension <code>.excsv.zip</code> (or <code>.ecsv.zip</code>). This is a <strong>container format</strong>, not a new dialect — the inner file is a regular ExCSV document.</p>
+
+    <h3>10.1 Archive Layout</h3>
+    <ul>
+      <li>The archive <strong>MUST</strong> contain at least one entry whose name ends in <code>.excsv</code> or <code>.ecsv</code>.</li>
+      <li>The <strong>primary</strong> entry <strong>MUST</strong> be the <strong>first</strong> entry in the central directory.</li>
+      <li>Primary name <strong>MUST</strong> be either the archive base name with <code>.zip</code> stripped (<code>sales.excsv.zip</code> → <code>sales.excsv</code>), or <code>data.excsv</code> if no such match.</li>
+      <li>Additional entries (auxiliary data, attachments) <strong>MAY</strong> follow.</li>
+    </ul>
+
+    <h3>10.2 Compression</h3>
+    <p>The primary entry <strong>SHOULD</strong> use Deflate (method 8). Store, Deflate64, BZIP2, LZMA, and Zstandard <strong>MAY</strong> be used. ZIP64 extensions <strong>MUST</strong> be supported. Encrypted archives are <strong>NOT</strong> specified in v0.2.</p>
+
+    <h3>10.3 Required Inner Header Field</h3>
+    <p>The inner <code>.excsv</code> file's <code>#!excsv</code> header <strong>MUST</strong> include:</p>
+    <pre><code>original-size=&lt;bytes&gt;   uncompressed byte size of the inner .excsv file</code></pre>
+    <p>This value <strong>MUST</strong> match the <code>uncompressed_size</code> recorded in the ZIP central directory entry for the primary file. A mismatch <strong>MUST</strong> be reported as a validation error.</p>
+    <p>For semantic content integrity, use the <code>checksum=</code> field (Section 8) — it covers the data section and survives re-compression or re-archiving.</p>
+
+    <h3>10.4 ZIP Comment (Summary)</h3>
+    <p>The ZIP end-of-central-directory comment field (max 65535 bytes) <strong>MUST</strong> carry a textual summary of the inner ExCSV file. This lets consumers read metadata <strong>WITHOUT</strong> extracting the archive.</p>
+    <p>The comment <strong>MUST</strong> be UTF-8 encoded and <strong>MUST</strong> be a valid prefix of an ExCSV file (begins with <code>#!excsv ...</code>, then <code>#</code> lines only).</p>
+
+    <h4>Priority Order</h4>
+    <p>Writers <strong>MUST</strong> include lines in this priority order, stopping when the next line would exceed the 65535-byte budget:</p>
+    <ol>
+      <li><code>#!excsv</code> header line (<strong>MUST</strong> be present, <strong>MUST</strong> include <code>original-size=</code>).</li>
+      <li><code>#@source</code>, <code>#@author</code>, <code>#@created</code>, <code>#@exported</code>, <code>#@license</code>, <code>#@tool</code>.</li>
+      <li>All <code>#column</code> lines.</li>
+      <li>All <code>#$ddl</code> and <code>#$ddl-&lt;dialect&gt;</code> lines (preserving file order).</li>
+      <li>All <code>#%</code> aggregation lines.</li>
+      <li><code>#@comment</code>, <code>#@tags</code>.</li>
+      <li>Remaining <code>#@</code> entries.</li>
+      <li>All <code>#$dql</code> and <code>#$dql-&lt;dialect&gt;</code> lines.</li>
+      <li><code>#csvw</code> payload.</li>
+    </ol>
+
+    <h4>Truncation Marker</h4>
+    <p>If any content was omitted, the comment <strong>MUST</strong> end with:</p>
+    <pre><code><span class="hl-meta">#@comment-truncated: 1</span></code></pre>
+    <p>Readers <strong>MUST</strong> treat the comment as <strong>advisory</strong>: the authoritative source is the inner file. If they disagree (beyond truncation), the inner file wins.</p>
+
+    <hr />
+
+    <h2>11. Data Section</h2>
     <ul>
       <li>The data section <strong>MUST</strong> follow the CSV dialect defined in the header (<code>delim</code>, <code>quote</code>, etc.).</li>
       <li>Quoted values <strong>MUST NOT</strong> contain raw newlines. All values are single-line.</li>
@@ -440,41 +578,54 @@ page,views
 
     <hr />
 
-    <h2>10. Error Handling</h2>
+    <h2>12. Error Handling</h2>
     <p>Implementations <strong>MUST</strong> fail on:</p>
     <ul>
       <li>Malformed <code>#!excsv</code> header line (if present)</li>
       <li>Malformed <code>key=value</code> pairs in the header</li>
       <li>Column count mismatch in aggregation rows</li>
+      <li>Zipped file with missing <code>original-size</code> header field</li>
+      <li>Zipped file where inner uncompressed size does not match header <code>original-size</code></li>
+      <li>Zipped file where comment is not a valid ExCSV prefix</li>
+      <li><code>#$</code> line missing the <code>:</code> separator</li>
+      <li><code>#$</code> line whose payload contains an embedded newline</li>
     </ul>
     <p>Implementations <strong>SHOULD</strong> warn on:</p>
     <ul>
       <li>Unknown attributes in column definitions</li>
       <li>Aggregation types incompatible with column types</li>
+      <li>Unknown SQL dialect token</li>
+      <li><code>#$</code> verb other than <code>ddl</code> or <code>dql</code></li>
+      <li>ZIP comment disagrees with inner file's <code>#!excsv</code> header (other than truncation marker)</li>
+      <li>No <code>#$</code> line matches the consumer's target dialect</li>
     </ul>
 
     <hr />
 
-    <h2 id="full-example">11. Full Example</h2>
-    <pre><code><span class="hl-meta">#!excsv version=0.1 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:a1b2c3d4e5f6</span>
+    <h2 id="full-example">13. Full Example</h2>
+    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:a1b2c3d4e5f6 sql-dialect=mysql</span>
 <span class="hl-meta">#@author: author@example.com</span>
 <span class="hl-meta">#@source: sales_db.orders</span>
 <span class="hl-meta">#@comment: Quarterly sales export with all column features demonstrated</span>
 <span class="hl-meta">#@created: 2026-01-01T00:00:00Z</span>
 <span class="hl-meta">#@exported: 2026-03-24T12:00:00Z</span>
 <span class="hl-meta">#@license: CC-BY-4.0</span>
-<span class="hl-meta">#@sql-query: SELECT * FROM orders WHERE quarter = 'Q1'</span>
-<span class="hl-meta">#@sql-ddl: CREATE TABLE orders (id INT PRIMARY KEY, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL, amount DECIMAL(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMP, note TEXT)</span>
-<span class="hl-meta">#@tool: excsv-cli/0.1.0</span>
+<span class="hl-meta">#@tool: excsv-cli/0.2.0</span>
 <span class="hl-meta">#@tags: sales,Q1,2026,demo</span>
-<span class="hl-meta">#column name=id type=int unique=1 title="Order ID" description="Auto-incremented order identifier"</span>
+<span class="hl-meta">#column name=id type=int unique=1 title="Order ID"</span>
 <span class="hl-meta">#column name=customer type=string required=1 len_min=1 len_max=100 title="Customer Name"</span>
 <span class="hl-meta">#column name=email type=string required=1 len_max=254 pattern=^[^@]+@[^@]+$</span>
 <span class="hl-meta">#column name=amount type=decimal format=0.00 unit=USD min=0 max=999999.99 default=0.00 order=desc</span>
 <span class="hl-meta">#column name=status type=string default=pending</span>
 <span class="hl-meta">#column name=tags type=string separator=| title="Order Tags"</span>
-<span class="hl-meta">#column name=created_at type=datetime title="Created At" description="UTC timestamp of order creation"</span>
+<span class="hl-meta">#column name=created_at type=datetime title="Created At"</span>
 <span class="hl-meta">#column name=note type=string x-ui-widget=textarea</span>
+<span class="hl-meta">#$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL, amount DECIMAL(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMP, note TEXT) ENGINE=InnoDB</span>
+<span class="hl-meta">#$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)</span>
+<span class="hl-meta">#$ddl: CREATE INDEX orders_status_idx ON orders(status)</span>
+<span class="hl-meta">#$ddl: GRANT SELECT ON orders TO readonly</span>
+<span class="hl-meta">#$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL UNIQUE, amount NUMERIC(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMPTZ, note TEXT)</span>
+<span class="hl-meta">#$dql: SELECT * FROM orders WHERE quarter = 'Q1'</span>
 <span class="hl-meta">#%count_nonnull: 4,4,4,4,4,3,4,2</span>
 <span class="hl-meta">#%count_null: 0,0,0,0,0,1,0,2</span>
 <span class="hl-meta">#%count_distinct: 4,3,3,4,2,3,4,2</span>
@@ -489,6 +640,40 @@ id,customer,email,amount,status,tags,created_at,note
 2,Globex Inc,globex@example.com,300.50,completed,retail,2026-02-20T14:00:00Z,"Paid in full, net-30"
 3,Initech,info@initech.io,200.00,pending,urgent|retail,2026-03-01T11:45:00Z,
 4,Acme Corp,acme@example.com,50.00,pending,,2026-03-10T16:20:00Z,</code></pre>
+
+    <hr />
+
+    <h2 id="prior-art">Prior Art</h2>
+    <p>ExCSV stands on the shoulders of two prior formats that proved a CSV file can carry its own metadata without ceasing to be a CSV file.</p>
+
+    <h3>ECSV — Enhanced Character-Separated Values (Astropy)</h3>
+    <p><a href="https://docs.astropy.org/en/stable/io/ascii/ecsv.html" target="_blank" rel="noopener">Astropy's ECSV</a> is the closest spiritual ancestor. It established the core pattern:</p>
+    <ul>
+      <li>A versioned signature line (<code># %ECSV 1.0</code>).</li>
+      <li>A <code>#</code>-prefixed metadata block that any CSV reader ignores.</li>
+      <li>Per-column descriptors (<code>name</code>, <code>datatype</code>, <code>unit</code>, <code>format</code>, <code>description</code>).</li>
+      <li>A free-form file-level <code>meta:</code> block.</li>
+      <li>A plain CSV data section that round-trips through every standard tool.</li>
+    </ul>
+    <p>ExCSV adopts the same overall shape but <strong>swaps ECSV's nested YAML header for line-oriented <code>key=value</code> pairs</strong>. Each meta line stands on its own — easier to <code>grep</code>, easier to <code>diff</code>, easier to write by hand. The tradeoff: ExCSV doesn't try to carry rich Python-typed objects (masked columns, mixin columns, multidimensional arrays). That's deliberate — ExCSV is a tabular interchange format, not an in-memory object serializer.</p>
+
+    <h3>InfluxDB Annotated CSV</h3>
+    <p><a href="https://docs.influxdata.com/influxdb/v2/reference/syntax/annotated-csv/" target="_blank" rel="noopener">InfluxDB's Annotated CSV</a> showed the other half of the picture: <strong>annotation rows that carry one value per data column</strong>.</p>
+    <pre><code><span class="hl-meta">#group,false,false,true,true</span>
+<span class="hl-meta">#datatype,string,long,dateTime:RFC3339,double</span>
+<span class="hl-meta">#default,mean,,,,</span>
+,result,table,_time,_value</code></pre>
+    <p>ExCSV's <code>#%</code> aggregation rows are direct descendants of this idea — one row per metric, one value per column, file's CSV dialect for the values. The <code>#</code>-as-comment convention and the "any <code>#</code> line is safely ignorable by plain CSV readers" guarantee also come from this tradition.</p>
+
+    <h3>What ExCSV adds beyond both</h3>
+    <ul>
+      <li>An explicit <code>#!excsv</code> header line declaring the CSV dialect <strong>inside</strong> the file (delimiter, quote, encoding, null marker, row count, checksum).</li>
+      <li><code>#@key: value</code> provenance lines (source, author, license, tool, tags, created/exported timestamps).</li>
+      <li>Pre-computed aggregations as first-class metadata, not just types and defaults — consumers get <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>, <code>count_*</code> without scanning the data.</li>
+      <li>SQL companions (<code>#$ddl</code>, <code>#$dql</code>) with dialect tagging — ship the schema and the query that produced the data alongside the data itself, in multiple SQL dialects.</li>
+      <li>ZIP container (<code>.excsv.zip</code>) with the metadata summary embedded in the archive's comment field — preview schema without unzipping.</li>
+    </ul>
+    <p>If you already have ECSV files, the metadata translates 1:1 to ExCSV (<code>datatype</code> → <code>#column type=</code>, <code>unit</code> → <code>#column unit=</code>, <code>description</code> → <code>#column description=</code>, the <code>meta:</code> block → individual <code>#@</code> keys). If you already have Annotated CSV, the <code>#datatype</code> row maps to per-column <code>#column type=</code> lines and the <code>#default</code> row maps to <code>#column default=</code>.</p>
 
     <hr />
 

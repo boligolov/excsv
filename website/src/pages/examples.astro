@@ -3,13 +3,13 @@ import Base from '../layouts/Base.astro';
 import CodeBlock from '../components/CodeBlock.astro';
 ---
 
-<Base title="ExCSV Examples" description="Annotated ExCSV examples covering common use cases: minimal files, typed columns, aggregations, tab-delimited exports, and more.">
+<Base title="ExCSV Examples" description="Annotated ExCSV examples covering common use cases: minimal files, typed columns, aggregations, SQL companions, zipped containers, and more.">
   <h1>Examples</h1>
-  <p class="intro">Real-world patterns showing how ExCSV builds on plain CSV. Each example is a valid <code>.excsv</code> file.</p>
+  <p class="intro">Real-world patterns showing how ExCSV builds on plain CSV. Each example is a valid <code>.excsv</code> file (v0.2).</p>
 
   <section class="example">
     <CodeBlock title="1. Minimal" description="Just the header line. Everything else is standard CSV.">
-{`#!excsv version=0.1
+{`#!excsv version=0.2
 name,age,city
 Alice,32,Berlin
 Bob,28,Tokyo
@@ -20,7 +20,7 @@ Carol,45,Lagos`}
 
   <section class="example">
     <CodeBlock title="2. Typed columns with constraints" description="Column schema defines types, validation rules, and display hints.">
-{`#!excsv version=0.1 delim=comma header=1
+{`#!excsv version=0.2 delim=comma header=1
 #column name=id type=int unique=1
 #column name=email type=string required=1 len_max=254 pattern=^[^@]+@[^@]+$
 #column name=score type=decimal min=0 max=100 format=0.0
@@ -35,26 +35,26 @@ id,email,score,active
 
   <section class="example">
     <CodeBlock title="3. Tab-delimited with metadata" description="A TSV export from a database, with provenance metadata.">
-{`#!excsv version=0.1 delim=tab header=1 encoding=UTF-8
+{`#!excsv version=0.2 delim=tab header=1 encoding=UTF-8
 #@source: warehouse_db.inventory
 #@author: ops-team@company.com
 #@exported: 2026-03-20T08:00:00Z
-#@query: SELECT sku, name, qty FROM inventory WHERE qty > 0
 #@tool: pg_dump/16.2
 #column name=sku type=string unique=1
 #column name=name type=string
 #column name=qty type=int min=0
+#$dql-postgres: SELECT sku, name, qty FROM inventory WHERE qty > 0
 sku	name	qty
 WDG-001	Widget Pro	1200
 WDG-002	Widget Lite	3400
 GDG-001	Gadget X	870`}
     </CodeBlock>
-    <p class="note">The <code>#@query</code> value is raw text to end of line — spaces, quotes, and SQL syntax are preserved as-is.</p>
+    <p class="note">The query that produced the file is preserved as <code>#$dql-postgres</code>. The raw text is taken to end of line — SQL syntax preserved as-is.</p>
   </section>
 
   <section class="example">
     <CodeBlock title="4. Aggregations" description="Pre-computed statistics embedded in the file.">
-{`#!excsv version=0.1 delim=comma header=1
+{`#!excsv version=0.2 delim=comma header=1
 #column name=region type=string
 #column name=product type=string
 #column name=revenue type=decimal unit=USD
@@ -75,8 +75,63 @@ West,Widget,3200.00,120`}
   </section>
 
   <section class="example">
-    <CodeBlock title="5. No header row (header=0)" description="Columns defined by index instead of matching header names.">
-{`#!excsv version=0.1 delim=comma header=0
+    <CodeBlock title="5. SQL companions — single dialect via header" description="Set sql-dialect once, drop the suffix on every #$ line.">
+{`#!excsv version=0.2 delim=comma header=1 sql-dialect=postgres
+#@source: analytics_db.users
+#column name=id type=long unique=1
+#column name=email type=string required=1
+#column name=created_at type=datetime
+#$ddl: CREATE TABLE users (id BIGSERIAL PRIMARY KEY, email TEXT NOT NULL UNIQUE, created_at TIMESTAMPTZ NOT NULL)
+#$ddl: CREATE INDEX users_created_at_idx ON users(created_at)
+#$ddl: GRANT SELECT ON users TO readonly
+#$dql: SELECT * FROM users WHERE created_at >= '2026-01-01'
+id,email,created_at
+1,alice@example.com,2026-01-15T09:30:00Z
+2,bob@example.com,2026-02-20T14:00:00Z
+3,carol@example.com,2026-03-01T11:45:00Z`}
+    </CodeBlock>
+    <p class="note">Each <code>#$ddl</code> line is one statement. They execute in file order. <code>#$dql</code> is informational provenance — never executed automatically.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="6. SQL companions — multi-dialect" description="Same data, three flavors of CREATE TABLE. Pick the one matching your target.">
+{`#!excsv version=0.2 delim=comma header=1
+#column name=id type=long unique=1
+#column name=amount type=decimal unit=USD
+#$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(10,2))
+#$ddl-mysql: CREATE TABLE orders (id BIGINT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(10,2)) ENGINE=InnoDB
+#$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(10,2))
+#$ddl-clickhouse: CREATE TABLE orders (id UInt64, amount Decimal(10,2)) ENGINE = MergeTree() ORDER BY id
+#$ddl-sqlite: CREATE TABLE orders (id INTEGER PRIMARY KEY AUTOINCREMENT, amount REAL)
+id,amount
+1,99.99
+2,250.00
+3,42.50`}
+    </CodeBlock>
+    <p class="note">A consumer targeting <code>mysql</code> executes only the unqualified line and the <code>-mysql</code> line — others are skipped. The unqualified line acts as a portable fallback.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="7. Zipped container header" description="Header of the inner .excsv file inside a sales.excsv.zip archive.">
+{`#!excsv version=0.2 delim=comma quote=double header=1 rows=10000 checksum=sha256:e3b0c442... original-size=204800 sql-dialect=postgres
+#@source: warehouse.sales
+#@created: 2026-04-01T08:00:00Z
+#@tool: excsv-cli/0.2.0
+#column name=order_id type=long unique=1
+#column name=customer_id type=long
+#column name=amount type=decimal unit=USD
+#$ddl: CREATE TABLE sales (order_id BIGSERIAL PRIMARY KEY, customer_id BIGINT, amount NUMERIC(10,2))
+order_id,customer_id,amount
+1,42,99.99
+2,13,250.00
+3,77,42.50`}
+    </CodeBlock>
+    <p class="note">When packaged as <code>.excsv.zip</code>, the header carries <code>original-size</code> (uncompressed bytes) — it <strong>MUST</strong> match the ZIP central directory's <code>uncompressed_size</code>. The ZIP archive's comment field carries this same prefix so consumers can preview metadata without unzipping.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="8. No header row (header=0)" description="Columns defined by index instead of matching header names.">
+{`#!excsv version=0.2 delim=comma header=0
 #column index=0 type=datetime
 #column index=1 name=level type=string
 #column index=2 name=message type=string
@@ -89,8 +144,8 @@ West,Widget,3200.00,120`}
   </section>
 
   <section class="example">
-    <CodeBlock title="6. Custom attributes (x- prefix)" description="Application-specific metadata using the x- convention.">
-{`#!excsv version=0.1 delim=comma header=1
+    <CodeBlock title="9. Custom attributes (x- prefix)" description="Application-specific metadata using the x- convention.">
+{`#!excsv version=0.2 delim=comma header=1
 #@tool: my-crm/2.4.0
 #@comment: Customer export for marketing sync
 #column name=id type=int unique=1 x-crm-entity=contact
@@ -103,13 +158,12 @@ id,Full Name,email,segment,ltv
 102,Bob Chen,bob@globex.io,smb,3200.50
 103,Carol Diaz,carol@initech.com,enterprise|churned,8750.00`}
     </CodeBlock>
-    <p class="note">Custom <code>x-</code> attributes are ignored by generic parsers but carry meaning for specific tools.
-      Note how the header row uses <code>title</code> ("Full Name") for columns that have it.</p>
+    <p class="note">Custom <code>x-</code> attributes are ignored by generic parsers but carry meaning for specific tools. Note how the header row uses <code>title</code> ("Full Name") for columns that have it.</p>
   </section>
 
   <section class="example">
-    <CodeBlock title="7. CSVW compatibility" description="Embedding a CSVW JSON-LD annotation alongside ExCSV schema.">
-{`#!excsv version=0.1 delim=comma header=1 csvw=inline-json schema=excsv
+    <CodeBlock title="10. CSVW compatibility" description="Embedding a CSVW JSON-LD annotation alongside ExCSV schema.">
+{`#!excsv version=0.2 delim=comma header=1 csvw=inline-json schema=excsv
 #@source: hr_db.employees
 #column name=id type=int unique=1
 #column name=name type=string
@@ -124,8 +178,8 @@ id,name,dept
   </section>
 
   <section class="example">
-    <CodeBlock title="8. Null handling" description="Default null (empty field) vs custom null marker.">
-{`#!excsv version=0.1 delim=comma header=1 null=NA
+    <CodeBlock title="11. Null handling" description="Default null (empty field) vs custom null marker.">
+{`#!excsv version=0.2 delim=comma header=1 null=NA
 #column name=sensor type=string
 #column name=reading type=decimal
 #column name=status type=string
