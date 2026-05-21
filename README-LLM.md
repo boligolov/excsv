@@ -75,7 +75,19 @@ If value is not a well-known name, treat as the literal quote character. Example
 
 ## META LINES
 
-All start with `#`. Five recognized kinds by prefix. Unrecognized `#` lines MUST be ignored. Recommended order: `#@` metadata first, then `#column`, then `#csvw`, then `#$` SQL, then `#%` aggregations. Order within each group does not matter except where stated (e.g. `#$ddl` execution order). Parsers MUST accept any order.
+All start with `#`. Five structured kinds by prefix plus a free-form human-comment line (`##`). Unrecognized `#` lines MUST be ignored (forward-compat). Recommended order: `#@` metadata first, then `#column`, then `#csvw`, then `#$` SQL, then `#%` aggregations. Order within each group does not matter except where stated (e.g. `#$ddl` execution order). Parsers MUST accept any order. `##` human comments MAY appear anywhere in the meta block.
+
+### 0. Human comment: `## ...`
+
+Free-form comment to end of line. MUST be ignored by parsers — carries no structured meaning. Writers MUST NOT use `##` to encode any structured field; it is reserved for human notes.
+
+```
+## TODO: drop legacy status values before next quarter
+## last reviewed by alex@example.com 2026-03-24
+#@source: sales_db.orders
+```
+
+`##` lines are NOT preserved in canonical re-serialization unless the implementation specifically opts into preserving them (round-trip mode). The default writer MAY drop them.
 
 ### 1. File-level metadata: `#@key: value`
 
@@ -521,7 +533,8 @@ SHOULD warn:
    c. "#csvw " -> store remainder as csvw_payload
    d. "#$" -> extract key (between "#$" and ":"), value (after ": "). Key is `<verb>[-<dialect>[-<version>]]` where verb ∈ {ddl, dql}. APPEND to an ordered list of SQL entries (preserve file order). Verbs other than ddl/dql MUST be preserved but MAY produce a warning.
    e. "#@" -> extract key (between "#@" and ":"), value (after ": "), store as metadata[key] = value (last-wins on duplicates).
-   f. Other "#" lines -> ignore
+   f. "##" -> human comment, ignore (or attach to round-trip buffer if preservation mode is on).
+   g. Other "#" lines -> ignore
 4. First non-"#" line begins data section.
 5. If header=1: first data line is column names. Validate against #column name attributes if present.
 6. Parse remaining lines as CSV using resolved delimiter and quote character.
@@ -693,36 +706,7 @@ id,customer,email,amount,status,tags,created_at,note
   ^ 4 data rows
 ```
 
-PRIOR ART
-=========
-
-ExCSV draws directly from two prior self-describing-CSV formats. Translation hints below for LLMs that encounter either format and want to map fields to ExCSV.
-
-ECSV (Astropy Enhanced Character-Separated Values)
-- Spec: https://docs.astropy.org/en/stable/io/ascii/ecsv.html
-- Signature line: `# %ECSV 1.0` (ExCSV equivalent: `#!excsv version=0.2`).
-- Metadata block: YAML inside `#` comments, with `datatype:` list and `meta:` block (ExCSV: line-oriented `#column ...` and `#@key: value`).
-- Translation:
-  - ECSV `{name: x, datatype: float32, unit: m, format: .2f, description: foo}`
-    → ExCSV `#column name=x type=float unit=m format=.2f description="foo"`
-  - ECSV `meta: {author: alice, date: 2026-01-01}`
-    → ExCSV `#@author: alice` + `#@created: 2026-01-01`
-  - ECSV `schema: astropy-2.0` → no direct ExCSV equivalent (Astropy-specific class hints; preserve via `x-` attributes if needed).
-- ExCSV intentionally does NOT carry masked-column, mixin-column, or multidimensional-column metadata. These are out of scope for v0.2.
-
-InfluxDB Annotated CSV
-- Spec: https://docs.influxdata.com/influxdb/v2/reference/syntax/annotated-csv/
-- Annotation rows: `#datatype,...`, `#group,...`, `#default,...` — one value per data column (ExCSV equivalent: `#%<name>: ...` aggregation rows use the same per-column positional layout).
-- Translation:
-  - `#datatype,string,long,dateTime:RFC3339,double` → per-column `#column type=` lines (one per column).
-  - `#default,mean,,,` → per-column `default=` attribute on each `#column`.
-  - `#group,false,false,true,true` → no direct ExCSV equivalent; map via `x-influx-group=1` custom attribute on relevant `#column` lines.
-  - Multiple tables separated by blank rows → not supported in ExCSV v0.2; split into separate files.
-
-ExCSV's distinguishing additions over both: explicit CSV-dialect header (`delim`, `quote`, `encoding`, `null`, `rows`, `checksum`), provenance via `#@`, pre-computed aggregations via `#%`, SQL companions via `#$`, ZIP container with summary in archive comment.
-
 LICENSE
 =======
 
 This specification is released under CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/
-

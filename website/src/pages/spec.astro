@@ -159,15 +159,17 @@ id,name,price
       <li>Meta lines <strong>MUST</strong> start with <code>#</code>.</li>
       <li>Meta lines <strong>MUST</strong> precede the data section.</li>
       <li>Parsing of meta lines <strong>MUST</strong> stop at the first non-<code>#</code> line.</li>
-      <li>Unrecognized <code>#</code> lines <strong>MUST</strong> be ignored.</li>
-      <li>Recommended order: <code>#@</code> metadata first, then <code>#column</code>, then <code>#csvw</code>, then <code>#$</code> SQL, then <code>#%</code> aggregations. Parsers <strong>MUST</strong> accept any order.</li>
+      <li>Lines starting with <code>##</code> are <strong>human comments</strong> — they carry no structured meaning and <strong>MUST</strong> be ignored by parsers. Writers <strong>MUST NOT</strong> emit <code>##</code> as part of any structured field; it is reserved for free-form notes ("comment to end of line").</li>
+      <li>Other unrecognized <code>#</code> lines <strong>MUST</strong> be ignored (forward-compatibility for future meta kinds).</li>
+      <li>Recommended order: <code>#@</code> metadata first, then <code>#column</code>, then <code>#csvw</code>, then <code>#$</code> SQL, then <code>#%</code> aggregations. Parsers <strong>MUST</strong> accept any order. <code>##</code> comments <strong>MAY</strong> appear anywhere in the meta block.</li>
     </ul>
 
     <h3>4.2 Types of Meta Lines</h3>
-    <p>Five recognized kinds, by prefix:</p>
+    <p>Five recognized structured kinds plus a human-comment line, by prefix:</p>
     <table>
       <thead><tr><th>Prefix</th><th>Purpose</th><th>Example</th></tr></thead>
       <tbody>
+        <tr><td><code>## ...</code></td><td>Human comment (ignored by parsers; comment to end of line)</td><td><code>## TODO: drop legacy status values</code></td></tr>
         <tr><td><code>#@key: value</code></td><td>File-level metadata</td><td><code>#@source: sales_db.orders</code></td></tr>
         <tr><td><code>#column ...</code></td><td>Column annotation</td><td><code>#column name=id type=int</code></td></tr>
         <tr><td><code>#csvw ...</code></td><td>CSVW payload</td><td><code>#csvw {`{"tableSchema": ...}`}</code></td></tr>
