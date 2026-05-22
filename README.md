@@ -21,6 +21,8 @@
 - New meta line kind `#$` for SQL companions (DDL and DQL).
 - New header field `sql-dialect` setting a default SQL dialect for `#$` lines.
 - ZIP container format (`.excsv.zip`) with required `original-size` header field and an in-comment summary for unzipped inspection.
+- Free-form human comment marker `##` (ignored by parsers).
+- Reservation of names for a future column-oriented multi-table archive format (`.excsv.pack.zip`). See §10.4.
 
 ### Quick Example
 
@@ -652,6 +654,24 @@ If any content was omitted, the comment **MUST** end with:
 ```
 
 Readers **MUST** treat the comment as **advisory**: the authoritative source is the inner file. If they disagree (beyond truncation), the inner file wins.
+
+### 10.4 Reserved for future use
+
+The names below are **reserved in v0.2** for a planned column-oriented multi-table archive format (`.excsv.pack.zip`). They are not defined by v0.2. Writers conforming to v0.2 **MUST NOT** emit them. Reservation exists so third-party extensions don't claim conflicting meanings before the format is shipped.
+
+When readers encounter any of them on a v0.2 file, they follow the existing forward-compatibility rules: unknown header keys are ignored, unknown `#`-prefixed meta lines are ignored. Nothing else is required.
+
+| Reserved | Kind | Planned use |
+| --- | --- | --- |
+| `.excsv.pack.zip` / `.ecsv.pack.zip` | file extension | multi-table columnar archive |
+| `layout=` | header key | values `row` / `columnar` / `pack` to distinguish the storage form |
+| `mode=` | header key (manifest only) | `multi-table` (default) vs `single-table` for packs |
+| `section-size=` | header key | row chunk size for columnar tables |
+| `table-count=` | header key (manifest only) | informational table count |
+| `#table` | meta line (manifest only) | declares a table inside a pack |
+| `#fk` | meta line (manifest only) | informational foreign-key declaration between tables in a pack |
+
+Behavior, syntax, and full semantics of the above will be defined in a future spec revision. Until then they have no meaning under v0.2.
 
 ---
 

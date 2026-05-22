@@ -21,6 +21,8 @@ import Base from '../layouts/Base.astro';
       <li>New meta line kind <code>#$</code> for SQL companions (DDL and DQL).</li>
       <li>New header field <code>sql-dialect</code> setting a default SQL dialect for <code>#$</code> lines.</li>
       <li>ZIP container format (<code>.excsv.zip</code>) with a required <code>original-size</code> header field and an in-comment summary for unzipped inspection.</li>
+      <li>Free-form human comment marker <code>##</code> (ignored by parsers).</li>
+      <li>Reservation of names for a future column-oriented multi-table archive format (<code>.excsv.pack.zip</code>). See <a href="#reserved-future">§10.5</a>.</li>
     </ul>
 
     <h3>Quick Example</h3>
@@ -566,6 +568,25 @@ page,views
     <p>If any content was omitted, the comment <strong>MUST</strong> end with:</p>
     <pre><code><span class="hl-meta">#@comment-truncated: 1</span></code></pre>
     <p>Readers <strong>MUST</strong> treat the comment as <strong>advisory</strong>: the authoritative source is the inner file. If they disagree (beyond truncation), the inner file wins.</p>
+
+    <h3 id="reserved-future">10.5 Reserved for Future Use</h3>
+    <p>The names below are <strong>reserved in v0.2</strong> for a planned column-oriented multi-table archive format (<code>.excsv.pack.zip</code>). They are not defined by v0.2. Writers conforming to v0.2 <strong>MUST NOT</strong> emit them. Reservation exists so third-party extensions don't claim conflicting meanings before the format is shipped.</p>
+    <p>When readers encounter any of them on a v0.2 file they follow the existing forward-compatibility rules: unknown header keys are ignored, unknown <code>#</code>-prefixed meta lines are ignored. Nothing else is required.</p>
+    <table>
+      <thead>
+        <tr><th>Reserved</th><th>Kind</th><th>Planned use</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>.excsv.pack.zip</code> / <code>.ecsv.pack.zip</code></td><td>file extension</td><td>multi-table columnar archive</td></tr>
+        <tr><td><code>layout=</code></td><td>header key</td><td>values <code>row</code> / <code>columnar</code> / <code>pack</code> to distinguish the storage form</td></tr>
+        <tr><td><code>mode=</code></td><td>header key (manifest only)</td><td><code>multi-table</code> (default) vs <code>single-table</code> for packs</td></tr>
+        <tr><td><code>section-size=</code></td><td>header key</td><td>row chunk size for columnar tables</td></tr>
+        <tr><td><code>table-count=</code></td><td>header key (manifest only)</td><td>informational table count</td></tr>
+        <tr><td><code>#table</code></td><td>meta line (manifest only)</td><td>declares a table inside a pack</td></tr>
+        <tr><td><code>#fk</code></td><td>meta line (manifest only)</td><td>informational foreign-key declaration between tables in a pack</td></tr>
+      </tbody>
+    </table>
+    <p>Behavior, syntax, and full semantics of the above will be defined in a future spec revision. Until then they have no meaning under v0.2.</p>
 
     <hr />
 
