@@ -1,0 +1,4 @@
+#!excsv version=0.2 quote=double
+id,note
+1,"a,b"
+2,"She said ""hello"""

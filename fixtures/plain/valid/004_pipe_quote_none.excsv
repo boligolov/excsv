@@ -1,0 +1,4 @@
+#!excsv version=0.2 delim=pipe quote=none
+id|status
+1|ok
+2|pending

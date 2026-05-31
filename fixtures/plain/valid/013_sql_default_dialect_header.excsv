@@ -1,0 +1,6 @@
+#!excsv version=0.2 sql-dialect=postgres-15
+#$ddl: CREATE TABLE events (id BIGSERIAL PRIMARY KEY, payload JSONB)
+#$ddl: CREATE INDEX events_id_idx ON events(id)
+#$dql: SELECT * FROM events
+id,payload
+1,{}

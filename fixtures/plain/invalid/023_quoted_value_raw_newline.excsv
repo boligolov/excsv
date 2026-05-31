@@ -1,0 +1,4 @@
+#!excsv version=0.2 quote=double
+id,note
+1,"line1
+line2"

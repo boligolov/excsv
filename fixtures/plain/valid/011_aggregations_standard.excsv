@@ -1,0 +1,17 @@
+#!excsv version=0.2
+#column name=id type=int
+#column name=name type=string
+#column name=amount type=decimal
+#%count_nonnull: 3,3,3
+#%count_null: 0,0,0
+#%count_distinct: 3,3,3
+#%sum: ,,60.00
+#%avg: ,,20.00
+#%min: ,,10.00
+#%max: ,,30.00
+#%len_min: ,3,
+#%len_max: ,5,
+id,name,amount
+1,Amy,10.00
+2,Bob,20.00
+3,Clara,30.00

@@ -1,0 +1,9 @@
+#!excsv version=0.2
+#$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(8,2))
+#$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB
+#$ddl-postgres-15: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))
+#$ddl-clickhouse: CREATE TABLE orders (id UInt64, amount Decimal(8,2)) ENGINE = MergeTree() ORDER BY id
+#$dql: SELECT * FROM orders WHERE amount > 0
+#$dql-postgres: SELECT id, amount FROM orders ORDER BY id
+id,amount
+1,10.00

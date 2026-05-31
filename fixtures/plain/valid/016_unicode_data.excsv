@@ -1,0 +1,5 @@
+#!excsv version=0.2 encoding=UTF-8
+id,name,city
+1,Łukasz,Wrocław
+2,Ольга,Київ
+3,李雷,北京

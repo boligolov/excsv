@@ -1,0 +1,4 @@
+#!excsv version=0.2 delim=@
+id@name
+1@Alice
+2@Bob

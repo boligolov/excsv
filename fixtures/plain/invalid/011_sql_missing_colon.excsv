@@ -1,0 +1,4 @@
+#!excsv version=0.2
+#$ddl CREATE TABLE t (id INT)
+id
+1

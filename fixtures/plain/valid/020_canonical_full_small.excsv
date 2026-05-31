@@ -1,0 +1,23 @@
+#!excsv version=0.2 rows=2 schema=excsv sql-dialect=mysql
+#@author: author@example.com
+#@source: sales_db.orders
+#@created: 2026-01-01T00:00:00Z
+#@exported: 2026-03-24T12:00:00Z
+#@license: CC-BY-4.0
+#@tool: excsv-cli/0.2.0
+#@tags: sales,Q1
+#$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, customer VARCHAR(100), amount DECIMAL(8,2)) ENGINE=InnoDB
+#$dql: SELECT * FROM orders WHERE amount > 0
+#column name=id type=int unique=1
+#column name=customer type=string required=1 len_max=100
+#column name=amount type=decimal unit=USD min=0
+#%count_nonnull: 2,2,2
+#%count_null: 0,0,0
+#%count_distinct: 2,2,2
+#%sum: ,,120.50
+#%avg: ,,60.25
+#%min: ,,20.50
+#%max: ,,100.00
+id,customer,amount
+1,Acme,100.00
+2,Globex,20.50

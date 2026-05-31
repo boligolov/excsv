@@ -1,0 +1,4 @@
+#!excsv version=0.2 null=NA
+name,email
+Alice,NA
+Bob,bob@example.com

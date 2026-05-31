@@ -1,0 +1,6 @@
+#!excsv version=0.2 csvw=inline-json schema=excsv
+#csvw {"@context":"http://www.w3.org/ns/csvw","tableSchema":{"columns":[{"name":"ignored","datatype":"string"}]}}
+#column name=id type=int
+#column name=name type=string
+id,name
+1,Alice

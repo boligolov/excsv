@@ -1,0 +1,5 @@
+#!excsv version=0.2 null=NA
+id,email,amount
+1,a@example.com,10.00
+,,
+2,NA,

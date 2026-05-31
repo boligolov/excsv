@@ -1,0 +1,11 @@
+#!excsv version=0.2
+#column name=id type=int
+#column name=name type=string
+#column name=amount type=decimal
+#%sum: ,,45.00
+#%avg: ,,22.50
+#%len_min: ,3,
+#%len_max: ,4,
+id,name,amount
+1,Amy,10.00
+2,Bob,35.00

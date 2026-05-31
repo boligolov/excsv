@@ -1,0 +1,9 @@
+#!excsv version=0.2
+## this is a human note
+#@source: demo
+## comment between meta kinds
+#column name=id type=int
+#column name=name type=string
+## another human note
+id,name
+1,Alice

@@ -1,0 +1,10 @@
+#!excsv version=0.2 sql-dialect=postgres
+#$ddl: CREATE TABLE users (id BIGSERIAL PRIMARY KEY, email VARCHAR(254) NOT NULL)
+#$ddl: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES users(id), amount NUMERIC(10,2))
+#$ddl: CREATE INDEX orders_user_id_idx ON orders(user_id)
+#$ddl: CREATE UNIQUE INDEX users_email_uq ON users(email)
+#$ddl: GRANT SELECT ON orders TO readonly
+#$ddl-postgres: ALTER TABLE orders SET (autovacuum_enabled = false)
+#$dql: SELECT u.email, o.amount FROM users u JOIN orders o ON o.user_id = u.id
+id,user_id,amount
+1,1,10.00

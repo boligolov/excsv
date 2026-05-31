@@ -1,0 +1,6 @@
+#!excsv version=0.2
+#column name=id type=int required=1 unique=1 min=1 max=999999
+#column name=email type=string required=1 len_min=5 len_max=254 pattern=^[^@]+@[^@]+$ x-ui=field
+#column name=amount type=decimal format=0.00 unit=USD default=0.00 order=desc
+id,email,amount
+1,a@example.com,10.50
