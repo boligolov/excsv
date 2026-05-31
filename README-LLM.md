@@ -4,6 +4,10 @@
 
 ExCSV = Extended CSV. Self-describing, line-oriented tabular format. Spec version: 0.2 (Draft). Backward-compatible with CSV/TSV. File extensions: `.excsv`, `.ecsv` (plain); `.excsv.zip`, `.ecsv.zip` (zipped container, see ZIP CONTAINER). MIME types: `text/excsv` (plain), `application/excsv+zip` (zipped). Encoding default: UTF-8. License: CC0 1.0.
 
+## IMPLEMENTATIONS
+
+Reference CLI/library: **excsv-golang** (Go) — https://github.com/boligolov/excsv-golang — `excsv` command; plain + row-ZIP v0.2.
+
 ## FILE STRUCTURE (strict order)
 
 ```

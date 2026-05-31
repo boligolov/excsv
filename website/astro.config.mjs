@@ -15,6 +15,7 @@ export default defineConfig({
         'https://excsv.org/',
         'https://excsv.org/spec/',
         'https://excsv.org/examples/',
+        'https://excsv.org/tools/',
       ],
       serialize(item) {
         if (item.url === 'https://excsv.org/') {
@@ -24,6 +25,8 @@ export default defineConfig({
           item.priority = 0.9;
         } else if (item.url === 'https://excsv.org/examples/') {
           item.priority = 0.8;
+        } else if (item.url === 'https://excsv.org/tools/') {
+          item.priority = 0.7;
         }
         return item;
       },

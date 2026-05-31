@@ -38,6 +38,18 @@ id,name,price
 
 It's just CSV with a self-describing header. See the [full example](#13-full-example) for schema, metadata, SQL, and aggregations.
 
+### Reference implementation
+
+**[excsv-golang](https://github.com/boligolov/excsv-golang)** is the reference CLI and Go library for this specification. It supports plain (`.excsv`, `.ecsv`) and row-ZIP (`.excsv.zip`, `.ecsv.zip`) files — validate, inspect metadata, convert to CSV, wrap/unwrap archives, and more.
+
+```bash
+go install github.com/boligolov/excsv-golang/cmd/excsv@latest
+excsv validate data.excsv
+excsv info data.excsv.zip
+```
+
+See the [tools page](https://excsv.org/tools/) for libraries and implementations built on ExCSV.
+
 ---
 
 ## 1. Introduction
