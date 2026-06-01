@@ -1,0 +1,173 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="ExCSV Tools & Libraries" description="CLI tools and libraries that implement the ExCSV v0.2 specification.">
+  <h1>Tools &amp; Libraries</h1>
+  <p class="intro">
+    Implementations built on the <a href="/spec/">ExCSV v0.2 specification</a>.
+    This list is curated — if you ship a library or CLI, open an issue on the
+    <a href="https://github.com/boligolov/excsv" target="_blank" rel="noopener">spec repo</a>.
+  </p>
+
+  <section class="tool-list">
+    <article class="tool-card">
+      <div class="tool-head">
+        <div>
+          <h2><a href="https://github.com/boligolov/excsv-golang" target="_blank" rel="noopener">excsv-golang</a></h2>
+          <p class="tool-meta">Go · CLI + library · Reference implementation</p>
+        </div>
+        <span class="badge">v0.2</span>
+      </div>
+
+      <p>
+        Reference command-line tool and Go library for ExCSV. Supports plain
+        (<code>.excsv</code>, <code>.ecsv</code>) and row-ZIP
+        (<code>.excsv.zip</code>, <code>.ecsv.zip</code>) storage forms.
+      </p>
+
+      <ul class="feature-list">
+        <li>Parse, validate, and serialize ExCSV documents</li>
+        <li>Header, metadata, rows, and conversion commands</li>
+        <li>ZIP wrap / unwrap / peek with <code>original-size</code> checks</li>
+        <li>Fixture-driven tests against the shared <code>fixtures/</code> corpus</li>
+      </ul>
+
+      <div class="tool-install">
+        <h3>Install</h3>
+        <pre><code>go install github.com/boligolov/excsv-golang/cmd/excsv@latest</code></pre>
+      </div>
+
+      <div class="tool-example">
+        <h3>Quick start</h3>
+        <pre><code>excsv validate data.excsv
+excsv info data.excsv --json
+excsv zip peek archive.excsv.zip
+excsv convert to-csv data.excsv</code></pre>
+      </div>
+
+      <p class="tool-links">
+        <a href="https://github.com/boligolov/excsv-golang" target="_blank" rel="noopener">GitHub</a>
+        ·
+        <a href="https://github.com/boligolov/excsv-golang#usage" target="_blank" rel="noopener">Usage docs</a>
+        ·
+        <a href="https://pkg.go.dev/github.com/boligolov/excsv-golang/pkg/excsv" target="_blank" rel="noopener">pkg/excsv</a>
+      </p>
+    </article>
+  </section>
+
+  <section class="coming-soon">
+    <h2>Planned</h2>
+    <p>
+      Python package (<code>excsv</code>) and additional language bindings are tracked in the
+      <a href="https://github.com/boligolov/excsv/blob/master/plan/README.md" target="_blank" rel="noopener">implementation plan</a>.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .intro {
+    color: var(--color-muted);
+    font-size: 1.05rem;
+    max-width: 42rem;
+    line-height: 1.7;
+  }
+  .tool-list {
+    margin-top: 2rem;
+  }
+  .tool-card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    max-width: 48rem;
+  }
+  .tool-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .tool-head h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.35rem;
+  }
+  .tool-head h2 a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .tool-head h2 a:hover {
+    color: var(--color-accent);
+  }
+  .tool-meta {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--color-muted);
+  }
+  .badge {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--color-accent);
+    color: #fff;
+    padding: 0.25em 0.6em;
+    border-radius: 6px;
+    height: fit-content;
+  }
+  .tool-card > p {
+    color: var(--color-muted);
+    line-height: 1.65;
+    margin-bottom: 1.25rem;
+  }
+  .feature-list {
+    margin: 0 0 1.5rem;
+    padding-left: 1.25rem;
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+  .tool-install h3,
+  .tool-example h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin: 0 0 0.5rem;
+  }
+  .tool-install,
+  .tool-example {
+    margin-bottom: 1.25rem;
+  }
+  pre {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    background: var(--color-code-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+  }
+  .tool-links {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  .coming-soon {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+    max-width: 42rem;
+  }
+  .coming-soon h2 {
+    border: none;
+    padding: 0;
+    font-size: 1.1rem;
+  }
+  .coming-soon p {
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+</style>
