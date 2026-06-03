@@ -13,6 +13,11 @@ export default defineConfig({
       lastmod: new Date(),
       customPages: [
         'https://excsv.org/',
+        'https://excsv.org/variants/',
+        'https://excsv.org/variants/plain/',
+        'https://excsv.org/variants/sidecar/',
+        'https://excsv.org/variants/zip/',
+        'https://excsv.org/variants/pack/',
         'https://excsv.org/spec/',
         'https://excsv.org/examples/',
         'https://excsv.org/tools/',

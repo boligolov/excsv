@@ -11,15 +11,17 @@ import Base from '../layouts/Base.astro';
       <tbody>
         <tr><td><strong>Version</strong></td><td>0.2</td></tr>
         <tr><td><strong>Status</strong></td><td>Draft / Experimental</td></tr>
-        <tr><td><strong>File extensions</strong></td><td><code>.excsv</code>, <code>.ecsv</code> (plain); <code>.excsv.zip</code>, <code>.ecsv.zip</code> (zipped)</td></tr>
+        <tr><td><strong>File extensions</strong></td><td><code>.excsv</code>, <code>.ecsv</code> (plain); <code>.extsv</code> (sidecar for TSV); <code>.excsv.zip</code>, <code>.ecsv.zip</code> (zipped)</td></tr>
         <tr><td><strong>MIME types</strong></td><td><code>text/excsv</code> (plain); <code>application/excsv+zip</code> (zipped)</td></tr>
       </tbody>
     </table>
+    <p>Storage forms: <a href="/variants/">overview</a> — <a href="/variants/plain/">inline</a>, <a href="/variants/sidecar/">sidecar</a>, <a href="/variants/zip/">ZIP</a>, <a href="/variants/pack/">pack (planned)</a>.</p>
 
     <h3>What's new in 0.2</h3>
     <ul>
       <li>New meta line kind <code>#$</code> for SQL companions (DDL and DQL).</li>
       <li>New header field <code>sql-dialect</code> setting a default SQL dialect for <code>#$</code> lines.</li>
+      <li><strong>Sidecar</strong> profile: metadata-only <code>.excsv</code> / <code>.extsv</code> with required <code>reference=</code> pointing at sibling CSV/TSV. See <a href="#sidecar">§2.3</a>.</li>
       <li>ZIP container format (<code>.excsv.zip</code>) with a required <code>original-size</code> header field and an in-comment summary for unzipped inspection.</li>
       <li>Free-form human comment marker <code>##</code> (ignored by parsers).</li>
       <li>Reservation of names for a future column-oriented multi-table archive format (<code>.excsv.pack.zip</code>). See <a href="#reserved-future">§10.5</a>.</li>
@@ -47,6 +49,7 @@ id,name,price
       <li>Optional SQL companions (DDL/DQL with dialect tagging)</li>
       <li>Optional embedded <a href="https://www.w3.org/TR/tabular-data-primer/">CSVW</a> compatibility</li>
       <li>Optional ZIP container with summary in the archive comment</li>
+      <li>Optional <strong>sidecar</strong> metadata files for existing CSV/TSV (<code>reference=</code>)</li>
     </ul>
     <p>ExCSV is designed for CLI workflows, data interchange, human readability, and minimal parsing complexity.</p>
 
@@ -73,10 +76,32 @@ id,name,price
 ├─────────────────────────┤
 │  Data Section           │  ← standard CSV/TSV rows
 └─────────────────────────┘</code></pre>
-    <p>An ExCSV document <strong>MAY</strong> omit the header line. If the header line is missing, the document <strong>MUST</strong> be interpreted as a minimal ExCSV document with default parameters (<code>delim=comma</code>, <code>quote=double</code>, <code>header=1</code>, <code>encoding=UTF-8</code>).</p>
-    <p>The smallest valid ExCSV file is an empty file, or a single header line: <code>#!excsv version=0.2</code>.</p>
+    <p>An ExCSV document <strong>MAY</strong> omit the header line. If the header line is missing, the document <strong>MUST</strong> be interpreted as a minimal ExCSV document with default parameters (<code>delim=comma</code>, <code>quote=none</code>, <code>header=1</code>, <code>encoding=UTF-8</code>).</p>
+    <p>The smallest valid ExCSV file is an empty file, or a single header line: <code>#!excsv version=0.2</code> (header-only stub).</p>
 
-    <h3>2.1 Line Endings and BOM</h3>
+    <h3>2.2 Document profiles (plain)</h3>
+    <table>
+      <thead><tr><th>Profile</th><th>Data section</th><th><code>reference=</code></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Inline</strong> (default)</td><td>present</td><td><strong>MUST NOT</strong> be set</td></tr>
+        <tr><td><strong>Sidecar</strong></td><td>absent</td><td><strong>REQUIRED</strong> — <a href="#sidecar">§2.3</a></td></tr>
+        <tr><td><strong>Header-only stub</strong></td><td>absent</td><td>absent</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="sidecar">2.3 Sidecar (detached metadata)</h3>
+    <p>A <strong>sidecar</strong> is a plain ExCSV file with only the <code>#!excsv</code> header and <code>#</code> meta lines — no data section — describing data in a separate CSV or TSV file. See also <a href="/variants/sidecar/">Sidecar (storage form)</a>.</p>
+    <p><strong>Pairing:</strong> <code>sales.excsv</code> + <code>sales.csv</code>, or <code>sales.extsv</code> + <code>sales.tsv</code> (same basename). A <code>.extsv</code> sidecar <strong>SHOULD</strong> declare <code>delim=tab</code>.</p>
+    <p>The header <strong>MUST</strong> include <code>reference=&lt;relative-path&gt;</code> — path to the data file relative to the sidecar's directory; <strong>MUST NOT</strong> be absolute. Inline documents <strong>MUST NOT</strong> set <code>reference=</code>. <code>#@source</code> is provenance, not a load path.</p>
+    <p>After meta lines the file <strong>MUST</strong> end. Any data row while <code>reference=</code> is set <strong>MUST</strong> fail. <code>rows=</code>, <code>checksum=</code>, and <code>#%</code> describe the referenced file; checksum verification requires both files.</p>
+    <p>When opening <code>sales.csv</code>, implementations <strong>MAY</strong> load <code>sales.excsv</code> from the same directory. When opening the sidecar, implementations <strong>MUST</strong> resolve <code>reference=</code>.</p>
+    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1 rows=2 reference=sales.csv</span>
+<span class="hl-meta">#column name=id type=int</span>
+<span class="hl-meta">#column name=customer type=string</span>
+<span class="hl-meta">#%sum: ,,750.50</span></code></pre>
+    <p>Sibling <code>sales.csv</code> holds data rows (plain CSV, no <code>#!excsv</code> line).</p>
+
+    <h3>2.4 Line Endings and BOM</h3>
     <ul>
       <li>Files <strong>MAY</strong> use LF or CRLF line endings. Parsers <strong>MUST</strong> accept both.</li>
       <li>Parsers <strong>MUST</strong> ignore UTF-8 BOM (<code>U+FEFF</code>) at start of file.</li>
@@ -122,6 +147,7 @@ id,name,price
         <tr><td><code>schema</code></td><td>MAY</td><td>Schema precedence: <code>excsv</code> (default) or <code>csvw</code></td></tr>
         <tr><td><code>sql-dialect</code></td><td>MAY</td><td>Default SQL dialect for unqualified <code>#$</code> lines (see Section 5)</td></tr>
         <tr><td><code>original-size</code></td><td><strong>MUST</strong> if zipped</td><td>Uncompressed byte size of the inner <code>.excsv</code> file. Must match the ZIP central directory <code>uncompressed_size</code> (see Section 10).</td></tr>
+        <tr><td><code>reference</code></td><td><strong>MUST</strong> if sidecar</td><td>Relative path to CSV/TSV data file (<a href="#sidecar">§2.3</a>). <strong>MUST NOT</strong> be set on inline documents.</td></tr>
       </tbody>
     </table>
 
@@ -526,7 +552,7 @@ page,views
 
     <hr />
 
-    <h2>10. ZIP Container</h2>
+    <h2 id="zip-container">10. ZIP Container</h2>
     <p>An ExCSV document <strong>MAY</strong> be shipped inside a standard ZIP archive with the extension <code>.excsv.zip</code> (or <code>.ecsv.zip</code>). This is a <strong>container format</strong>, not a new dialect — the inner file is a regular ExCSV document.</p>
 
     <h3>10.1 Archive Layout</h3>
@@ -607,6 +633,8 @@ page,views
       <li>Malformed <code>#!excsv</code> header line (if present)</li>
       <li>Malformed <code>key=value</code> pairs in the header</li>
       <li>Column count mismatch in aggregation rows</li>
+      <li>Sidecar (<code>reference=</code> set) containing any data row</li>
+      <li>Strict sidecar parse where the referenced file does not exist</li>
       <li>Zipped file with missing <code>original-size</code> header field</li>
       <li>Zipped file where inner uncompressed size does not match header <code>original-size</code></li>
       <li>Zipped file where comment is not a valid ExCSV prefix</li>
@@ -621,6 +649,8 @@ page,views
       <li><code>#$</code> verb other than <code>ddl</code> or <code>dql</code></li>
       <li>ZIP comment disagrees with inner file's <code>#!excsv</code> header (other than truncation marker)</li>
       <li>No <code>#$</code> line matches the consumer's target dialect</li>
+      <li><code>.extsv</code> sidecar with <code>delim</code> other than <code>tab</code></li>
+      <li>Checksum mismatch when validating a sidecar pair</li>
     </ul>
 
     <hr />
@@ -659,7 +689,7 @@ page,views
 <span class="hl-meta">#%len_min: ,,15,,,6,,20</span>
 <span class="hl-meta">#%len_max: ,,18,,,16,,21</span>
 id,customer,email,amount,status,tags,created_at,note
-1,Acme Corp,acme@example.com,500.00,completed,urgent|wholesale,2026-01-15T09:30:00Z,Large wholesale order
+1,Acme Corp,acme@example.com,500.00,completed,urgent|wholesale,2026-01-15T09:30:00Z,"Large wholesale order"
 2,Globex Inc,globex@example.com,300.50,completed,retail,2026-02-20T14:00:00Z,"Paid in full, net-30"
 3,Initech,info@initech.io,200.00,pending,urgent|retail,2026-03-01T11:45:00Z,
 4,Acme Corp,acme@example.com,50.00,pending,,2026-03-10T16:20:00Z,</code></pre>
@@ -667,7 +697,7 @@ id,customer,email,amount,status,tags,created_at,note
     <hr />
 
     <h2 id="prior-art">Prior Art</h2>
-    <p>ExCSV stands on the shoulders of two prior formats that proved a CSV file can carry its own metadata without ceasing to be a CSV file.</p>
+    <p>ExCSV stands on the shoulders of prior work that proved CSV can carry metadata — inline or in a sibling file — while remaining plain CSV for legacy readers.</p>
 
     <h3>ECSV — Enhanced Character-Separated Values (Astropy)</h3>
     <p><a href="https://docs.astropy.org/en/stable/io/ascii/ecsv.html" target="_blank" rel="noopener">Astropy's ECSV</a> is the closest spiritual ancestor. It established the core pattern:</p>
@@ -688,15 +718,30 @@ id,customer,email,amount,status,tags,created_at,note
 ,result,table,_time,_value</code></pre>
     <p>ExCSV's <code>#%</code> aggregation rows are direct descendants of this idea — one row per metric, one value per column, file's CSV dialect for the values. The <code>#</code>-as-comment convention and the "any <code>#</code> line is safely ignorable by plain CSV readers" guarantee also come from this tradition.</p>
 
-    <h3>What ExCSV adds beyond both</h3>
+    <h3>MetaCSV — sidecar metadata in CSV form</h3>
+    <p><a href="https://github.com/MetaCSV/MetaCSV" target="_blank" rel="noopener">MetaCSV</a> (J. Férard, draft) is the closest analogue to ExCSV's <a href="#sidecar">sidecar</a> profile: a separate <code>.mcsv</code> file beside the data CSV, itself a three-column table (<code>domain</code>, <code>key</code>, <code>value</code>).</p>
+    <table>
+      <thead><tr><th>MetaCSV domain</th><th>Role</th><th>ExCSV analogue</th></tr></thead>
+      <tbody>
+        <tr><td><code>meta</code></td><td>MetaCSV version, creator</td><td><code>#!excsv version=…</code>, <code>#@tool</code></td></tr>
+        <tr><td><code>file</code></td><td>Encoding, BOM, line terminator</td><td><code>encoding=</code>, §2.4 line endings</td></tr>
+        <tr><td><code>csv</code></td><td>Delimiter, quoting (Python <code>csv</code> dialect)</td><td><code>delim=</code>, <code>quote=</code></td></tr>
+        <tr><td><code>data</code></td><td><code>col/&lt;n&gt;/type</code> with typed parameters</td><td><code>#column</code> (<code>index=</code> or <code>name=</code>)</td></tr>
+      </tbody>
+    </table>
+    <p>MetaCSV types are <strong>index-based</strong> with locale-specific parameters (e.g. <code>date/yyyy-MM-dd</code>, <code>boolean/vrai/faux</code>). ExCSV sidecars reuse the same <code>#</code> vocabulary as inline files, support name-based columns when <code>header=1</code>, and require <code>reference=</code> to bind the data path. Pairing is by basename (<code>data.csv</code> + <code>data.mcsv</code>); ExCSV uses <code>data.excsv</code> / <code>data.extsv</code> plus explicit <code>reference=</code>.</p>
+    <p>MetaCSV focuses on typing for SQL/ODS; it does not define aggregations, <code>#$</code> SQL, checksums, or ZIP containers. Tools such as <a href="https://github.com/jferard/csvsniffer" target="_blank" rel="noopener">csvsniffer</a> emit <code>.mcsv</code> from sniffing — similar in spirit to ExCSV schema inference (Mode B).</p>
+
+    <h3>What ExCSV adds beyond all of the above</h3>
     <ul>
       <li>An explicit <code>#!excsv</code> header line declaring the CSV dialect <strong>inside</strong> the file (delimiter, quote, encoding, null marker, row count, checksum).</li>
       <li><code>#@key: value</code> provenance lines (source, author, license, tool, tags, created/exported timestamps).</li>
       <li>Pre-computed aggregations as first-class metadata, not just types and defaults — consumers get <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>, <code>count_*</code> without scanning the data.</li>
       <li>SQL companions (<code>#$ddl</code>, <code>#$dql</code>) with dialect tagging — ship the schema and the query that produced the data alongside the data itself, in multiple SQL dialects.</li>
       <li>ZIP container (<code>.excsv.zip</code>) with the metadata summary embedded in the archive's comment field — preview schema without unzipping.</li>
+      <li><strong>Sidecar profile</strong> (<code>.excsv</code> / <code>.extsv</code> + <code>reference=</code>) for RFC 4180–clean data files.</li>
     </ul>
-    <p>If you already have ECSV files, the metadata translates 1:1 to ExCSV (<code>datatype</code> → <code>#column type=</code>, <code>unit</code> → <code>#column unit=</code>, <code>description</code> → <code>#column description=</code>, the <code>meta:</code> block → individual <code>#@</code> keys). If you already have Annotated CSV, the <code>#datatype</code> row maps to per-column <code>#column type=</code> lines and the <code>#default</code> row maps to <code>#column default=</code>.</p>
+    <p>If you already have ECSV files, the metadata translates 1:1 to ExCSV (<code>datatype</code> → <code>#column type=</code>, <code>unit</code> → <code>#column unit=</code>, <code>description</code> → <code>#column description=</code>, the <code>meta:</code> block → individual <code>#@</code> keys). If you already have Annotated CSV, the <code>#datatype</code> row maps to per-column <code>#column type=</code> lines and the <code>#default</code> row maps to <code>#column default=</code>. For MetaCSV, map <code>csv,*</code> and <code>file,*</code> to <code>#!excsv</code>, <code>data,col/n/type</code> to <code>#column index=n type=…</code> (add <code>name=</code> when the data file has headers).</p>
 
     <hr />
 

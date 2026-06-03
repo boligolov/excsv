@@ -1,0 +1,3 @@
+#!excsv version=0.2 delim=tab header=1 rows=2 reference=038_sidecar_extsv_sibling.tsv
+#column name=sku type=string
+#column name=qty type=int

@@ -2,7 +2,9 @@
 
 ## IDENTITY
 
-ExCSV = Extended CSV. Self-describing, line-oriented tabular format. Spec version: 0.2 (Draft). Backward-compatible with CSV/TSV. File extensions: `.excsv`, `.ecsv` (plain); `.excsv.zip`, `.ecsv.zip` (zipped container, see ZIP CONTAINER). MIME types: `text/excsv` (plain), `application/excsv+zip` (zipped). Encoding default: UTF-8. License: CC0 1.0.
+ExCSV = Extended CSV. Self-describing, line-oriented tabular format. Spec version: 0.2 (Draft). Backward-compatible with CSV/TSV. File extensions: `.excsv`, `.ecsv` (plain inline); `.extsv` (plain sidecar for TSV siblings); `.excsv.zip`, `.ecsv.zip` (zipped container, see ZIP CONTAINER). MIME types: `text/excsv` (plain), `application/excsv+zip` (zipped). Encoding default: UTF-8. License: CC0 1.0.
+
+Storage forms (non-normative overview): inline plain (header+meta+data), sidecar (header+meta only, `reference=` points at CSV/TSV), zip (one inner inline file), pack (reserved, see RESERVED FOR FUTURE USE).
 
 ## IMPLEMENTATIONS
 
@@ -20,9 +22,84 @@ An ExCSV document MAY omit the header line. If the header line is missing, the d
 
 Transition rule: first line NOT starting with `#` begins the data section. All meta lines MUST precede data.
 
-Minimal valid file: an empty file, or `#!excsv version=0.2` (header line only).
+Minimal valid file: an empty file, or `#!excsv version=0.2` (header-only stub).
 
 Line endings: files MAY use LF or CRLF. Parsers MUST accept both. Parsers MUST ignore UTF-8 BOM (`U+FEFF`) at start of file.
+
+### Document profiles (plain)
+
+| Profile | Data section | `reference=` | Notes |
+| --- | --- | --- | --- |
+| **inline** (default) | present | MUST NOT be set | Canonical single-file ExCSV |
+| **sidecar** | absent | REQUIRED | Metadata for external CSV/TSV; see SIDECAR |
+| **header-only stub** | absent | absent | Templates, schema exports; not bound to external data |
+
+## SIDECAR (detached metadata)
+
+A **sidecar** is a plain ExCSV document that contains ONLY the `#!excsv` header and `#` meta lines — no data section — and describes tabular data stored in a separate CSV or TSV file.
+
+### Pairing convention
+
+| Sidecar extension | Typical data sibling |
+| --- | --- |
+| `.excsv` / `.ecsv` | `.csv` |
+| `.extsv` | `.tsv` |
+
+Files SHOULD share the same basename (`sales.excsv` + `sales.csv`). A sidecar using `.extsv` SHOULD declare `delim=tab` in its header.
+
+### Required header field
+
+```
+reference=<relative-path>   REQUIRED on sidecars; path to the data file, relative to the sidecar file's directory
+```
+
+- The path MUST be relative (MUST NOT be absolute).
+- Typical value is a basename only (`sales.csv`). Subpaths (`exports/sales.csv`) MAY be used.
+- Inline documents (with a data section) MUST NOT set `reference=`.
+- `#@source` is provenance (system/table name), not a load path — do not substitute for `reference=`.
+
+### Sidecar invariants
+
+- After the meta block, the file MUST end (EOF). Any data row while `reference=` is set is a MUST-fail error (`sidecar_has_data_section`).
+- A meta-only file without `reference=` is a header-only stub, not a sidecar.
+- A meta-only file without `reference=` MUST NOT be validated as a sidecar (`sidecar_missing_reference` applies only when the consumer expects sidecar profile).
+
+### Derived fields on referenced data
+
+When `reference=` is set:
+
+- `rows=`, `checksum=`, and `#%` lines describe the **referenced** data file, not the sidecar bytes.
+- Checksum verification requires reading the pair (sidecar + referenced file). Parsing the sidecar alone MAY skip checksum verification.
+- Data-section rules (`delim`, `quote`, `header`, `null`) apply when parsing the referenced file.
+
+### Discovery (optional ergonomics)
+
+When opening `sales.csv`, implementations MAY look for `sales.excsv` then `sales.extsv` in the same directory and treat the pair as one logical document. When opening a sidecar, implementations MUST resolve `reference=` to load data (strict parse MUST require the referenced file to exist; lenient MAY warn).
+
+### Prior art: MetaCSV
+
+[MetaCSV](https://github.com/MetaCSV/MetaCSV) is a draft sidecar spec (`.mcsv`): auxiliary CSV with columns `domain,key,value`. Domains: `meta` (version), `file` (encoding, line terminator), `csv` (delimiter, quote), `data` (`col/<n>/type` with locale-aware type parameters). Pairing by basename (`data.csv` + `data.mcsv`). ExCSV sidecar differs: `#` meta lines (not CSV-in-CSV), `reference=` path, name-based `#column` when `header=1`, plus aggregations/SQL/ZIP not in MetaCSV. Map `csv,delimiter` → `delim=`, `data,col/n/type` → `#column index=n type=…`.
+
+### Sidecar example
+
+`sales.excsv` (metadata only):
+
+```
+#!excsv version=0.2 delim=comma quote=double header=1 rows=2 reference=sales.csv
+#@source: sales_db.orders
+#column name=id type=int
+#column name=customer type=string
+#column name=amount type=decimal
+#%sum: ,,750.50
+```
+
+`sales.csv` (plain CSV, no `#!excsv`):
+
+```
+id,customer,amount
+1,Acme Corp,500.00
+2,Globex Inc,250.50
+```
 
 ## HEADER LINE
 
@@ -50,6 +127,7 @@ encoding       DEFAULT "UTF-8"   character encoding
 schema         DEFAULT "excsv"   "excsv" | "csvw" — which schema source wins
 sql-dialect    OPTIONAL          default SQL dialect token for unqualified `sql-*` meta keys (see SQL META KEYS). E.g. "mysql", "postgres-15", "clickhouse".
 original-size  REQUIRED if zipped  uncompressed byte size of the inner `.excsv` file (decimal integer). See ZIP CONTAINER.
+reference      REQUIRED if sidecar relative path to CSV/TSV data file (see SIDECAR). MUST NOT be set on inline documents.
 ```
 
 ### DELIMITERS
@@ -536,6 +614,8 @@ MUST fail:
   - malformed #!excsv header line (if present)
   - malformed key=value in header
   - column count mismatch in aggregation rows
+  - sidecar (`reference=` set) with any data row (sidecar_has_data_section)
+  - strict sidecar parse where referenced file does not exist (sidecar_reference_not_found)
   - zipped file with missing `original-size` header field
   - zipped file where inner uncompressed size does not match header `original-size`
   - zipped file where comment is not a valid ExCSV prefix (does not start with #!excsv)
@@ -550,6 +630,8 @@ SHOULD warn:
   - zip comment disagrees with inner file's #!excsv header (other than truncation marker)
   - no #$ line matches the consumer's target dialect (no DDL/DQL available)
   - family/version mismatch when matching an unversioned line to a versioned target dialect (or vice versa)
+  - .extsv sidecar with delim other than tab (sidecar_delim_ext_mismatch)
+  - checksum mismatch when validating a sidecar pair (sidecar_checksum_mismatch)
 ```
 
 ## PARSING ALGORITHM (pseudocode)
@@ -559,7 +641,7 @@ SHOULD warn:
    a. Locate primary entry per ZIP CONTAINER rules.
    b. Extract bytes.
    c. Continue parsing the extracted bytes as a normal ExCSV file from step 1.
-   d. After step 9, verify ZIP central dir uncompressed_size == header `original-size`. Mismatch is a MUST-fail error.
+   d. After step 10, verify ZIP central dir uncompressed_size == header `original-size`. Mismatch is a MUST-fail error.
 1. Read line 1. If starts with "#!excsv": parse space-separated key=value pairs (split on first "="), store as header_fields. If line 1 does NOT start with "#!excsv": use defaults (delim=comma, quote=double, header=1, encoding=UTF-8), rewind line 1 for meta/data parsing.
 2. Resolve delimiter: lookup delim in {comma:",", tab:"\t", pipe:"|", semicolon:";"}. If no match, use literal value. If delim absent, default comma.
 3. Read subsequent lines while line starts with "#":
@@ -570,18 +652,21 @@ SHOULD warn:
    e. "#@" -> extract key (between "#@" and ":"), value (after ": "), store as metadata[key] = value (last-wins on duplicates).
    f. "##" -> human comment, ignore (or attach to round-trip buffer if preservation mode is on).
    g. Other "#" lines -> ignore
-4. First non-"#" line begins data section.
-5. If header=1: first data line is column names. Validate against #column name attributes if present.
-6. Parse remaining lines as CSV using resolved delimiter and quote character.
-7. If checksum present: normalize data section newlines to LF, compute digest, compare.
-8. If aggregations present: validate value count equals column count.
-9. If file was zipped (step 0): verify `original-size` header field equals the ZIP central directory uncompressed size for the primary entry.
+4. First non-"#" line begins data section. If EOF before any non-# line:
+   a. If reference= present → sidecar profile; data is external (stop; optional pair load).
+   b. Else → header-only stub (rows=0).
+5. If reference= present and any data row was parsed → MUST fail (sidecar_has_data_section).
+6. If header=1: first data line is column names. Validate against #column name attributes if present.
+7. Parse remaining lines as CSV using resolved delimiter and quote character (inline data, or referenced file when sidecar pair is loaded).
+8. If checksum present: normalize data section newlines to LF, compute digest, compare (on inline bytes or referenced file per sidecar rules).
+9. If aggregations present: validate value count equals column count.
+10. If file was zipped (step 0): verify `original-size` header field equals the ZIP central directory uncompressed size for the primary entry.
 ```
 
 ## SERIALIZATION ALGORITHM (pseudocode)
 
 ```
-1. Write "#!excsv" + header fields in canonical order: version, delim, quote, header, encoding, null, rows, checksum, schema, csvw, sql-dialect, original-size. Omit fields with default values. Omit `original-size` for plain (non-zipped) files. Quote values containing spaces.
+1. Write "#!excsv" + header fields in canonical order: version, delim, quote, header, encoding, null, rows, checksum, schema, csvw, sql-dialect, reference, original-size. Omit fields with default values. Omit `original-size` for plain (non-zipped) files. Omit `reference` on inline files. Quote values containing spaces.
 2. Write file-level metadata as "#@key: value" lines (one per unique key).
 3. Write "#column name=X type=Y ..." for each column in order.
 4. Write "#$<verb>[-<dialect>]: <statement>" lines preserving the file's original insertion order. Multiple entries with the same key are allowed and MUST be emitted in order.
@@ -597,10 +682,18 @@ SHOULD warn:
 
 ## QUICK-REFERENCE EXAMPLES
 
-### Minimal (header only)
+### Minimal (header-only stub)
 ```
 #!excsv version=0.2
 ```
+
+### Sidecar (metadata for external CSV)
+```
+#!excsv version=0.2 delim=comma header=1 rows=2 reference=sales.csv
+#column name=id type=int
+#column name=name type=string
+```
+(sibling `sales.csv` holds data rows; sidecar MUST NOT contain any data lines)
 
 ### Schema-less (no #column lines)
 ```

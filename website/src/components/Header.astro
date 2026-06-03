@@ -4,10 +4,19 @@ import ThemeToggle from './ThemeToggle.astro';
 const { pathname } = Astro.url;
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/spec/', label: 'Specification' },
+  { href: '/variants/', label: 'Formats' },
+  { href: '/spec/', label: 'Spec' },
   { href: '/examples/', label: 'Examples' },
   { href: '/tools/', label: 'Tools' },
 ];
+
+function isActive(href: string) {
+  return (
+    pathname === href ||
+    pathname === href.slice(0, -1) ||
+    (href === '/variants/' && pathname.startsWith('/variants'))
+  );
+}
 ---
 
 <header class="site-header">
@@ -15,15 +24,45 @@ const links = [
     <a href="/" class="logo">
       <span class="logo-mark">Ex</span><span class="logo-text">CSV</span>
     </a>
-    <nav>
-      {links.map(({ href, label }) => (
-        <a href={href} class:list={[{ active: pathname === href || pathname === href.slice(0, -1) }]}>
-          {label}
-        </a>
-      ))}
-      <a href="https://github.com/boligolov/excsv" class="gh-link" target="_blank" rel="noopener">GitHub</a>
-      <ThemeToggle />
-    </nav>
+
+    <div class="header-end">
+      <nav id="site-nav" class="site-nav" aria-label="Main">
+        <ul class="nav-list">
+          {links.map(({ href, label }) => (
+            <li>
+              <a href={href} class:list={[{ active: isActive(href) }]}>
+                {label}
+              </a>
+            </li>
+          ))}
+          <li class="nav-gh">
+            <a href="https://github.com/boligolov/excsv" target="_blank" rel="noopener">GitHub</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="header-controls">
+        <a href="https://github.com/boligolov/excsv" class="gh-link gh-link--compact" target="_blank" rel="noopener" aria-label="GitHub repository">GitHub</a>
+        <ThemeToggle />
+        <button
+          type="button"
+          class="menu-toggle"
+          aria-label="Open menu"
+          aria-expanded="false"
+          aria-controls="site-nav"
+        >
+          <svg class="icon-menu" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+          <svg class="icon-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -33,26 +72,30 @@ const links = [
     background: var(--color-bg);
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 100;
   }
+
   .header-inner {
     max-width: var(--max-width-wide);
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1.5rem;
+    gap: 1rem;
+    padding: 0.65rem 1.25rem;
   }
+
   .logo {
+    flex-shrink: 0;
     font-size: 1.2rem;
     font-weight: 700;
     text-decoration: none;
     color: var(--color-text);
     display: flex;
     align-items: center;
-    gap: 0;
   }
   .logo:hover { text-decoration: none; }
+
   .logo-mark {
     background: var(--color-accent);
     color: #fff;
@@ -61,35 +104,211 @@ const links = [
     font-size: 0.95rem;
     margin-right: 0.3rem;
   }
-  nav {
+
+  .header-end {
     display: flex;
-    gap: 1.5rem;
     align-items: center;
-    font-size: 0.92rem;
+    gap: 0.75rem;
+    min-width: 0;
   }
-  nav a {
+
+  .site-nav {
+    min-width: 0;
+  }
+
+  .nav-list {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-list a {
     color: var(--color-muted);
     text-decoration: none;
     font-weight: 500;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    padding: 0.25em 0.1em;
   }
-  nav a:hover, nav a.active {
+
+  .nav-list a:hover,
+  .nav-list a.active {
     color: var(--color-text);
     text-decoration: none;
   }
-  nav a.active {
+
+  .nav-list a.active {
     color: var(--color-accent);
   }
+
+  .nav-gh {
+    display: none;
+  }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
   .gh-link {
     border: 1px solid var(--color-border);
-    padding: 0.3em 0.7em;
+    padding: 0.3em 0.65em;
     border-radius: 6px;
     font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-decoration: none;
+    white-space: nowrap;
   }
+
   .gh-link:hover {
+    color: var(--color-text);
+    border-color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 0.35em;
+    cursor: pointer;
+    color: var(--color-muted);
+    line-height: 0;
+  }
+
+  .menu-toggle:hover {
+    color: var(--color-text);
     border-color: var(--color-muted);
   }
-  @media (max-width: 640px) {
-    nav { gap: 1rem; font-size: 0.85rem; }
-    .gh-link { display: none; }
+
+  .icon-close { display: none; }
+
+  :global(body.nav-open) {
+    overflow: hidden;
+  }
+
+  :global(body.nav-open) .menu-toggle .icon-menu { display: none; }
+  :global(body.nav-open) .menu-toggle .icon-close { display: block; }
+
+  /* Compact desktop: wrap links instead of crowding logo */
+  @media (max-width: 960px) {
+    .gh-link--compact { display: none; }
+
+    .nav-gh {
+      display: list-item;
+    }
+
+    .header-inner {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .header-end {
+      flex: 1 1 auto;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .nav-list {
+      gap: 0.25rem 0.75rem;
+    }
+  }
+
+  /* Mobile: drawer menu */
+  @media (max-width: 720px) {
+    .header-inner {
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .header-end {
+      flex: 0 0 auto;
+      flex-wrap: nowrap;
+    }
+
+    .menu-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .site-nav {
+      display: none;
+      position: fixed;
+      inset: 3.25rem 0 auto 0;
+      z-index: 99;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
+      padding: 0.75rem 1.25rem 1rem;
+    }
+
+    :global(body.nav-open) .site-nav {
+      display: block;
+    }
+
+    .nav-list {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    .nav-list li {
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .nav-list li:last-child {
+      border-bottom: none;
+    }
+
+    .nav-list a {
+      display: block;
+      padding: 0.75rem 0.25rem;
+      font-size: 1rem;
+    }
+
+    .nav-gh a {
+      font-weight: 600;
+    }
   }
 </style>
+
+<script>
+  const toggle = document.querySelector('.menu-toggle');
+  const nav = document.getElementById('site-nav');
+
+  function setOpen(open: boolean) {
+    document.body.classList.toggle('nav-open', open);
+    toggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle?.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+
+  function closeMenu() {
+    setOpen(false);
+  }
+
+  toggle?.addEventListener('click', () => {
+    setOpen(!document.body.classList.contains('nav-open'));
+  });
+
+  nav?.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMenu();
+  });
+
+  window.matchMedia('(min-width: 721px)').addEventListener('change', (e) => {
+    if (e.matches) closeMenu();
+  });
+</script>

@@ -7,7 +7,7 @@
 | ------------------ | ------------------------------------------------------------ |
 | **Version**        | 0.2                                                          |
 | **Status**         | Draft / Experimental                                         |
-| **File extensions**| `.excsv`, `.ecsv` (plain); `.excsv.zip`, `.ecsv.zip` (zipped) |
+| **File extensions**| `.excsv`, `.ecsv` (plain); `.extsv` (sidecar for TSV); `.excsv.zip`, `.ecsv.zip` (zipped) |
 | **MIME types**     | `text/excsv` (plain); `application/excsv+zip` (zipped)       |
 
 
@@ -22,7 +22,8 @@
 - New header field `sql-dialect` setting a default SQL dialect for `#$` lines.
 - ZIP container format (`.excsv.zip`) with required `original-size` header field and an in-comment summary for unzipped inspection.
 - Free-form human comment marker `##` (ignored by parsers).
-- Reservation of names for a future column-oriented multi-table archive format (`.excsv.pack.zip`). See §10.4.
+- **Sidecar** profile: metadata-only `.excsv` / `.extsv` with required `reference=` pointing at a sibling CSV/TSV. See [§2.3](#23-sidecar-detached-metadata).
+- Reservation of names for a future column-oriented multi-table archive format (`.excsv.pack.zip`). See §10.5.
 
 ### Quick Example
 
@@ -97,9 +98,57 @@ An ExCSV file **MUST** consist of, in order:
 
 An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=double`, `header=1`, `encoding=UTF-8`).
 
-The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.2`.
+The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.2` (a **header-only stub** with no data and no `reference=`).
 
-### 2.1 Line Endings and BOM
+### 2.2 Document profiles (plain)
+
+| Profile | Data section | `reference=` |
+| --- | --- | --- |
+| **Inline** (default) | present | **MUST NOT** be set |
+| **Sidecar** | absent | **REQUIRED** — see [§2.3](#23-sidecar-detached-metadata) |
+| **Header-only stub** | absent | absent (templates, exports) |
+
+See also the [storage forms overview](https://excsv.org/variants/) on the project website.
+
+### 2.3 Sidecar (detached metadata)
+
+A **sidecar** is a plain ExCSV file containing only the `#!excsv` header and `#` meta lines — **no data section** — that describes tabular data in a separate CSV or TSV file.
+
+**Pairing:** `sales.excsv` with `sales.csv`, or `sales.extsv` with `sales.tsv`. Same basename; sidecar extension signals metadata. A `.extsv` sidecar **SHOULD** declare `delim=tab`.
+
+**Required field:** the header **MUST** include `reference=<relative-path>` — path to the data file, relative to the sidecar's directory, **MUST NOT** be absolute. Example: `reference=sales.csv`.
+
+**Invariants:**
+
+- After meta lines, the file **MUST** end. Any data row while `reference=` is set **MUST** fail validation.
+- Inline files (with data rows) **MUST NOT** set `reference=`.
+- `#@source` is provenance, not a filesystem path — do not use it instead of `reference=`.
+
+**Derived fields:** `rows=`, `checksum=`, and `#%` lines describe the **referenced** data file. Checksum verification requires opening both files.
+
+**Discovery:** when opening `sales.csv`, implementations **MAY** load `sales.excsv` (then `sales.extsv`) from the same directory. When opening the sidecar, implementations **MUST** resolve `reference=` to obtain data rows.
+
+**Example** — `sales.excsv`:
+
+```
+#!excsv version=0.2 delim=comma quote=double header=1 rows=2 reference=sales.csv
+#@source: sales_db.orders
+#column name=id type=int
+#column name=customer type=string
+#%sum: ,,750.50
+```
+
+`sales.csv` (ordinary CSV, no ExCSV header):
+
+```
+id,customer,amount
+1,Acme Corp,500.00
+2,Globex Inc,250.50
+```
+
+Sidecar pairs are **not** combined into `.excsv.zip` in v0.2; materialize inline or ship two plain files.
+
+### 2.4 Line Endings and BOM
 
 - Files **MAY** use LF or CRLF line endings. Parsers **MUST** accept both.
 - Parsers **MUST** ignore UTF-8 BOM (`U+FEFF`) at start of file.
@@ -147,6 +196,7 @@ If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, a
 | `schema`        | MAY                        | Schema precedence: `excsv` (default) or `csvw`                                                                                       |
 | `sql-dialect`   | MAY                        | Default SQL dialect for unqualified `#$` lines (see [Section 5](#5-sql-companions))                                                  |
 | `original-size` | **MUST** if zipped         | Uncompressed byte size of the inner `.excsv` file (decimal integer). Must match the ZIP central directory `uncompressed_size`. See [Section 10](#10-zip-container). |
+| `reference`     | **MUST** if sidecar        | Relative path to the CSV/TSV data file. See [§2.3](#23-sidecar-detached-metadata). **MUST NOT** be set on inline documents. |
 
 
 #### Delimiter Values
@@ -667,7 +717,7 @@ If any content was omitted, the comment **MUST** end with:
 
 Readers **MUST** treat the comment as **advisory**: the authoritative source is the inner file. If they disagree (beyond truncation), the inner file wins.
 
-### 10.4 Reserved for future use
+### 10.5 Reserved for future use
 
 The names below are **reserved in v0.2** for a planned column-oriented multi-table archive format (`.excsv.pack.zip`). They are not defined by v0.2. Writers conforming to v0.2 **MUST NOT** emit them. Reservation exists so third-party extensions don't claim conflicting meanings before the format is shipped.
 
@@ -704,6 +754,8 @@ Implementations **MUST** fail on:
 - Malformed `#!excsv` header line (if present)
 - Malformed `key=value` pairs in the header
 - Column count mismatch in aggregation rows
+- Sidecar (`reference=` set) containing any data row
+- Strict sidecar parse where the referenced file does not exist
 - Zipped file with missing `original-size` header field
 - Zipped file where inner uncompressed size does not match header `original-size`
 - Zipped file where comment is not a valid ExCSV prefix
@@ -718,6 +770,8 @@ Implementations **SHOULD** warn on:
 - `#$` verb other than `ddl` or `dql`
 - ZIP comment disagrees with inner file's `#!excsv` header (other than truncation marker)
 - No `#$` line matches the consumer's target dialect
+- `.extsv` sidecar with `delim` other than `tab`
+- Checksum mismatch when validating a sidecar pair
 
 ---
 
@@ -767,7 +821,7 @@ id,customer,email,amount,status,tags,created_at,note
 
 ## Prior Art
 
-ExCSV stands on the shoulders of two prior formats that proved a CSV file can carry its own metadata without ceasing to be a CSV file.
+ExCSV stands on the shoulders of prior work that proved a CSV file can carry its own metadata — inline or in a sibling file — without ceasing to be plain CSV for legacy tools.
 
 ### ECSV — Enhanced Character-Separated Values (Astropy)
 
@@ -794,15 +848,35 @@ ExCSV adopts the same overall shape but **swaps ECSV's nested YAML header for li
 
 ExCSV's `#%` aggregation rows are direct descendants of this idea — one row per metric, one value per column, file's CSV dialect for the values. The `#`-as-comment convention and the "any `#` line is safely ignorable by plain CSV readers" guarantee also come from this tradition.
 
-### What ExCSV adds beyond both
+### MetaCSV — sidecar metadata in CSV form
+
+[MetaCSV](https://github.com/MetaCSV/MetaCSV) (J. Férard, draft spec) describes a **detached** metadata file with extension `.mcsv`, stored next to the data CSV. The sidecar is itself a small three-column table (`domain`, `key`, `value`):
+
+| MetaCSV domain | Role | ExCSV analogue |
+| --- | --- | --- |
+| `meta` | MetaCSV version, creator, target app | `#!excsv version=…`, `#@tool`, … |
+| `file` | Encoding, BOM, line terminator | `encoding=`, line-ending rules in §2.4 |
+| `csv` | Delimiter, quote, escape (Python `csv` dialect) | `delim=`, `quote=` on `#!excsv` |
+| `data` | Column types as `col/<n>/type` with typed parameters | `#column name=… type=… format=…` |
+
+Column types are **index-based** (`col/0/type`, `col/1/type`, …) with rich, locale-aware parameters (e.g. `date/yyyy-MM-dd`, `boolean/vrai/faux`, `currency/post/€/decimal/,/.`). ExCSV sidecars instead use **line-oriented `#` meta** (same vocabulary as inline ExCSV), optional **name-based** `#column` when `header=1`, and an explicit `reference=` bind to the data file.
+
+Pairing is by convention (`data.csv` + `data.mcsv`); ExCSV uses the same basename pattern (`data.csv` + `data.excsv` / `data.extsv`) plus normative `reference=`.
+
+MetaCSV targets **interpretation and typing** for SQL/ODS export; it does not define aggregations, SQL companions, checksums, or ZIP containers. A minimal MetaCSV sidecar may list only non-default keys; ExCSV canonical writers similarly omit default header fields.
+
+**Possible cross-pollination (non-normative):** per-column null markers (`data,col/n/null_value` in MetaCSV) map naturally to future `#column`-level overrides; auto-generated `.mcsv` from sniffers (e.g. ColumnDet, csvsniffer) is analogous to ExCSV tools inferring schema from data (Mode B).
+
+### What ExCSV adds beyond all of the above
 
 - An explicit `#!excsv` header line declaring the CSV dialect **inside** the file (delimiter, quote, encoding, null marker, row count, checksum).
 - `#@key: value` provenance lines (source, author, license, tool, tags, created/exported timestamps).
 - Pre-computed aggregations as first-class metadata, not just types and defaults — consumers get `sum`, `avg`, `min`, `max`, `count_*` without scanning the data.
 - SQL companions (`#$ddl`, `#$dql`) with dialect tagging — ship the schema and the query that produced the data alongside the data itself, in multiple SQL dialects.
 - ZIP container (`.excsv.zip`) with the metadata summary embedded in the archive's comment field — preview schema without unzipping.
+- **Sidecar profile** (`.excsv` / `.extsv` metadata-only + `reference=`) for legacy CSV/TSV that must stay byte-identical to RFC 4180.
 
-If you already have ECSV files, the metadata translates 1:1 to ExCSV (`datatype` → `#column type=`, `unit` → `#column unit=`, `description` → `#column description=`, the `meta:` block → individual `#@` keys). If you already have Annotated CSV, the `#datatype` row maps to per-column `#column type=` lines and the `#default` row maps to `#column default=`.
+If you already have ECSV files, the metadata translates 1:1 to ExCSV (`datatype` → `#column type=`, `unit` → `#column unit=`, `description` → `#column description=`, the `meta:` block → individual `#@` keys). If you already have Annotated CSV, the `#datatype` row maps to per-column `#column type=` lines and the `#default` row maps to `#column default=`. For MetaCSV sidecars, map `csv,*` and `file,*` rows to `#!excsv` fields, `data,col/n/type` to `#column index=n type=…` (add `name=` when the data file has a header row), and keep the data file unchanged.
 
 ---
 

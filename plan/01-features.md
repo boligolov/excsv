@@ -6,7 +6,7 @@ Format-agnostic capability map. Independent of Go / Python / CLI surface. Each f
 
 | Short name | Extension(s) | Layout | Notes |
 | --- | --- | --- | --- |
-| **plain** | `.excsv`, `.ecsv` | row-oriented text | Backward-compatible with CSV/TSV. The canonical form. |
+| **plain** | `.excsv`, `.ecsv` | row-oriented text | Backward-compatible with CSV/TSV. Inline (header+meta+data) or **sidecar** (meta only, `reference=` → sibling `.csv`/`.tsv`; `.extsv` for TSV). |
 | **zip** | `.excsv.zip`, `.ecsv.zip` | row-oriented text, Deflate-wrapped | Container of exactly one plain file. ZIP comment summary. |
 | **pack** | `.excsv.pack.zip`, `.ecsv.pack.zip` | columnar, multi-table (or single-table mode) | ZIP archive of `_manifest.excsv` + per-table directories of `.col` files. Reserved in v0.2; promotes to spec post-v0.3. |
 
@@ -45,6 +45,8 @@ Core lifecycle: open, parse, materialize, serialize, stream.
 | A8 | Streaming row reader | ✓ | ✓ | ≈ | PF: streams rows by reading one section across all `.col` files; degrades to per-row file seeks if unsectioned. |
 | A9 | Streaming row writer | ✓ | ✓ | ⊕ | PF: collect rows until section boundary, flush section to all `.col` entries simultaneously. |
 | A10 | Stream-passthrough mode (data bytes preserved verbatim) | ✓ | ≈ | — | RF: untouched bytes for Mode A commands. PF has no equivalent — any write touches multiple files. |
+| A11 | Open sidecar pair (resolve `reference=`, merge meta + external data) | ✓ | — | — | Discovery: opening `foo.csv` MAY load `foo.excsv`. ZIP inner file is always inline. |
+| A12 | Materialize sidecar → inline / split inline → sidecar + CSV | ✓ | — | — | Writer concern; not required for read-only parsers. |
 
 ## B. Header line (`#!excsv`)
 
@@ -56,6 +58,7 @@ Core lifecycle: open, parse, materialize, serialize, stream.
 | B4 | Remove field (Mode A) | ✓ | ✓ | ✓ | |
 | B5 | Validate field values (types, well-known tokens) | ✓ | ✓ | ✓ | |
 | B6 | Detect missing-header default minimum file | ✓ | — | — | RF only. |
+| B7 | `reference=` field (sidecar binding, path rules) | ✓ | — | — | REQUIRED if sidecar; MUST NOT on inline. Relative path, not absolute. |
 
 ## C. File-level metadata (`#@`)
 

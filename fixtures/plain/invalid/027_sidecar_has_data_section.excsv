@@ -1,0 +1,4 @@
+#!excsv version=0.2 delim=comma header=1 reference=027_sidecar_has_data_section.csv
+#column name=id type=int
+id,value
+1,10

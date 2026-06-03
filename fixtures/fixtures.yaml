@@ -29,14 +29,22 @@ error_kinds:
   - zip_comment_not_utf8
   - zip_unsupported_compression
   - zip_encrypted
+  - sidecar_has_data_section
+  - sidecar_missing_reference
+  - sidecar_reference_not_found
+  - sidecar_delim_ext_mismatch
+  - sidecar_checksum_mismatch
+  - reference_on_inline
 
 - id: plain/valid/001_minimal_header_only.excsv
-  exercises: [A4, A6, B1]
+  exercises: [A4, A6, B1, B6]
   expect:
     parse: ok
     warnings: []
+    profile: stub
     header:
       version: "0.2"
+    rows: 0
 
 - id: plain/valid/002_no_header_defaults.excsv
   exercises: [A4, B6, G6]
@@ -295,6 +303,44 @@ error_kinds:
     header:
       checksum: sha256:605096a310e4908def91488e2d873d6bd9f4a9930bcb42eeac08d6f0ccf3ba0e
 
+- id: plain/valid/037_sidecar_csv_sibling.excsv
+  exercises: [A11, B7]
+  data_sibling: plain/valid/037_sidecar_csv_sibling.csv
+  expect:
+    parse: ok
+    warnings: []
+    profile: sidecar
+    header:
+      version: "0.2"
+      reference: 037_sidecar_csv_sibling.csv
+    rows: 2
+    columns: 3
+
+- id: plain/valid/038_sidecar_extsv_sibling.extsv
+  exercises: [A11, B7]
+  data_sibling: plain/valid/038_sidecar_extsv_sibling.tsv
+  expect:
+    parse: ok
+    warnings: []
+    profile: sidecar
+    header:
+      delim: tab
+      reference: 038_sidecar_extsv_sibling.tsv
+    rows: 2
+    columns: 2
+
+- id: plain/valid/039_sidecar_checksum_pair.excsv
+  exercises: [A11, B7, M3]
+  data_sibling: plain/valid/039_sidecar_checksum_pair.csv
+  expect:
+    parse: ok
+    warnings: []
+    profile: sidecar
+    header:
+      reference: 039_sidecar_checksum_pair.csv
+      checksum: sha256:0b3f39155f0904ac1a986803018c602ca7202e944afd7431ba601276f7b6344b
+    rows: 2
+
 - id: plain/invalid/001_header_missing_version.excsv
   exercises: [B1, B5]
   expect:
@@ -450,6 +496,48 @@ error_kinds:
   expect:
     parse: fail
     error_kind: column_name_header_mismatch
+
+- id: plain/invalid/027_sidecar_has_data_section.excsv
+  exercises: [A11, B7]
+  expect:
+    parse: fail
+    error_kind: sidecar_has_data_section
+
+- id: plain/invalid/028_reference_on_inline.excsv
+  exercises: [B7]
+  expect:
+    parse: fail
+    error_kind: reference_on_inline
+
+- id: plain/invalid/029_sidecar_delim_ext_mismatch.extsv
+  exercises: [B7]
+  data_sibling: plain/invalid/029_sidecar_delim_ext_mismatch.tsv
+  expect:
+    parse: ok
+    warnings: [sidecar_delim_ext_mismatch]
+    profile: sidecar
+
+- id: plain/invalid/030_sidecar_missing_reference.excsv
+  exercises: [B7]
+  expect:
+    parse: fail
+    profile: sidecar
+    error_kind: sidecar_missing_reference
+
+- id: plain/invalid/031_sidecar_reference_not_found.excsv
+  exercises: [A11, B7]
+  expect:
+    parse: fail
+    profile: sidecar_strict
+    error_kind: sidecar_reference_not_found
+
+- id: plain/invalid/032_sidecar_checksum_mismatch.excsv
+  exercises: [A11, M3]
+  data_sibling: plain/invalid/032_sidecar_checksum_mismatch.csv
+  expect:
+    parse: fail
+    profile: sidecar
+    error_kind: sidecar_checksum_mismatch
 
 - id: zip/valid/001_simple_primary_match.excsv.zip
   exercises: [A1, J1, J5]

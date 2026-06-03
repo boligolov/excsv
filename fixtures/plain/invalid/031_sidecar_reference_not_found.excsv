@@ -1,0 +1,2 @@
+#!excsv version=0.2 delim=comma header=1 reference=031_sidecar_missing_sibling.csv
+#column name=id type=int

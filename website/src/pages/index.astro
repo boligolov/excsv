@@ -13,6 +13,7 @@ import Base from '../layouts/Base.astro';
       </p>
       <div class="cta-row">
         <a href="/spec/" class="btn btn-primary">Read the spec</a>
+        <a href="/variants/" class="btn btn-secondary">Storage forms</a>
         <a href="/examples/" class="btn btn-secondary">See examples</a>
         <a href="/tools/" class="btn btn-secondary">Tools</a>
       </div>
@@ -38,7 +39,7 @@ date,event,count
   <section class="features">
     <div class="card">
       <h3>Schema annotations</h3>
-      <p>Define column types, constraints, defaults, and validation patterns right inside the file. No sidecar schema needed.</p>
+      <p>Define column types, constraints, defaults, and validation patterns inline — or in a <a href="/variants/sidecar/">sidecar</a> next to plain CSV.</p>
     </div>
     <div class="card">
       <h3>Built-in aggregations</h3>
@@ -51,6 +52,10 @@ date,event,count
     <div class="card">
       <h3>CLI-friendly</h3>
       <p>All metadata lines start with <code>#</code>, so <code>grep</code>, <code>awk</code>, <code>head</code>, and <code>cut</code> work on the data section out of the box.</p>
+    </div>
+    <div class="card">
+      <h3>Sidecar for legacy CSV</h3>
+      <p>Keep <code>data.csv</code> unchanged. Put schema, SQL, and stats in <code>data.excsv</code> with <code>reference=data.csv</code> — metadata only, no duplicated rows.</p>
     </div>
     <div class="card">
       <h3>Zipped distribution</h3>
@@ -97,6 +102,10 @@ date,event,count
         <h4><a href="https://docs.influxdata.com/influxdb/v2/reference/syntax/annotated-csv/" target="_blank" rel="noopener">Annotated CSV</a> — InfluxDB</h4>
         <p>Established the "one annotation row, one value per data column" pattern with <code>#datatype</code>, <code>#group</code>, and <code>#default</code> rows. ExCSV's <code>#%</code> aggregation rows (<code>sum</code>, <code>avg</code>, <code>min</code>, ...) inherit this layout directly.</p>
       </div>
+      <div>
+        <h4><a href="https://github.com/MetaCSV/MetaCSV" target="_blank" rel="noopener">MetaCSV</a> — sidecar <code>.mcsv</code></h4>
+        <p>Typed metadata in a sibling CSV (<code>domain,key,value</code>) beside plain <code>data.csv</code>. ExCSV's <a href="/variants/sidecar/">sidecar</a> pursues the same goal with <code>#</code> lines and <code>reference=</code> instead of a second CSV vocabulary.</p>
+      </div>
     </div>
     <p class="full-credit">Full credit and a translation guide on the <a href="/spec/#prior-art">specification</a>.</p>
   </section>
@@ -122,7 +131,9 @@ date,event,count
   }
   .cta-row {
     display: flex;
-    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.65rem;
     margin-top: 1.5rem;
   }
   .version-tag {
@@ -133,22 +144,36 @@ date,event,count
     text-transform: uppercase;
   }
   .btn {
-    display: inline-block;
-    padding: 0.6em 1.4em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    padding: 0.55em 1.1em;
     border-radius: 8px;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    line-height: 1.25;
+    white-space: nowrap;
     text-decoration: none;
-    transition: opacity 0.15s;
+    transition: opacity 0.15s, border-color 0.15s;
   }
-  .btn:hover { text-decoration: none; opacity: 0.85; }
+  .btn:hover { text-decoration: none; opacity: 0.9; }
   .btn-primary {
     background: var(--color-accent);
     color: #fff;
   }
+  .btn-primary:hover {
+    opacity: 1;
+    filter: brightness(1.05);
+  }
   .btn-secondary {
     border: 1px solid var(--color-border);
     color: var(--color-text);
+    background: var(--color-bg);
+  }
+  .btn-secondary:hover {
+    border-color: var(--color-muted);
+    opacity: 1;
   }
   .hero-code pre {
     font-size: 0.82rem;
@@ -214,14 +239,28 @@ date,event,count
     color: var(--color-muted);
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 960px) {
     .hero {
       grid-template-columns: 1fr;
       gap: 2rem;
       padding: 2rem 0 3rem;
     }
+  }
+
+  @media (max-width: 768px) {
     .hero h1 { font-size: 1.8rem; }
     .features { grid-template-columns: 1fr; }
     .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 480px) {
+    .cta-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
   }
 </style>

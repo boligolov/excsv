@@ -39,6 +39,7 @@ Each implementation's test directory **MUST NOT** duplicate fixtures. Symlink, j
 - `<slug>` is short snake_case, describes what the fixture exercises.
 - Examples:
   - `plain/valid/001_minimal_header_only.excsv`
+  - `plain/valid/NNN_sidecar_csv_sibling.excsv` + `NNN_sidecar_csv_sibling.csv` (pair)
   - `plain/invalid/004_bad_header_no_version.excsv`
   - `zip/valid/002_with_truncated_comment.excsv.zip`
   - `pack/valid/003_two_tables_with_fk.excsv.pack.zip`
@@ -93,9 +94,11 @@ Fields:
 - `expect.error_kind` — required when `parse: fail`. Symbolic name from a shared enum (see below).
 - `expect.<spot-check>` — optional asserts that a parser MUST produce specific values. Light touch — these aren't full output comparisons, just enough to catch silent miscoding.
 - `derived_from` — for zip/pack fixtures generated from a plain source, names the source.
+- `data_sibling` — for sidecar pairs, path under `fixtures/` to the CSV/TSV data file (e.g. `plain/valid/037_sidecar_csv_sibling.csv`).
+- `profile` (in `expect` or top-level) — how the runner opens the fixture: `stub` (header-only, no `reference=`), `sidecar` (metadata-only + `reference=`, load sibling), `sidecar_strict` (sidecar parse MUST resolve `reference=` or fail).
 - `superseded_by` — if set, runners skip this fixture but keep it on disk for historical reference.
 
-A shared **error kind enum** lives in the manifest header so both Go and Python emit the same symbolic name. Examples: `header_missing_version`, `header_malformed_kv`, `agg_arity_mismatch`, `sql_missing_colon`, `sql_embedded_newline`, `zip_original_size_mismatch`, `zip_comment_not_excsv_prefix`, `pack_manifest_missing_layout`, `pack_table_dir_missing`, …
+A shared **error kind enum** lives in the manifest header so both Go and Python emit the same symbolic name. Examples: `header_missing_version`, `header_malformed_kv`, `agg_arity_mismatch`, `sql_missing_colon`, `sql_embedded_newline`, `sidecar_has_data_section`, `sidecar_missing_reference`, `sidecar_reference_not_found`, `sidecar_delim_ext_mismatch`, `sidecar_checksum_mismatch`, `zip_original_size_mismatch`, `zip_comment_not_excsv_prefix`, `pack_manifest_missing_layout`, `pack_table_dir_missing`, …
 
 ## Source-controlled vs generated
 
@@ -134,12 +137,15 @@ What each category needs, organized by feature domain from `01-features.md`. Cou
 | 018 | `plain/valid/018_all_null_row.excsv` | empty-null fields and explicit null marker |
 | 019 | `plain/valid/019_checksum_empty_data_header0.excsv` | valid checksum over empty data section |
 | 020 | `plain/valid/020_canonical_full_small.excsv` | compact all-features sample |
+| 037 | `plain/valid/037_sidecar_csv_sibling.excsv` + `.csv` | sidecar + `reference=`, `#%`, sibling CSV |
+| 038 | `plain/valid/038_sidecar_extsv_sibling.extsv` + `.tsv` | `.extsv` sidecar, `delim=tab` |
+| 039 | `plain/valid/039_sidecar_checksum_pair.excsv` + `.csv` | sidecar `checksum=` over referenced data |
 
 #### Still required to reach the full target (~51)
 
 | Domain | Missing examples (minimum still needed) |
 | --- | --- |
-| Minimum / structural | truly empty file fixture, CRLF-specific fixture, UTF-8 BOM-at-start fixture |
+| Minimum / structural | (covered: 021 empty, 022 CRLF, 023 BOM) |
 | Header fields | semicolon delimiter, custom delimiter literal, single quote char, custom quote char, `null=""`, non-UTF-8 encoding fixture |
 | Human comments | round-trip-preservation mode fixture (if implementation supports preserving `##`) |
 | `#@` metadata | empty value fixture, custom-key-heavy fixture |
@@ -162,6 +168,12 @@ What each category needs, organized by feature domain from `01-features.md`. Cou
 | Encoding problems: invalid UTF-8 byte sequence; declared encoding mismatch | 2 |
 | Checksum mismatch (when present) | 1 |
 | header=1 with data header row NOT matching `#column name=` | 1 |
+| Sidecar: `reference=` with data rows | 1 (027) |
+| Sidecar: `reference=` on inline document | 1 (028) |
+| Sidecar: missing `reference=` when profile=sidecar | 1 (030) |
+| Sidecar: referenced file missing (strict) | 1 (031) |
+| Sidecar: checksum mismatch on pair | 1 (032) |
+| Sidecar: `.extsv` with `delim≠tab` | 1 (029, warn) |
 | **Total minimum** | **~20** |
 
 ### Zip — valid (target: ~12 fixtures)

@@ -1,0 +1,3 @@
+#!excsv version=0.2 delim=comma header=1
+#column name=id type=int
+#column name=name type=string
