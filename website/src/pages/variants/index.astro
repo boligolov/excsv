@@ -1,0 +1,49 @@
+---
+import Variant from '../../layouts/Variant.astro';
+---
+
+<Variant
+  title="ExCSV storage forms"
+  description="Overview of ExCSV document profiles: plain inline, sidecar metadata, ZIP container, and planned pack format."
+  heading="Storage forms"
+  lede="ExCSV is one format with several ways to ship it. Pick the profile that matches how your data is stored on disk."
+>
+  <div class="format-grid">
+    <div class="format-card">
+      <span class="badge badge-stable">v0.2</span>
+      <h3><a href="/variants/plain/">Plain (inline)</a></h3>
+      <p>Metadata and data rows in a single <code>.excsv</code> file. The canonical form.</p>
+      <a href="/variants/plain/">Read more →</a>
+    </div>
+    <div class="format-card">
+      <span class="badge badge-stable">v0.2</span>
+      <h3><a href="/variants/sidecar/">Sidecar</a></h3>
+      <p>Schema and stats in <code>sales.excsv</code>; rows stay in <code>sales.csv</code>. Legacy CSV friendly.</p>
+      <a href="/variants/sidecar/">Read more →</a>
+    </div>
+    <div class="format-card">
+      <span class="badge badge-stable">v0.2</span>
+      <h3><a href="/variants/zip/">ZIP container</a></h3>
+      <p>One inner <code>.excsv</code> inside <code>.excsv.zip</code>. Summary in the ZIP comment.</p>
+      <a href="/variants/zip/">Read more →</a>
+    </div>
+    <div class="format-card">
+      <span class="badge badge-future">planned</span>
+      <h3><a href="/variants/pack/">Pack</a></h3>
+      <p>Multi-table columnar archive <code>.excsv.pack.zip</code>. Reserved in v0.2.</p>
+      <a href="/variants/pack/">Read more →</a>
+    </div>
+  </div>
+
+  <h2>How they relate</h2>
+  <pre><code>plain (inline)     sales.excsv          header + meta + data rows
+sidecar            sales.excsv + sales.csv   meta only + reference=
+zip                sales.excsv.zip      inner sales.excsv (usually inline)
+pack (future)      dataset.excsv.pack.zip   manifest + column files</code></pre>
+
+  <p>
+    Normative rules live in the <a href="/spec/">specification</a>.
+    Sidecar semantics are in <a href="/spec/#sidecar">§2.3 Sidecar</a>.
+    ZIP rules are in <a href="/spec/#zip-container">§10</a>.
+  </p>
+</Variant>

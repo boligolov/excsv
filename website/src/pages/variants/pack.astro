@@ -1,0 +1,45 @@
+---
+import Variant from '../../layouts/Variant.astro';
+---
+
+<Variant
+  title="ExCSV pack (planned)"
+  description="Future multi-table columnar ExCSV archive format — reserved names in v0.2."
+  heading="Pack"
+  lede="Column-oriented multi-table ZIP archive. Reserved in v0.2; full semantics ship in a future revision."
+>
+  <div class="format-card" style="margin-bottom: 1.5rem;">
+    <span class="badge badge-future">not in v0.2</span>
+    <p style="margin: 0.5rem 0 0; color: var(--color-text);">
+      Writers conforming to v0.2 <strong>MUST NOT</strong> emit pack files or reserved header/meta keys.
+      Readers ignore unknown keys and <code>#</code> lines per forward-compat rules.
+    </p>
+  </div>
+
+  <h2>Planned shape</h2>
+  <pre><code>dataset.excsv.pack.zip
+├── _manifest.excsv      layout=pack mode=multi-table
+├── orders/
+│   ├── _header.excsv
+│   ├── 0-id.col
+│   └── 1-customer.col
+└── line_items/
+    └── ...</code></pre>
+
+  <h2>Reserved identifiers</h2>
+  <table>
+    <thead>
+      <tr><th>Reserved</th><th>Kind</th><th>Planned use</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>.excsv.pack.zip</code></td><td>extension</td><td>multi-table columnar archive</td></tr>
+      <tr><td><code>layout=</code></td><td>header</td><td><code>row</code> / <code>columnar</code> / <code>pack</code></td></tr>
+      <tr><td><code>mode=</code></td><td>header</td><td><code>multi-table</code> / <code>single-table</code></td></tr>
+      <tr><td><code>section-size=</code></td><td>header</td><td>row chunk size for sectioned columns</td></tr>
+      <tr><td><code>#table</code></td><td>meta</td><td>declares a table directory</td></tr>
+      <tr><td><code>#fk</code></td><td>meta</td><td>informational foreign keys</td></tr>
+    </tbody>
+  </table>
+
+  <p><a href="/spec/#reserved-future">Reserved for future use (§10.5)</a></p>
+</Variant>

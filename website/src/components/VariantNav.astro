@@ -1,0 +1,59 @@
+---
+const { pathname } = Astro.url;
+const variants = [
+  { href: '/variants/', label: 'Overview' },
+  { href: '/variants/plain/', label: 'Plain (inline)' },
+  { href: '/variants/sidecar/', label: 'Sidecar' },
+  { href: '/variants/zip/', label: 'ZIP' },
+  { href: '/variants/pack/', label: 'Pack' },
+];
+const isVariants = pathname.startsWith('/variants');
+---
+
+{isVariants && (
+  <nav class="variant-nav" aria-label="ExCSV storage forms">
+    {variants.map(({ href, label }) => (
+      <a
+        href={href}
+        class:list={[{
+          active:
+            pathname === href ||
+            pathname === href.slice(0, -1) ||
+            (href === '/variants/' && pathname === '/variants'),
+        }]}
+      >
+        {label}
+      </a>
+    ))}
+  </nav>
+)}
+
+<style>
+  .variant-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.25rem 0 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .variant-nav a {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-decoration: none;
+    padding: 0.35em 0.75em;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+  }
+  .variant-nav a:hover {
+    color: var(--color-text);
+    border-color: var(--color-muted);
+    text-decoration: none;
+  }
+  .variant-nav a.active {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+</style>
