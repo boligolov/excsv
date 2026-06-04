@@ -21,6 +21,6 @@ SHOULD warn:
   - zip comment disagrees with inner file's #!excsv header (other than truncation marker)
   - no #$ line matches the consumer's target dialect (no DDL/DQL available)
   - family/version mismatch when matching an unversioned line to a versioned target dialect (or vice versa)
-  - .etsv or .extsv sidecar with delim other than tab (sidecar_delim_ext_mismatch)
+  - .extsv file with delim other than tab (sidecar_delim_ext_mismatch)
   - checksum mismatch when validating a sidecar pair (sidecar_checksum_mismatch)
 ```

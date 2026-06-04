@@ -28,12 +28,12 @@ A **sidecar** is a plain ExCSV document that contains ONLY the `#!excsv` header 
 
 ### Pairing convention
 
-| Sidecar extension | Typical data sibling |
-| --- | --- |
-| `.excsv` / `.ecsv` | `.csv` |
-| `.etsv` / `.extsv` | `.tsv` |
+| Extension | Typical data sibling (sidecar) | Notes |
+| --- | --- | --- |
+| `.excsv` | `.csv` | Plain — inline or sidecar |
+| `.extsv` | `.tsv` | Plain — inline or sidecar; SHOULD declare `delim=tab` |
 
-Files SHOULD share the same basename (`sales.excsv` + `sales.csv`). A sidecar using `.etsv` or `.extsv` SHOULD declare `delim=tab` in its header.
+Files SHOULD share the same basename (`sales.excsv` + `sales.csv`, or `sales.extsv` + `sales.tsv`).
 
 ### Required header field
 
@@ -62,7 +62,7 @@ When `reference=` is set:
 
 ### Discovery (optional ergonomics)
 
-When opening `sales.csv`, implementations MAY look for `sales.excsv` then `sales.etsv` then `sales.extsv` in the same directory and treat the pair as one logical document. When opening a sidecar, implementations MUST resolve `reference=` to load data (strict parse MUST require the referenced file to exist; lenient MAY warn).
+When opening `sales.csv`, implementations MAY look for `sales.excsv` in the same directory; when opening `sales.tsv`, implementations MAY look for `sales.extsv`. When opening a sidecar, implementations MUST resolve `reference=` to load data (strict parse MUST require the referenced file to exist; lenient MAY warn).
 
 ### Prior art: MetaCSV
 

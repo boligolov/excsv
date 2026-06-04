@@ -2,7 +2,7 @@
 
 Dense spec for AI assistants. Human-readable split: [docs/](docs/). Topic index below.
 
-**Identity:** ExCSV = self-describing CSV/TSV. Version 0.2 (Draft). Extensions: `.excsv`, `.ecsv` (inline); `.etsv`, `.extsv` (TSV sidecar); `.excsv.zip`, `.ecsv.zip`. MIME: `text/excsv`, `application/excsv+zip`. Default encoding UTF-8. CC0 1.0.
+**Identity:** ExCSV = self-describing CSV/TSV. Version 0.2 (Draft). Extensions: `.excsv`, `.extsv` (plain — inline or sidecar); `.excsv.zip`, `.extsv.zip`. MIME: `text/excsv`, `application/excsv+zip`. Default encoding UTF-8. CC0 1.0.
 
 **Reference impl:** [excsv-golang](https://github.com/boligolov/excsv-golang) — `excsv` CLI; plain + row-ZIP v0.2.
 

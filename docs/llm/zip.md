@@ -1,15 +1,15 @@
 # ZIP Container
 
-An ExCSV document MAY be shipped inside a standard ZIP archive with the extension `.excsv.zip` (or `.ecsv.zip`). This is a **container format**, not a new dialect — the inner file is a valid ExCSV document with the same structure as any other.
+An ExCSV document MAY be shipped inside a standard ZIP archive with the extension `.excsv.zip` or `.extsv.zip`. This is a **container format**, not a new dialect — the inner file is a valid ExCSV document (`.excsv` or `.extsv`) with the same structure as any other.
 
 ## File naming
 
-The archive MUST contain at least one entry whose name ends in `.excsv` or `.ecsv`. This is the **primary** ExCSV file. The primary file MUST be:
+The archive MUST contain at least one entry whose name ends in `.excsv` or `.extsv`. This is the **primary** file. The primary file MUST be:
 
 - The **first** entry in the central directory, AND
 - Named either:
-  - The archive's base name with `.zip` stripped (e.g. `sales.excsv.zip` → `sales.excsv`), OR
-  - `data.excsv` if no such match.
+  - The archive's base name with `.zip` stripped (e.g. `sales.excsv.zip` → `sales.excsv`, `sales.extsv.zip` → `sales.extsv`), OR
+  - `data.excsv` / `data.extsv` if no such match.
 
 Additional entries (auxiliary data, schemas, attachments) MAY appear after the primary file. Readers MUST locate the primary by the rule above and ignore other entries unless they understand them.
 
@@ -21,7 +21,7 @@ ZIP64 extensions MUST be supported by parsers (large files exceeding 4 GiB).
 
 ## Required inner header field
 
-The inner `.excsv` file's `#!excsv` header MUST include:
+The inner `.excsv` or `.extsv` file's `#!excsv` header MUST include:
 
 ```
 original-size=<bytes>   uncompressed byte size of the inner .excsv file (decimal integer)
@@ -73,7 +73,7 @@ Readers MUST treat the comment as advisory:
 
 ```
 1. Open archive. Read central directory.
-2. Locate primary entry by naming rule (first entry ending in .excsv/.ecsv, name matches archive base or is "data.excsv").
+2. Locate primary entry by naming rule (first entry ending in .excsv/.extsv, name matches archive base or is "data.excsv" / "data.extsv").
 3. (Optional fast path) Read end-of-central-directory comment. Parse as ExCSV prefix. Use for metadata-only queries.
 4. (Full read) Extract primary entry into memory or stream.
 5. Parse extracted content as ExCSV (see parsing.md).

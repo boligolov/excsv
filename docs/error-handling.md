@@ -21,5 +21,5 @@ Implementations **SHOULD** warn on:
 - `#$` verb other than `ddl` or `dql`
 - ZIP comment disagrees with inner file's `#!excsv` header (other than truncation marker)
 - No `#$` line matches the consumer's target dialect
-- `.etsv` or `.extsv` sidecar with `delim` other than `tab`
+- `.extsv` file with `delim` other than `tab`
 - Checksum mismatch when validating a sidecar pair

@@ -30,7 +30,9 @@ See also the [storage forms overview](https://excsv.org/variants/) on the projec
 
 A **sidecar** is a plain ExCSV file containing only the `#!excsv` header and `#` meta lines — **no data section** — that describes tabular data in a separate CSV or TSV file.
 
-**Pairing:** `sales.excsv` with `sales.csv`, or `sales.etsv` / `sales.extsv` with `sales.tsv`. Same basename; sidecar extension signals metadata. A `.etsv` or `.extsv` sidecar **SHOULD** declare `delim=tab`.
+**Pairing:** `sales.excsv` with `sales.csv`, or `sales.extsv` with `sales.tsv`. Same basename; the sidecar extension signals metadata. A `.extsv` file (inline or sidecar) **SHOULD** declare `delim=tab`.
+
+Plain `.excsv` and `.extsv` files **MAY** be **inline** (header + meta + data) or **sidecar** (header + meta only, with `reference=`).
 
 **Required field:** the header **MUST** include `reference=<relative-path>` — path to the data file, relative to the sidecar's directory, **MUST NOT** be absolute. Example: `reference=sales.csv`.
 
@@ -42,7 +44,7 @@ A **sidecar** is a plain ExCSV file containing only the `#!excsv` header and `#`
 
 **Derived fields:** `rows=`, `checksum=`, and `#%` lines describe the **referenced** data file. Checksum verification requires opening both files.
 
-**Discovery:** when opening `sales.csv`, implementations **MAY** load `sales.excsv` (then `sales.etsv`, then `sales.extsv`) from the same directory. When opening the sidecar, implementations **MUST** resolve `reference=` to obtain data rows.
+**Discovery:** when opening `sales.csv`, implementations **MAY** load `sales.excsv` from the same directory; when opening `sales.tsv`, implementations **MAY** load `sales.extsv`. When opening a sidecar, implementations **MUST** resolve `reference=` to obtain data rows.
 
 **Example** — `sales.excsv`:
 
@@ -62,7 +64,7 @@ id,customer,amount
 2,Globex Inc,250.50
 ```
 
-Sidecar pairs are **not** combined into `.excsv.zip` in v0.2; materialize inline or ship two plain files.
+Sidecar pairs are **not** combined into `.excsv.zip` or `.extsv.zip` in v0.2; materialize inline or ship two plain files.
 
 ## Line Endings and BOM
 

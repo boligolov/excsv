@@ -1,13 +1,13 @@
 # ZIP Container
 
-An ExCSV document **MAY** be shipped inside a standard ZIP archive with the extension `.excsv.zip` (or `.ecsv.zip`). This is a **container format**, not a new dialect — the inner file is a regular ExCSV document.
+An ExCSV document **MAY** be shipped inside a standard ZIP archive with the extension `.excsv.zip` or `.extsv.zip`. This is a **container format**, not a new dialect — the inner file is a regular ExCSV document (`.excsv` or `.extsv` respectively).
 
 ## Archive Layout
 
-The archive **MUST** contain at least one entry whose name ends in `.excsv` or `.ecsv`. The **primary** entry **MUST** be:
+The archive **MUST** contain at least one entry whose name ends in `.excsv` or `.extsv`. The **primary** entry **MUST** be:
 
 - The **first** entry in the central directory, AND
-- Named either the archive's base name with `.zip` stripped (`sales.excsv.zip` → `sales.excsv`), OR named `data.excsv` if no such match.
+- Named either the archive's base name with `.zip` stripped (`sales.excsv.zip` → `sales.excsv`, `sales.extsv.zip` → `sales.extsv`), OR named `data.excsv` / `data.extsv` if no such match.
 
 Additional entries (auxiliary data, attachments) **MAY** follow.
 
@@ -17,10 +17,10 @@ The primary entry **SHOULD** use Deflate (method 8). Store, Deflate64, BZIP2, LZ
 
 ## Required Inner Header Field
 
-The inner `.excsv` file's `#!excsv` header **MUST** include:
+The inner `.excsv` or `.extsv` file's `#!excsv` header **MUST** include:
 
 ```
-original-size=<bytes>   uncompressed byte size of the inner .excsv file
+original-size=<bytes>   uncompressed byte size of the inner file
 ```
 
 This value **MUST** match the `uncompressed_size` recorded in the ZIP central directory entry for the primary file. A mismatch **MUST** be reported as a validation error.
@@ -65,7 +65,7 @@ When readers encounter any of them on a v0.2 file, they follow the existing forw
 
 | Reserved | Kind | Planned use |
 | --- | --- | --- |
-| `.excsv.pack.zip` / `.ecsv.pack.zip` | file extension | multi-table columnar archive |
+| `.excsv.pack.zip` / `.extsv.pack.zip` | file extension | multi-table columnar archive |
 | `layout=` | header key | values `row` / `columnar` / `pack` to distinguish the storage form |
 | `mode=` | header key (manifest only) | `multi-table` (default) vs `single-table` for packs |
 | `section-size=` | header key | row chunk size for columnar tables |

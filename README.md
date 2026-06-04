@@ -6,7 +6,7 @@
 | --- | --- |
 | **Version** | 0.2 |
 | **Status** | Draft / Experimental |
-| **File extensions** | `.excsv`, `.ecsv` (plain inline); `.etsv`, `.extsv` (sidecar for TSV); `.excsv.zip`, `.ecsv.zip` (zipped) |
+| **File extensions** | `.excsv`, `.extsv` (plain — inline or sidecar); `.excsv.zip`, `.extsv.zip` (zipped) |
 | **MIME types** | `text/excsv` (plain); `application/excsv+zip` (zipped) |
 
 > **Feeding ExCSV to an LLM?** Use [`README-LLM.md`](README-LLM.md) — condensed tables, pseudocode, translation notes. Raw paste link: `https://raw.githubusercontent.com/boligolov/excsv/main/README-LLM.md`
@@ -16,7 +16,7 @@
 - Meta line kind `#$` for SQL companions (DDL/DQL) and header field `sql-dialect`.
 - ZIP container (`.excsv.zip`) with `original-size` and in-comment summary.
 - Human comment marker `##` (ignored by parsers).
-- **Sidecar** profile: metadata-only `.excsv` / `.etsv` / `.extsv` with `reference=` → sibling CSV/TSV. See [file structure](docs/file-structure.md#sidecar-detached-metadata).
+- **Sidecar** profile: plain `.excsv` or `.extsv` with only header+meta and `reference=` → sibling `.csv` or `.tsv`. See [file structure](docs/file-structure.md#sidecar-detached-metadata).
 - Reserved names for future `.excsv.pack.zip`. See [ZIP → reserved](docs/zip.md#reserved-for-future-use).
 
 ## Quick example
@@ -39,8 +39,8 @@ Full-featured sample: [docs/full-example.md](docs/full-example.md).
 
 ```bash
 go install github.com/boligolov/excsv-golang/cmd/excsv@latest
-excsv validate data.excsv
-excsv info data.excsv.zip
+excsv data.excsv validate
+excsv data.excsv.zip info
 ```
 
 More tools: [excsv.org/tools](https://excsv.org/tools/).

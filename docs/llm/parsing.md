@@ -1,7 +1,7 @@
 # Parsing Algorithm (pseudocode)
 
 ```
-0. If file is a ZIP container (magic bytes "PK\x03\x04" or .excsv.zip extension):
+0. If file is a ZIP container (magic bytes "PK\x03\x04" or .excsv.zip / .extsv.zip extension):
    a. Locate primary entry per ZIP CONTAINER rules.
    b. Extract bytes.
    c. Continue parsing the extracted bytes as a normal ExCSV file from step 1.

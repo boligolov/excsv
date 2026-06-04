@@ -2,7 +2,7 @@
 
 ExCSV = Extended CSV. Self-describing, line-oriented tabular format. Spec version: 0.2 (Draft). Backward-compatible with CSV/TSV.
 
-**File extensions:** `.excsv`, `.ecsv` (plain inline); `.etsv`, `.extsv` (plain sidecar for TSV siblings); `.excsv.zip`, `.ecsv.zip` (zipped container, see [ZIP](zip.md)).
+**File extensions:** `.excsv`, `.extsv` (plain — inline or sidecar); `.excsv.zip`, `.extsv.zip` (zipped container, see [ZIP](zip.md)).
 
 **MIME types:** `text/excsv` (plain), `application/excsv+zip` (zipped). Encoding default: UTF-8. License: CC0 1.0.
 

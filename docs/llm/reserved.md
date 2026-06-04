@@ -7,8 +7,8 @@ Readers conforming to v0.2 MUST follow the existing forward-compat rules when en
 ## Reserved file extensions
 
 ```
-.excsv.pack.zip     planned multi-table columnar archive
-.ecsv.pack.zip      alias
+.excsv.pack.zip     planned multi-table columnar archive (CSV dialect)
+.extsv.pack.zip     planned multi-table columnar archive (TSV dialect)
 ```
 
 ## Reserved header keys

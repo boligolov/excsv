@@ -40,7 +40,7 @@ ExCSV's `#%` aggregation rows are direct descendants of this idea — one row pe
 
 Column types are **index-based** (`col/0/type`, `col/1/type`, …) with rich, locale-aware parameters (e.g. `date/yyyy-MM-dd`, `boolean/vrai/faux`, `currency/post/€/decimal/,/.`). ExCSV sidecars instead use **line-oriented `#` meta** (same vocabulary as inline ExCSV), optional **name-based** `#column` when `header=1`, and an explicit `reference=` bind to the data file.
 
-Pairing is by convention (`data.csv` + `data.mcsv`); ExCSV uses the same basename pattern (`data.csv` + `data.excsv` / `data.etsv` / `data.extsv`) plus normative `reference=`.
+Pairing is by convention (`data.csv` + `data.mcsv`); ExCSV uses the same basename pattern (`data.csv` + `data.excsv`, `data.tsv` + `data.extsv`) plus normative `reference=`.
 
 MetaCSV targets **interpretation and typing** for SQL/ODS export; it does not define aggregations, SQL companions, checksums, or ZIP containers. A minimal MetaCSV sidecar may list only non-default keys; ExCSV canonical writers similarly omit default header fields.
 
@@ -53,6 +53,6 @@ MetaCSV targets **interpretation and typing** for SQL/ODS export; it does not de
 - Pre-computed aggregations as first-class metadata, not just types and defaults — consumers get `sum`, `avg`, `min`, `max`, `count_*` without scanning the data.
 - SQL companions (`#$ddl`, `#$dql`) with dialect tagging — ship the schema and the query that produced the data alongside the data itself, in multiple SQL dialects.
 - ZIP container (`.excsv.zip`) with the metadata summary embedded in the archive's comment field — preview schema without unzipping.
-- **Sidecar profile** (`.excsv` / `.etsv` / `.extsv` metadata-only + `reference=`) for legacy CSV/TSV that must stay byte-identical to RFC 4180.
+- **Sidecar profile** (plain `.excsv` or `.extsv` metadata-only + `reference=`) for legacy CSV/TSV that must stay byte-identical to RFC 4180.
 
 If you already have ECSV files, the metadata translates 1:1 to ExCSV (`datatype` → `#column type=`, `unit` → `#column unit=`, `description` → `#column description=`, the `meta:` block → individual `#@` keys). If you already have Annotated CSV, the `#datatype` row maps to per-column `#column type=` lines and the `#default` row maps to `#column default=`. For MetaCSV sidecars, map `csv,*` and `file,*` rows to `#!excsv` fields, `data,col/n/type` to `#column index=n type=…` (add `name=` when the data file has a header row), and keep the data file unchanged.
