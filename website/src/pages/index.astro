@@ -38,36 +38,36 @@ date,event,count
   <!-- Features -->
   <section class="features">
     <div class="card">
-      <h3>Schema annotations</h3>
-      <p>Define column types, constraints, defaults, and validation patterns inline — or in a <a href="/variants/sidecar/">sidecar</a> next to plain CSV.</p>
-    </div>
-    <div class="card">
-      <h3>Built-in aggregations</h3>
-      <p>Embed sum, avg, count, min/max, and more as metadata rows. Consumers get stats without scanning the data.</p>
-    </div>
-    <div class="card">
-      <h3>SQL companions</h3>
-      <p>Ship DDL and DQL alongside data, tagged per dialect (<code>mysql</code>, <code>postgres</code>, <code>clickhouse</code>...). Recreate the schema in any database.</p>
-    </div>
-    <div class="card">
-      <h3>CLI-friendly</h3>
-      <p>All metadata lines start with <code>#</code>, so <code>grep</code>, <code>awk</code>, <code>head</code>, and <code>cut</code> work on the data section out of the box.</p>
+      <h3>Backward-compatible</h3>
+      <p>Any CSV reader can consume the data section. Metadata lines are comments. Nothing breaks.</p>
     </div>
     <div class="card">
       <h3>Sidecar for legacy CSV</h3>
       <p>Keep <code>data.csv</code> unchanged. Put schema, SQL, and stats in <code>data.excsv</code> with <code>reference=data.csv</code> — metadata only, no duplicated rows.</p>
     </div>
     <div class="card">
-      <h3>Zipped distribution</h3>
+      <h3>CLI-friendly</h3>
+      <p>All metadata lines start with <code>#</code>, so <code>grep</code>, <code>awk</code>, <code>head</code>, and <code>cut</code> work on the data section out of the box.</p>
+    </div>
+    <div class="card">
+      <h3>Built-in aggregations</h3>
+      <p>Embed sum, avg, count, min/max, and more as metadata rows. Consumers get stats without scanning the data.</p>
+    </div>
+    <div class="card">
+      <h3><a href="/variants/zipped/">Zipped</a> distribution</h3>
       <p><code>.excsv.zip</code> and <code>.extsv.zip</code> archives carry their summary in the ZIP comment — read schema and aggregations without unzipping. No extraction needed for preview.</p>
     </div>
     <div class="card">
-      <h3><a href="/variants/pack/">Pack (v0.3)</a></h3>
+      <h3><a href="/variants/pack/">Multi-table pack</a></h3>
       <p><code>.excsv.pack.zip</code> — multi-table, columnar: manifest + <code>.col</code> files per column. Selective reads and database snapshots without row-oriented ZIP overhead.</p>
     </div>
     <div class="card">
-      <h3>Backward-compatible</h3>
-      <p>Any CSV reader can consume the data section. Metadata lines are comments. Nothing breaks.</p>
+      <h3>Schema annotations</h3>
+      <p>Define column types, constraints, defaults, and validation patterns inline — or in a <a href="/variants/sidecar/">sidecar</a> next to plain CSV.</p>
+    </div>
+    <div class="card">
+      <h3>SQL companions</h3>
+      <p>Ship DDL and DQL alongside data, tagged per dialect (<code>mysql</code>, <code>postgres</code>, <code>clickhouse</code>...). Recreate the schema in any database.</p>
     </div>
   </section>
 
