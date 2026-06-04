@@ -12,19 +12,19 @@ import Variant from '../../layouts/Variant.astro';
     <div class="format-card">
       <span class="badge badge-stable">v0.2</span>
       <h3><a href="/variants/plain/">Plain (inline)</a></h3>
-      <p>Metadata and data rows in a single <code>.excsv</code> file. The canonical form.</p>
+      <p>Metadata and data rows in a single <code>.excsv</code> or <code>.extsv</code> file. The canonical form.</p>
       <a href="/variants/plain/">Read more →</a>
     </div>
     <div class="format-card">
       <span class="badge badge-stable">v0.2</span>
       <h3><a href="/variants/sidecar/">Sidecar</a></h3>
-      <p>Schema and stats in <code>sales.excsv</code>; rows stay in <code>sales.csv</code>. Legacy CSV friendly.</p>
+      <p>Schema and stats in <code>sales.excsv</code> or <code>sales.extsv</code>; rows stay in <code>sales.csv</code> or <code>sales.tsv</code>. Legacy CSV/TSV friendly.</p>
       <a href="/variants/sidecar/">Read more →</a>
     </div>
     <div class="format-card">
       <span class="badge badge-stable">v0.2</span>
       <h3><a href="/variants/zip/">ZIP container</a></h3>
-      <p>One inner <code>.excsv</code> inside <code>.excsv.zip</code>. Summary in the ZIP comment.</p>
+      <p>One inner <code>.excsv</code> or <code>.extsv</code> inside <code>.excsv.zip</code> or <code>.extsv.zip</code>. Summary in the ZIP comment.</p>
       <a href="/variants/zip/">Read more →</a>
     </div>
     <div class="format-card">
@@ -36,10 +36,11 @@ import Variant from '../../layouts/Variant.astro';
   </div>
 
   <h2>How they relate</h2>
-  <pre><code>plain (inline)     sales.excsv          header + meta + data rows
-sidecar            sales.excsv + sales.csv   meta only + reference=
-zip                sales.excsv.zip      inner sales.excsv (usually inline)
-pack (future)      dataset.excsv.pack.zip   manifest + column files</code></pre>
+  <pre><code>plain (inline)     sales.excsv | sales.extsv     header + meta + data rows
+sidecar            sales.excsv + sales.csv         meta only + reference=
+                   sales.extsv + sales.tsv
+zip                sales.excsv.zip | sales.extsv.zip   inner file (usually inline)
+pack (future)      dataset.excsv.pack.zip            manifest + column files</code></pre>
 
   <p>
     Normative rules live in the <a href="/spec/">specification</a>.

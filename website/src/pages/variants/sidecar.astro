@@ -53,7 +53,7 @@ import CodeBlock from '../../components/CodeBlock.astro';
   </p>
 
   <h2>Discovery</h2>
-  <p>When a consumer opens <code>sales.csv</code>, it <strong>MAY</strong> look for <code>sales.excsv</code> (then <code>sales.extsv</code>) in the same directory and merge metadata with data. When opening the sidecar, resolve <code>reference=</code> to load rows.</p>
+  <p>When a consumer opens <code>sales.csv</code>, it <strong>MAY</strong> look for <code>sales.excsv</code> in the same directory; when opening <code>sales.tsv</code>, it <strong>MAY</strong> look for <code>sales.extsv</code>. When opening a sidecar, resolve <code>reference=</code> to load rows.</p>
 
   <h2>Errors</h2>
   <ul>

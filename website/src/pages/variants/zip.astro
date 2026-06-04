@@ -5,13 +5,13 @@ import CodeBlock from '../../components/CodeBlock.astro';
 
 <Variant
   title="ExCSV ZIP container"
-  description="Ship one inner .excsv inside .excsv.zip with metadata summary in the ZIP archive comment."
+  description="Ship one inner .excsv or .extsv inside .excsv.zip or .extsv.zip with metadata summary in the ZIP archive comment."
   heading="ZIP container"
   lede="Compress a plain inline ExCSV file. Read schema and aggregations from the ZIP comment without extracting."
 >
   <h2>Layout</h2>
-  <pre><code>sales.excsv.zip
-└── sales.excsv     ← primary entry (first in central directory)
+  <pre><code>sales.excsv.zip          sales.extsv.zip
+└── sales.excsv          └── sales.extsv
     header + meta + data rows (inline plain form)</code></pre>
 
   <p>
@@ -34,7 +34,7 @@ import CodeBlock from '../../components/CodeBlock.astro';
 
   <h2>Fast path</h2>
   <ol>
-    <li>Open archive, locate primary entry (<code>sales.excsv</code> or <code>data.excsv</code>).</li>
+    <li>Open archive, locate primary entry (<code>sales.excsv</code>, <code>sales.extsv</code>, or <code>data.excsv</code> / <code>data.extsv</code>).</li>
     <li>Optionally parse the end-of-central-directory comment for metadata-only queries.</li>
     <li>Extract primary entry for full parse and checksum validation.</li>
   </ol>
