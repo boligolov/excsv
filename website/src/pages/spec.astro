@@ -1,21 +1,26 @@
----
+﻿---
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="ExCSV Specification v0.2" description="Full ExCSV format specification — header line, meta lines, SQL companions, column schema, aggregations, and ZIP container.">
+<Base title="ExCSV Specification v0.3" description="Full ExCSV format specification — header line, meta lines, SQL companions, column schema, aggregations, and ZIP container.">
   <article class="spec">
-    <h1>ExCSV v0.2 — Specification</h1>
+    <h1>ExCSV v0.3 — Specification</h1>
     <p><strong>Extended Comma-Separated Values (ExCSV)</strong></p>
 
     <table>
       <tbody>
-        <tr><td><strong>Version</strong></td><td>0.2</td></tr>
+        <tr><td><strong>Version</strong></td><td>0.3</td></tr>
         <tr><td><strong>Status</strong></td><td>Draft / Experimental</td></tr>
-        <tr><td><strong>File extensions</strong></td><td><code>.excsv</code>, <code>.extsv</code> (plain — inline or sidecar); <code>.excsv.zip</code>, <code>.extsv.zip</code> (zipped)</td></tr>
+        <tr><td><strong>File extensions</strong></td><td><code>.excsv</code>, <code>.extsv</code> (plain); <code>.excsv.zip</code>, <code>.extsv.zip</code> (row ZIP); <code>.excsv.pack.zip</code>, <code>.extsv.pack.zip</code> (pack)</td></tr>
         <tr><td><strong>MIME types</strong></td><td><code>text/excsv</code> (plain); <code>application/excsv+zip</code> (zipped)</td></tr>
       </tbody>
     </table>
-    <p>Storage forms: <a href="/variants/">overview</a> — <a href="/variants/plain/">inline</a>, <a href="/variants/sidecar/">sidecar</a>, <a href="/variants/zip/">ZIP</a>, <a href="/variants/pack/">pack (planned)</a>.</p>
+    <p>Storage forms: <a href="/variants/">overview</a> — <a href="/variants/plain/">inline</a>, <a href="/variants/sidecar/">sidecar</a>, <a href="/variants/zip/">ZIP</a>, <a href="/variants/pack/">pack</a>. Pack detail: <a href="https://github.com/boligolov/excsv/blob/main/docs/pack.md">docs/pack.md</a>.</p>
+
+    <h3>What's new in 0.3</h3>
+    <ul>
+      <li><strong>Pack</strong> — <code>.excsv.pack.zip</code> / <code>.extsv.pack.zip</code>: multi-table columnar archives. See <a href="#pack-container">§10.5</a> and <a href="/variants/pack/">pack variant</a>.</li>
+    </ul>
 
     <h3>What's new in 0.2</h3>
     <ul>
@@ -24,11 +29,10 @@ import Base from '../layouts/Base.astro';
       <li><strong>Sidecar</strong> profile: plain <code>.excsv</code> or <code>.extsv</code> with only header+meta and required <code>reference=</code> pointing at sibling <code>.csv</code> or <code>.tsv</code>. See <a href="#sidecar">§2.3</a>.</li>
       <li>ZIP container format (<code>.excsv.zip</code>, <code>.extsv.zip</code>) with a required <code>original-size</code> header field and an in-comment summary for unzipped inspection.</li>
       <li>Free-form human comment marker <code>##</code> (ignored by parsers).</li>
-      <li>Reservation of names for a future column-oriented multi-table archive format (<code>.excsv.pack.zip</code>). See <a href="#reserved-future">§10.5</a>.</li>
     </ul>
 
     <h3>Quick Example</h3>
-    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1</span>
+    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1</span>
 <span class="hl-meta">#column name=id type=int</span>
 <span class="hl-meta">#column name=name type=string</span>
 <span class="hl-meta">#column name=price type=decimal unit=USD</span>
@@ -77,7 +81,7 @@ id,name,price
 │  Data Section           │  ← standard CSV/TSV rows
 └─────────────────────────┘</code></pre>
     <p>An ExCSV document <strong>MAY</strong> omit the header line. If the header line is missing, the document <strong>MUST</strong> be interpreted as a minimal ExCSV document with default parameters (<code>delim=comma</code>, <code>quote=none</code>, <code>header=1</code>, <code>encoding=UTF-8</code>).</p>
-    <p>The smallest valid ExCSV file is an empty file, or a single header line: <code>#!excsv version=0.2</code> (header-only stub).</p>
+    <p>The smallest valid ExCSV file is an empty file, or a single header line: <code>#!excsv version=0.3</code> (header-only stub).</p>
 
     <h3>2.2 Document profiles (plain)</h3>
     <table>
@@ -95,7 +99,7 @@ id,name,price
     <p>The header <strong>MUST</strong> include <code>reference=&lt;relative-path&gt;</code> — path to the data file relative to the sidecar's directory; <strong>MUST NOT</strong> be absolute. Inline documents <strong>MUST NOT</strong> set <code>reference=</code>. <code>#@source</code> is provenance, not a load path.</p>
     <p>After meta lines the file <strong>MUST</strong> end. Any data row while <code>reference=</code> is set <strong>MUST</strong> fail. <code>rows=</code>, <code>checksum=</code>, and <code>#%</code> describe the referenced file; checksum verification requires both files.</p>
     <p>When opening <code>sales.csv</code>, implementations <strong>MAY</strong> load <code>sales.excsv</code> from the same directory; when opening <code>sales.tsv</code>, implementations <strong>MAY</strong> load <code>sales.extsv</code>. When opening a sidecar, implementations <strong>MUST</strong> resolve <code>reference=</code>.</p>
-    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1 rows=2 reference=sales.csv</span>
+    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1 rows=2 reference=sales.csv</span>
 <span class="hl-meta">#column name=id type=int</span>
 <span class="hl-meta">#column name=customer type=string</span>
 <span class="hl-meta">#%sum: ,,750.50</span></code></pre>
@@ -113,7 +117,7 @@ id,name,price
 
     <h3>3.1 Syntax</h3>
     <p>If present, the header line <strong>MUST</strong> be line 1, <strong>MUST</strong> begin with <code>#!excsv</code>, and <strong>MUST</strong> contain at least the <code>version</code> field.</p>
-    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1</span></code></pre>
+    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1</span></code></pre>
 
     <h3>3.2 Key-Value Pairs</h3>
     <ul>
@@ -135,7 +139,7 @@ id,name,price
     <table>
       <thead><tr><th>Field</th><th>Requirement</th><th>Description</th></tr></thead>
       <tbody>
-        <tr><td><code>version</code></td><td><strong>MUST</strong></td><td>Format version (<code>0.2</code>)</td></tr>
+        <tr><td><code>version</code></td><td><strong>MUST</strong></td><td>Format version (`0.3`)</td></tr>
         <tr><td><code>delim</code></td><td>SHOULD</td><td>Delimiter — a known name <strong>or</strong> a literal character/sequence. Default: <code>comma</code></td></tr>
         <tr><td><code>quote</code></td><td>SHOULD</td><td>Quote — a known name <strong>or</strong> a literal character. Default: <code>none</code></td></tr>
         <tr><td><code>header</code></td><td>SHOULD</td><td><code>1</code> if the first data row is a header row, <code>0</code> otherwise. Default: <code>1</code></td></tr>
@@ -203,8 +207,11 @@ id,name,price
         <tr><td><code>#csvw ...</code></td><td>CSVW payload</td><td><code>#csvw {`{"tableSchema": ...}`}</code></td></tr>
         <tr><td><code>#$&lt;verb&gt;[-&lt;dialect&gt;]: ...</code></td><td>SQL companion</td><td><code>#$ddl-mysql: CREATE TABLE orders (...)</code></td></tr>
         <tr><td><code>#%&lt;name&gt;: ...</code></td><td>Aggregation values</td><td><code>#%sum: ,, 42.5</code></td></tr>
+        <tr><td><code>#table ...</code></td><td>Pack manifest only — table registry</td><td><code>#table name=orders dir=orders/ columns=4 original-size=1843200</code></td></tr>
+        <tr><td><code>#fk ...</code></td><td>Pack manifest only — informational FK</td><td><code>#fk from=orders.customer_id to=customers.id</code></td></tr>
       </tbody>
     </table>
+    <p><code>#table</code> and <code>#fk</code> <strong>MUST NOT</strong> appear in plain, row-ZIP, or table <code>_header.excsv</code> files. See <a href="#pack-container">§10.5</a>.</p>
 
     <h3>4.3 File-Level Metadata Values</h3>
     <p>The value is <strong>raw text</strong> to the end of the line. One optional space after <code>:</code> is skipped. No quoting or escaping — taken as-is.</p>
@@ -224,7 +231,7 @@ id,name,price
     <p>SQL companions (<code>ddl</code>, <code>dql</code>) are encoded as <code>#$</code> lines, not <code>#@</code>. See Section 5.</p>
 
     <p>Example:</p>
-    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1</span>
+    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1</span>
 <span class="hl-meta">#@author: alex@example.com</span>
 <span class="hl-meta">#@comment: demo dataset for onboarding docs</span>
 <span class="hl-meta">#@source: analytics_db.page_views</span>
@@ -301,14 +308,14 @@ page,views
 
     <h3>5.5 Examples</h3>
     <p><strong>Single dialect via header:</strong></p>
-    <pre><code><span class="hl-meta">#!excsv version=0.2 sql-dialect=mysql</span>
+    <pre><code><span class="hl-meta">#!excsv version=0.3 sql-dialect=mysql</span>
 <span class="hl-meta">#$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(254) NOT NULL) ENGINE=InnoDB</span>
 <span class="hl-meta">#$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)</span>
 <span class="hl-meta">#$ddl: GRANT SELECT ON orders TO readonly</span>
 <span class="hl-meta">#$dql: SELECT * FROM orders WHERE id &gt; 100</span></code></pre>
 
     <p><strong>Multi-dialect side-by-side:</strong></p>
-    <pre><code><span class="hl-meta">#!excsv version=0.2</span>
+    <pre><code><span class="hl-meta">#!excsv version=0.3</span>
 <span class="hl-meta">#$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(8,2))</span>
 <span class="hl-meta">#$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB</span>
 <span class="hl-meta">#$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))</span>
@@ -564,7 +571,10 @@ page,views
     </ul>
 
     <h3>10.2 Compression</h3>
-    <p>The primary entry <strong>SHOULD</strong> use Deflate (method 8). Store, Deflate64, BZIP2, LZMA, and Zstandard <strong>MAY</strong> be used. ZIP64 extensions <strong>MUST</strong> be supported. Encrypted archives are <strong>NOT</strong> specified in v0.2.</p>
+    <p>The primary entry <strong>SHOULD</strong> use Deflate (method 8). Store, Deflate64, BZIP2, LZMA, and Zstandard <strong>MAY</strong> be used. ZIP64 extensions <strong>MUST</strong> be supported.</p>
+
+    <h4 id="zip-password">Password protection</h4>
+    <p>Archives <strong>MAY</strong> use standard ZIP encryption (PKZIP traditional or AES). The password is supplied by tooling at write/read time and <strong>MUST NOT</strong> be stored in the <code>#!excsv</code> header, <code>#@</code> metadata, or ZIP comment. Readers <strong>MUST</strong> have the password before extracting the inner file. The comment fast path <strong>MAY</strong> be unavailable until the archive is unlocked.</p>
 
     <h3>10.3 Required Inner Header Field</h3>
     <p>The inner <code>.excsv</code> or <code>.extsv</code> file's <code>#!excsv</code> header <strong>MUST</strong> include:</p>
@@ -595,24 +605,48 @@ page,views
     <pre><code><span class="hl-meta">#@comment-truncated: 1</span></code></pre>
     <p>Readers <strong>MUST</strong> treat the comment as <strong>advisory</strong>: the authoritative source is the inner file. If they disagree (beyond truncation), the inner file wins.</p>
 
-    <h3 id="reserved-future">10.5 Reserved for Future Use</h3>
-    <p>The names below are <strong>reserved in v0.2</strong> for a planned column-oriented multi-table archive format (<code>.excsv.pack.zip</code>). They are not defined by v0.2. Writers conforming to v0.2 <strong>MUST NOT</strong> emit them. Reservation exists so third-party extensions don't claim conflicting meanings before the format is shipped.</p>
-    <p>When readers encounter any of them on a v0.2 file they follow the existing forward-compatibility rules: unknown header keys are ignored, unknown <code>#</code>-prefixed meta lines are ignored. Nothing else is required.</p>
-    <table>
-      <thead>
-        <tr><th>Reserved</th><th>Kind</th><th>Planned use</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><code>.excsv.pack.zip</code> / <code>.extsv.pack.zip</code></td><td>file extension</td><td>multi-table columnar archive</td></tr>
-        <tr><td><code>layout=</code></td><td>header key</td><td>values <code>row</code> / <code>columnar</code> / <code>pack</code> to distinguish the storage form</td></tr>
-        <tr><td><code>mode=</code></td><td>header key (manifest only)</td><td><code>multi-table</code> (default) vs <code>single-table</code> for packs</td></tr>
-        <tr><td><code>section-size=</code></td><td>header key</td><td>row chunk size for columnar tables</td></tr>
-        <tr><td><code>table-count=</code></td><td>header key (manifest only)</td><td>informational table count</td></tr>
-        <tr><td><code>#table</code></td><td>meta line (manifest only)</td><td>declares a table inside a pack</td></tr>
-        <tr><td><code>#fk</code></td><td>meta line (manifest only)</td><td>informational foreign-key declaration between tables in a pack</td></tr>
-      </tbody>
-    </table>
-    <p>Behavior, syntax, and full semantics of the above will be defined in a future spec revision. Until then they have no meaning under v0.2.</p>
+    <h3 id="pack-container">10.5 Pack Container</h3>
+    <p>Multi-table columnar archives (<code>.excsv.pack.zip</code>, <code>.extsv.pack.zip</code>). Human overview: <a href="/variants/pack/">pack variant</a>. Full normative text: <a href="https://github.com/boligolov/excsv/blob/main/docs/pack.md">docs/pack.md</a>.</p>
+    <p>Plain and row-oriented ZIP files <strong>MUST NOT</strong> use <code>layout=</code>, <code>#table</code>, or <code>#fk</code>. Writers <strong>MUST NOT</strong> emit pack-only keys on non-pack files.</p>
+
+    <h4>Structure</h4>
+    <p>Even a single-table pack uses <code>_manifest.excsv</code> plus one table subdirectory. Tools always iterate tables.</p>
+    <pre><code>bundle.excsv.pack.zip
+├── _manifest.excsv      ← MUST be first central-directory entry
+├── orders/
+│   ├── _header.excsv    ← layout=columnar, rows=N
+│   ├── 00-id.col
+│   └── 01-amount.col
+└── customers/
+    └── ...</code></pre>
+
+    <h4>Manifest</h4>
+    <p>Header-only file with <code>#!excsv version=0.3 layout=pack original-size=&lt;bytes&gt;</code>. <code>original-size</code> <strong>MUST</strong> equal the sum of <code>original-size=</code> on every <code>#table</code> line (uncompressed column payload only).</p>
+    <pre><code><span class="hl-meta">#!excsv version=0.3 layout=pack table-count=3 original-size=3123200</span>
+<span class="hl-meta">#@pack-name: sales-q1-2026</span>
+<span class="hl-meta">#table name=orders dir=orders/ columns=4 original-size=1843200</span>
+<span class="hl-meta">#table name=customers dir=customers/ columns=2 original-size=512000</span>
+<span class="hl-meta">#fk from=orders.customer_id to=customers.id</span></code></pre>
+    <ul>
+      <li><code>single-table=&lt;name&gt;</code> — optional CLI default while one <code>#table</code> exists; writers <strong>MUST</strong> remove it when a second table is added.</li>
+      <li>ZIP comment <strong>SHOULD</strong> mirror the manifest (same fast-path idea as row ZIP).</li>
+      <li>If manifest is missing or has no <code>#table</code> lines, readers <strong>MUST</strong> auto-discover subdirectories containing <code>_header.excsv</code> (alphabetical); tools <strong>SHOULD</strong> warn.</li>
+    </ul>
+
+    <h4>Table layout</h4>
+    <p>Each table directory contains <code>_header.excsv</code> (<code>layout=columnar</code>, required <code>rows=</code>, optional <code>section-size=</code>) and column payloads.</p>
+    <h5>Column files (unsectioned)</h5>
+    <p>If <code>section-size</code> is absent or <code>0</code>, each column is <code>&lt;index&gt;-&lt;safe_name&gt;.col</code> with one value per line and exactly <code>rows</code> lines.</p>
+    <h5>Column chunking (sectioning)</h5>
+    <p>When <code>section-size=N</code>, each column is a folder <code>&lt;index&gt;-&lt;name&gt;/</code> of chunk files <code>&lt;start&gt;.col</code> (zero-padded start row; width matches <code>rows</code>). All columns share the same section boundaries; the last chunk may be shorter; <code>rows=</code> is authoritative.</p>
+    <pre><code>orders/00-id/
+├── 000000.col    ← rows 0..N-1
+├── 010000.col
+└── 230000.col    ← short final chunk</code></pre>
+    <p>Random access to row <code>N</code>: <code>section_start = (N / section_size) * section_size</code>; open <code>&lt;idx&gt;-&lt;name&gt;/&lt;section_start&gt;.col</code>, read line <code>N - section_start</code>. Recommended default: <code>section-size=10000</code>. Tables in one pack <strong>MAY</strong> differ in <code>section-size</code>.</p>
+
+    <h4>CLI (target)</h4>
+    <p><code>excsv [flags] PACKFILE &lt;command&gt;</code> with <code>--table &lt;name&gt;</code> for table scope. Pack commands: <code>info</code>, <code>table list</code>, <code>fk list</code>. Table commands reuse row-ZIP subcommands. Pack-native: <code>col get</code>, <code>col list</code>. Not yet implemented in <a href="/tools/">excsv-golang</a>.</p>
 
     <hr />
 
@@ -656,7 +690,7 @@ page,views
     <hr />
 
     <h2 id="full-example">13. Full Example</h2>
-    <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:a1b2c3d4e5f6 sql-dialect=mysql</span>
+    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:a1b2c3d4e5f6 sql-dialect=mysql</span>
 <span class="hl-meta">#@author: author@example.com</span>
 <span class="hl-meta">#@source: sales_db.orders</span>
 <span class="hl-meta">#@comment: Quarterly sales export with all column features demonstrated</span>

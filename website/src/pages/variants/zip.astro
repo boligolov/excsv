@@ -1,4 +1,4 @@
----
+﻿---
 import Variant from '../../layouts/Variant.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
 ---
@@ -16,14 +16,14 @@ import CodeBlock from '../../components/CodeBlock.astro';
 
   <p>
     The inner file is a normal <a href="/variants/plain/">inline plain</a> document.
-    Sidecar pairs are <strong>not</strong> zipped as a unit in v0.2 — use two plain files or materialize inline first.
+    Sidecar pairs are <strong>not</strong> zipped as a unit — use two plain files or materialize inline first.
   </p>
 
   <h2>Inner header</h2>
   <p>The inner <code>#!excsv</code> line <strong>MUST</strong> include <code>original-size=&lt;bytes&gt;</code>, matching the ZIP central directory <code>uncompressed_size</code>.</p>
 
   <CodeBlock title="ZIP comment (excerpt)" description="Advisory summary — inner file is authoritative.">
-{`#!excsv version=0.2 delim=comma header=1 rows=4 original-size=18204 sql-dialect=postgres
+{`#!excsv version=0.3 delim=comma header=1 rows=4 original-size=18204 sql-dialect=postgres
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string

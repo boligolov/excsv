@@ -1,4 +1,4 @@
-# File Structure
+﻿# File Structure
 
 ```
 LINE 1:       Header line (zero or one, optional)
@@ -10,7 +10,7 @@ An ExCSV document MAY omit the header line. If the header line is missing, the d
 
 Transition rule: first line NOT starting with `#` begins the data section. All meta lines MUST precede data.
 
-Minimal valid file: an empty file, or `#!excsv version=0.2` (header-only stub).
+Minimal valid file: an empty file, or `#!excsv version=0.3` (header-only stub).
 
 Line endings: files MAY use LF or CRLF. Parsers MUST accept both. Parsers MUST ignore UTF-8 BOM (`U+FEFF`) at start of file.
 
@@ -73,7 +73,7 @@ When opening `sales.csv`, implementations MAY look for `sales.excsv` in the same
 `sales.excsv` (metadata only):
 
 ```
-#!excsv version=0.2 delim=comma quote=double header=1 rows=2 reference=sales.csv
+#!excsv version=0.3 delim=comma quote=double header=1 rows=2 reference=sales.csv
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string

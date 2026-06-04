@@ -1,11 +1,11 @@
-# Header Line
+﻿# Header Line
 
 ## Syntax
 
 If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, and **MUST** contain at least the `version` field.
 
 ```
-#!excsv version=0.2 delim=comma header=1
+#!excsv version=0.3 delim=comma header=1
 ```
 
 ## Key-Value Pairs
@@ -26,7 +26,7 @@ If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, a
 
 | Field           | Requirement                | Description                                                                                                                          |
 | --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `version`       | **MUST**                   | Format version (`0.2`)                                                                                                               |
+| `version`       | **MUST**                   | Format version (`0.3`)                                                                                                               |
 | `delim`         | SHOULD                     | Delimiter — a known name **or** a literal character/sequence (see below). Default: `comma`                                            |
 | `quote`         | SHOULD                     | Quote — a known name **or** a literal character (see below). Default: `none`                                                          |
 | `header`        | SHOULD                     | `1` if the first data row is a header row, `0` otherwise. Default: `1`                                                                |

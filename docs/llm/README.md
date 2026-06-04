@@ -1,4 +1,4 @@
-# ExCSV v0.2 — LLM reference (split docs)
+﻿# ExCSV v0.3 — LLM reference (split docs)
 
 Dense, structured specification optimized for AI assistants. Start at [README-LLM.md](../../README-LLM.md) for overview.
 
@@ -15,8 +15,9 @@ Dense, structured specification optimized for AI assistants. Start at [README-LL
 | CSVW (`#csvw`) | [csvw.md](csvw.md) |
 | Checksum | [checksum.md](checksum.md) |
 | ZIP container | [zip.md](zip.md) |
+| Pack container | [pack.md](pack.md) |
 | Data section | [data-section.md](data-section.md) |
-| Reserved (future) | [reserved.md](reserved.md) |
+| Pack-only keys | [reserved.md](reserved.md) |
 | Error handling | [error-handling.md](error-handling.md) |
 | Parsing algorithm | [parsing.md](parsing.md) |
 | Serialization algorithm | [serialization.md](serialization.md) |

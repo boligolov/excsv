@@ -1,8 +1,8 @@
-# Canonical Example (annotated)
+﻿# Canonical Example (annotated)
 
 ```
-#!excsv version=0.2 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:a1b2c3d4e5f6 sql-dialect=mysql
-  ^ header line: version=0.2, delimiter is comma, quote is double ("), first data row is header, empty fields are null (default), 4 data rows, excsv schema wins, checksum provided, default SQL dialect = mysql
+#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:a1b2c3d4e5f6 sql-dialect=mysql
+  ^ header line: version=0.3, delimiter is comma, quote is double ("), first data row is header, empty fields are null (default), 4 data rows, excsv schema wins, checksum provided, default SQL dialect = mysql
 #@author: author@example.com
 #@source: sales_db.orders
 #@comment: Quarterly sales export with all column features demonstrated

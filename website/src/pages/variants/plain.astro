@@ -1,4 +1,4 @@
----
+﻿---
 import Variant from '../../layouts/Variant.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
 ---
@@ -10,7 +10,7 @@ import CodeBlock from '../../components/CodeBlock.astro';
   lede="Header, metadata, and data rows live in one file. Any CSV tool can read the data section; ExCSV tools read everything."
 >
   <h2>File layout</h2>
-  <pre><code>#!excsv version=0.2 delim=comma header=1
+  <pre><code>#!excsv version=0.3 delim=comma header=1
 #@source: analytics_db.events
 #column name=id type=int
 #column name=name type=string
@@ -37,7 +37,7 @@ id,name
   </table>
 
   <CodeBlock title="Minimal inline" description="Schema + two data rows.">
-{`#!excsv version=0.2 delim=comma header=1
+{`#!excsv version=0.3 delim=comma header=1
 #column name=id type=int
 #column name=name type=string
 id,name

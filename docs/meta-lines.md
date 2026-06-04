@@ -25,3 +25,14 @@ Five recognized structured kinds plus a human-comment line, by prefix:
 | `#%<name>: ...`              | Aggregation values  | `#%sum: ,, 42.5`                         |
 
 See dedicated pages: [File metadata](file-metadata.md), [Columns](columns.md), [SQL](sql.md), [Aggregations](aggregations.md), [CSVW](csvw.md).
+
+### Pack manifest only
+
+On `_manifest.excsv` inside `.excsv.pack.zip` / `.extsv.pack.zip` only:
+
+| Prefix | Purpose | Example |
+| --- | --- | --- |
+| `#table ...` | Declares a table directory | `#table name=orders dir=orders/ columns=4 original-size=1843200` |
+| `#fk ...` | Informational foreign key | `#fk from=orders.customer_id to=customers.id` |
+
+These **MUST NOT** appear in plain or row-ZIP files or table `_header.excsv`. See [Pack container](pack.md).

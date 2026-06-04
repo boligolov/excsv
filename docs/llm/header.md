@@ -1,4 +1,4 @@
-# Header Line
+﻿# Header Line
 
 If present, MUST be line 1. MUST start with `#!excsv`. MUST contain `version=`. Format: space-separated `key=value` pairs. Split on FIRST `=` only (values may contain `=`). Unknown keys: ignore.
 
@@ -12,7 +12,7 @@ If present, MUST be line 1. MUST start with `#!excsv`. MUST contain `version=`. 
 ## Header fields
 
 ```
-version        REQUIRED  "0.2"
+version        REQUIRED  "0.3"
 delim          DEFAULT "comma"   delimiter name or literal (see DELIMITERS)
 quote          DEFAULT "none"    quote name or literal (see QUOTING)
 header         DEFAULT "1"       "1"=first data row is header, "0"=no header row

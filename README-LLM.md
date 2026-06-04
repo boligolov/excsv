@@ -1,14 +1,16 @@
-# ExCSV v0.2 — LLM Reference
+# ExCSV v0.3 — LLM Reference
 
 Dense spec for AI assistants. Human-readable split: [docs/](docs/). Topic index below.
 
-**Identity:** ExCSV = self-describing CSV/TSV. Version 0.2 (Draft). Extensions: `.excsv`, `.extsv` (plain — inline or sidecar); `.excsv.zip`, `.extsv.zip`. MIME: `text/excsv`, `application/excsv+zip`. Default encoding UTF-8. CC0 1.0.
+**Identity:** ExCSV = self-describing CSV/TSV. Version 0.3 (Draft). Extensions: `.excsv`, `.extsv` (plain); `.excsv.zip`, `.extsv.zip` (row); `.excsv.pack.zip`, `.extsv.pack.zip` (pack). MIME: `text/excsv`, `application/excsv+zip`. Default encoding UTF-8. CC0 1.0.
 
-**Reference impl:** [excsv-golang](https://github.com/boligolov/excsv-golang) — `excsv` CLI; plain + row-ZIP v0.2.
+**Reference impl:** [excsv-golang](https://github.com/boligolov/excsv-golang) — `excsv` CLI; plain + row-ZIP v0.3 (pack not yet in golang).
 
 **File layout:** optional `#!excsv` header → `#` meta lines → CSV/TSV data. First non-`#` line starts data. Missing header → defaults `delim=comma`, `quote=none`, `header=1`, `encoding=UTF-8`.
 
 **Meta prefixes:** `##` human comment (ignore) · `#@` file metadata · `#column` schema · `#csvw` JSON · `#$` SQL · `#%` aggregations.
+
+**ZIP password:** `.excsv.zip` / `.extsv.zip` MAY be protected with standard ZIP encryption (writer/reader tooling prompts for password; secret not in `#!excsv` or comment). Encrypted archives need the password before parse; comment fast-path unavailable until unlocked. See [docs/llm/zip.md](docs/llm/zip.md#password-protection).
 
 ---
 
@@ -27,8 +29,9 @@ Dense spec for AI assistants. Human-readable split: [docs/](docs/). Topic index 
 | CSVW | [docs/llm/csvw.md](docs/llm/csvw.md) |
 | Checksum | [docs/llm/checksum.md](docs/llm/checksum.md) |
 | ZIP container | [docs/llm/zip.md](docs/llm/zip.md) |
+| Pack container | [docs/llm/pack.md](docs/llm/pack.md) |
 | Data section | [docs/llm/data-section.md](docs/llm/data-section.md) |
-| Reserved (future) | [docs/llm/reserved.md](docs/llm/reserved.md) |
+| Pack-only keys | [docs/llm/reserved.md](docs/llm/reserved.md) |
 | Error handling | [docs/llm/error-handling.md](docs/llm/error-handling.md) |
 | Parsing algorithm | [docs/llm/parsing.md](docs/llm/parsing.md) |
 | Serialization algorithm | [docs/llm/serialization.md](docs/llm/serialization.md) |

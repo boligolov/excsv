@@ -1,4 +1,4 @@
-# ZIP Container
+﻿# ZIP Container
 
 An ExCSV document MAY be shipped inside a standard ZIP archive with the extension `.excsv.zip` or `.extsv.zip`. This is a **container format**, not a new dialect — the inner file is a valid ExCSV document (`.excsv` or `.extsv`) with the same structure as any other.
 
@@ -15,9 +15,17 @@ Additional entries (auxiliary data, schemas, attachments) MAY appear after the p
 
 ## Compression
 
-The primary entry SHOULD use Deflate (method 8). Store (method 0), Deflate64 (method 9), BZIP2 (method 12), LZMA (method 14), and Zstandard (method 93) MAY be used. Other methods SHOULD be rejected. Encrypted archives are NOT specified in v0.2.
+The primary entry SHOULD use Deflate (method 8). Store (method 0), Deflate64 (method 9), BZIP2 (method 12), LZMA (method 14), and Zstandard (method 93) MAY be used. Other methods SHOULD be rejected.
 
 ZIP64 extensions MUST be supported by parsers (large files exceeding 4 GiB).
+
+## Password protection
+
+Archive MAY use standard ZIP encryption (PKZIP traditional or AES — writer chooses). Password supplied by tooling at write/read; NOT stored in `#!excsv`, `#@`, or ZIP comment.
+
+- Reader MUST have password before extract/parse inner file.
+- Comment fast-path MAY be unavailable until archive unlocked.
+- Inner `checksum=` / `original-size=` refer to decrypted payload.
 
 ## Required inner header field
 
@@ -100,7 +108,7 @@ sales.excsv.zip
 └── sales.excsv          (compressed deflate, 7,432 bytes; uncompressed 18,204 bytes)
 
 ZIP comment (4,128 bytes):
-#!excsv version=0.2 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924... original-size=18204 sql-dialect=postgres-15
+#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924... original-size=18204 sql-dialect=postgres-15
 #@source: sales_db.orders
 #@author: author@example.com
 #@created: 2026-01-01T00:00:00Z
@@ -121,6 +129,6 @@ ZIP comment (4,128 bytes):
 The inner `sales.excsv` (uncompressed):
 
 ```
-#!excsv version=0.2 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924... original-size=18204 sql-dialect=postgres-15
+#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924... original-size=18204 sql-dialect=postgres-15
 ... full file: all #@ / #column / #% / #csvw lines, then data section ...
 ```

@@ -1,4 +1,4 @@
-# File-Level Metadata (`#@`)
+﻿# File-Level Metadata (`#@`)
 
 The value is **raw text** to the end of the line. One optional space after `:` is skipped (for readability). No quoting or escaping is applied — the value is taken as-is.
 
@@ -22,7 +22,7 @@ Each `#@` key is unique per file (last-wins on duplicates).
 Example:
 
 ```
-#!excsv version=0.2 delim=comma header=1
+#!excsv version=0.3 delim=comma header=1
 #@author: alex@example.com
 #@comment: demo dataset for onboarding docs
 #@source: analytics_db.page_views

@@ -1,4 +1,4 @@
-# ExCSV v0.2 — Specification (split docs)
+﻿# ExCSV v0.3 — Specification (split docs)
 
 Human-readable specification split by topic. Start at the [root README](../README.md) for overview and quick links.
 
@@ -15,6 +15,7 @@ Human-readable specification split by topic. Start at the [root README](../READM
 | CSVW (`#csvw`) | [csvw.md](csvw.md) |
 | Checksum | [checksum.md](checksum.md) |
 | ZIP container | [zip.md](zip.md) |
+| Pack container | [pack.md](pack.md) |
 | Data section | [data-section.md](data-section.md) |
 | Error handling | [error-handling.md](error-handling.md) |
 | Full example | [full-example.md](full-example.md) |

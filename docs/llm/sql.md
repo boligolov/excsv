@@ -1,4 +1,4 @@
-# SQL (`#$`)
+﻿# SQL (`#$`)
 
 A file MAY carry SQL companions to its data: definitional statements that recreate the table/schema (DDL), and informational queries that produced the data (DQL). These are encoded as a dedicated meta kind with the prefix `#$`.
 
@@ -90,7 +90,7 @@ Multiple `#$dql` lines MAY appear; all are preserved. Order has no execution mea
 Single-dialect DDL with `sql-dialect` header:
 
 ```
-#!excsv version=0.2 sql-dialect=mysql
+#!excsv version=0.3 sql-dialect=mysql
 #$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(254) NOT NULL, amount DECIMAL(8,2)) ENGINE=InnoDB
 #$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)
 #$ddl: GRANT SELECT ON orders TO readonly
@@ -100,7 +100,7 @@ Single-dialect DDL with `sql-dialect` header:
 Multi-dialect DDL side-by-side:
 
 ```
-#!excsv version=0.2
+#!excsv version=0.3
 #$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(8,2))
   ^ effective dialect = ansi (no header, no suffix)
 #$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB
@@ -112,7 +112,7 @@ Multi-dialect DDL side-by-side:
 Multi-statement DDL execution order:
 
 ```
-#!excsv version=0.2 sql-dialect=postgres
+#!excsv version=0.3 sql-dialect=postgres
 #$ddl: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, email VARCHAR(254) NOT NULL)
 #$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)
 #$ddl: CREATE INDEX orders_email_lower ON orders(LOWER(email))

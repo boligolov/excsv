@@ -1,15 +1,15 @@
-# Quick-Reference Examples
+﻿# Quick-Reference Examples
 
 ## Minimal (header-only stub)
 
 ```
-#!excsv version=0.2
+#!excsv version=0.3
 ```
 
 ## Sidecar (metadata for external CSV)
 
 ```
-#!excsv version=0.2 delim=comma header=1 rows=2 reference=sales.csv
+#!excsv version=0.3 delim=comma header=1 rows=2 reference=sales.csv
 #column name=id type=int
 #column name=name type=string
 ```
@@ -19,7 +19,7 @@
 ## Schema-less (no #column lines)
 
 ```
-#!excsv version=0.2 delim=comma header=1
+#!excsv version=0.3 delim=comma header=1
 name,age,city
 Alice,30,NYC
 Bob,25,LA
@@ -28,7 +28,7 @@ Bob,25,LA
 ## header=0 with index
 
 ```
-#!excsv version=0.2 delim=tab header=0
+#!excsv version=0.3 delim=tab header=0
 #column index=0 name=id type=int
 #column index=1 name=value type=decimal
 1	99.50
@@ -38,7 +38,7 @@ Bob,25,LA
 ## quote=none (no quoting)
 
 ```
-#!excsv version=0.2 delim=pipe header=1 quote=none
+#!excsv version=0.3 delim=pipe header=1 quote=none
 name|score|grade
 Alice|95|A
 Bob|87|B+
@@ -47,7 +47,7 @@ Bob|87|B+
 ## null (default: empty field = null)
 
 ```
-#!excsv version=0.2 delim=comma header=1
+#!excsv version=0.3 delim=comma header=1
 name,email
 Alice,
 Bob,bob@test.com
@@ -57,7 +57,7 @@ Bob,bob@test.com
 ## null=NA (non-empty null marker)
 
 ```
-#!excsv version=0.2 delim=comma header=1 null=NA
+#!excsv version=0.3 delim=comma header=1 null=NA
 name,email
 Alice,NA
 Bob,bob@test.com
@@ -67,7 +67,7 @@ Bob,bob@test.com
 ## Quote doubling (both header and data)
 
 ```
-#!excsv version=0.2 delim=comma quote=double header=1
+#!excsv version=0.3 delim=comma quote=double header=1
 #column name=name type=string
 #column name=note type=string description="contains ""special"" chars"
   ^ "" in header value produces literal "
@@ -80,7 +80,7 @@ Bob,"Line1, then more"
 ## SQL section: multi-dialect DDL and DQL
 
 ```
-#!excsv version=0.2 delim=comma header=1
+#!excsv version=0.3 delim=comma header=1
 #$ddl: CREATE TABLE products (id INTEGER PRIMARY KEY, name VARCHAR(100), price DECIMAL(8,2))
   ^ unqualified → effective dialect = ansi (no sql-dialect header)
 #$ddl-mysql: CREATE TABLE products (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(100), price DECIMAL(8,2)) ENGINE=InnoDB
@@ -98,7 +98,7 @@ id,name,price
 ## sql-dialect header (avoid suffixing every line)
 
 ```
-#!excsv version=0.2 delim=comma header=1 sql-dialect=postgres-15
+#!excsv version=0.3 delim=comma header=1 sql-dialect=postgres-15
 #$ddl: CREATE TABLE events (id BIGSERIAL PRIMARY KEY, ts TIMESTAMPTZ, payload JSONB)
 #$ddl: CREATE INDEX events_ts_brin ON events USING BRIN(ts)
 #$ddl: GRANT SELECT ON events TO readonly
@@ -111,6 +111,6 @@ id,ts,payload
 ## Zipped (.excsv.zip) — inner file header
 
 ```
-#!excsv version=0.2 delim=comma quote=double header=1 rows=1000 checksum=sha256:e3b0c442... original-size=204800
+#!excsv version=0.3 delim=comma quote=double header=1 rows=1000 checksum=sha256:e3b0c442... original-size=204800
   ^ original-size is REQUIRED in zipped files; it MUST match the ZIP central dir uncompressed_size.
 ```

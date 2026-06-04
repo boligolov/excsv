@@ -10,6 +10,7 @@ It extends CSV with:
 - Optional SQL companions (DDL/DQL with dialect tagging)
 - Optional embedded [CSVW](https://www.w3.org/TR/tabular-data-primer/) compatibility
 - Optional ZIP container with summary in the archive comment
+- Optional **pack** container: multi-table columnar `.excsv.pack.zip` — see [pack.md](pack.md)
 
 ExCSV is designed for CLI workflows, data interchange, human readability, and minimal parsing complexity.
 

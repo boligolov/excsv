@@ -1,4 +1,4 @@
-# SQL Companions
+﻿# SQL Companions
 
 A file **MAY** carry SQL statements alongside its data: DDL to recreate the schema, and DQL (SELECT queries) for provenance or example use.
 
@@ -67,7 +67,7 @@ Dialect-specific and portable DDL **MAY** be interleaved in the file. Only match
 **Single dialect via header:**
 
 ```
-#!excsv version=0.2 sql-dialect=mysql
+#!excsv version=0.3 sql-dialect=mysql
 #$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(254) NOT NULL) ENGINE=InnoDB
 #$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)
 #$ddl: GRANT SELECT ON orders TO readonly
@@ -77,7 +77,7 @@ Dialect-specific and portable DDL **MAY** be interleaved in the file. Only match
 **Multi-dialect side-by-side:**
 
 ```
-#!excsv version=0.2
+#!excsv version=0.3
 #$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(8,2))
 #$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB
 #$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))

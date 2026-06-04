@@ -1,4 +1,4 @@
----
+﻿---
 import Base from '../layouts/Base.astro';
 ---
 
@@ -17,10 +17,10 @@ import Base from '../layouts/Base.astro';
         <a href="/examples/" class="btn btn-secondary">See examples</a>
         <a href="/tools/" class="btn btn-secondary">Tools</a>
       </div>
-      <p class="version-tag">v0.2 — Draft</p>
+      <p class="version-tag">v0.3 — Draft</p>
     </div>
     <div class="hero-code">
-      <pre><code><span class="hl-meta">#!excsv version=0.2 delim=comma header=1 sql-dialect=postgres</span>
+      <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1 sql-dialect=postgres</span>
 <span class="hl-meta">#@source: analytics_db.events</span>
 <span class="hl-meta">#column name=date type=date</span>
 <span class="hl-meta">#column name=event type=string</span>
@@ -60,6 +60,10 @@ date,event,count
     <div class="card">
       <h3>Zipped distribution</h3>
       <p><code>.excsv.zip</code> and <code>.extsv.zip</code> archives carry their summary in the ZIP comment — read schema and aggregations without unzipping. No extraction needed for preview.</p>
+    </div>
+    <div class="card">
+      <h3><a href="/variants/pack/">Pack (v0.3)</a></h3>
+      <p><code>.excsv.pack.zip</code> — multi-table, columnar: manifest + <code>.col</code> files per column. Selective reads and database snapshots without row-oriented ZIP overhead.</p>
     </div>
     <div class="card">
       <h3>Backward-compatible</h3>

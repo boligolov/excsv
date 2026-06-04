@@ -23,3 +23,4 @@ Free-form comment to end of line. MUST be ignored by parsers — carries no stru
 | Aggregation | `#%<name>: ...` | [aggregations.md](aggregations.md) |
 | CSVW | `#csvw ...` | [csvw.md](csvw.md) |
 | SQL | `#$<verb>[-<dialect>]: ...` | [sql.md](sql.md) |
+| Pack manifest | `#table`, `#fk` | [pack.md](pack.md) — `_manifest.excsv` only, v0.3 |

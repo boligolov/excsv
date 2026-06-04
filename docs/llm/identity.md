@@ -1,13 +1,13 @@
-# Identity
+﻿# Identity
 
-ExCSV = Extended CSV. Self-describing, line-oriented tabular format. Spec version: 0.2 (Draft). Backward-compatible with CSV/TSV.
+ExCSV = Extended CSV. Self-describing, line-oriented tabular format. Spec version: 0.3 (Draft). Backward-compatible with CSV/TSV.
 
-**File extensions:** `.excsv`, `.extsv` (plain — inline or sidecar); `.excsv.zip`, `.extsv.zip` (zipped container, see [ZIP](zip.md)).
+**File extensions:** `.excsv`, `.extsv` (plain); `.excsv.zip`, `.extsv.zip` (row ZIP, [ZIP](zip.md)); `.excsv.pack.zip`, `.extsv.pack.zip` (pack, [pack.md](pack.md)).
 
 **MIME types:** `text/excsv` (plain), `application/excsv+zip` (zipped). Encoding default: UTF-8. License: CC0 1.0.
 
-Storage forms (non-normative overview): inline plain (header+meta+data), sidecar (header+meta only, `reference=` points at CSV/TSV), zip (one inner inline file), pack (reserved, see [Reserved](reserved.md)).
+Storage forms: inline plain, sidecar (`reference=`), row zip (one inner inline file), pack (manifest + columnar tables).
 
 ## Implementations
 
-Reference CLI/library: **excsv-golang** (Go) — https://github.com/boligolov/excsv-golang — `excsv` command; plain + row-ZIP v0.2.
+Reference CLI/library: **excsv-golang** (Go) — https://github.com/boligolov/excsv-golang — `excsv` command; plain + row-ZIP v0.3 (pack not yet in golang).

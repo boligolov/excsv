@@ -13,7 +13,15 @@ Additional entries (auxiliary data, attachments) **MAY** follow.
 
 ## Compression
 
-The primary entry **SHOULD** use Deflate (method 8). Store, Deflate64, BZIP2, LZMA, and Zstandard **MAY** be used. ZIP64 extensions **MUST** be supported. Encrypted archives are **NOT** specified in v0.2.
+The primary entry **SHOULD** use Deflate (method 8). Store, Deflate64, BZIP2, LZMA, and Zstandard **MAY** be used. ZIP64 extensions **MUST** be supported.
+
+## Password protection
+
+Archives **MAY** use standard ZIP encryption (PKZIP traditional or AES — the writer chooses). The password is supplied by tooling at write/read time and **MUST NOT** be stored in the `#!excsv` header, `#@` metadata, or ZIP comment.
+
+- Readers **MUST** have the password before extracting or parsing the inner file.
+- The comment fast path **MAY** be unavailable until the archive is unlocked.
+- Inner `checksum=` and `original-size=` refer to the decrypted payload.
 
 ## Required Inner Header Field
 
@@ -57,20 +65,10 @@ If any content was omitted, the comment **MUST** end with:
 
 Readers **MUST** treat the comment as **advisory**: the authoritative source is the inner file. If they disagree (beyond truncation), the inner file wins.
 
-## Reserved for future use
+## Pack container
 
-The names below are **reserved in v0.2** for a planned column-oriented multi-table archive format (`.excsv.pack.zip`). They are not defined by v0.2. Writers conforming to v0.2 **MUST NOT** emit them. Reservation exists so third-party extensions don't claim conflicting meanings before the format is shipped.
+Multi-table columnar archives (`.excsv.pack.zip`, `.extsv.pack.zip`) are specified in **[pack.md](pack.md)**. They use `layout=pack` on the manifest and `layout=columnar` on each table's `_header.excsv`.
 
-When readers encounter any of them on a v0.2 file, they follow the existing forward-compatibility rules: unknown header keys are ignored, unknown `#`-prefixed meta lines are ignored. Nothing else is required.
+Plain and row-oriented ZIP files **MUST NOT** use `layout=`, `#table`, or `#fk`. Writers **MUST NOT** emit pack-only keys on non-pack files.
 
-| Reserved | Kind | Planned use |
-| --- | --- | --- |
-| `.excsv.pack.zip` / `.extsv.pack.zip` | file extension | multi-table columnar archive |
-| `layout=` | header key | values `row` / `columnar` / `pack` to distinguish the storage form |
-| `mode=` | header key (manifest only) | `multi-table` (default) vs `single-table` for packs |
-| `section-size=` | header key | row chunk size for columnar tables |
-| `table-count=` | header key (manifest only) | informational table count |
-| `#table` | meta line (manifest only) | declares a table inside a pack |
-| `#fk` | meta line (manifest only) | informational foreign-key declaration between tables in a pack |
-
-Behavior, syntax, and full semantics of the above will be defined in a future spec revision. Until then they have no meaning under v0.2.
+When readers encounter pack-only header keys or meta lines on a plain or row-ZIP file, they follow forward-compatibility rules: ignore unknown keys and unknown `#` lines.
