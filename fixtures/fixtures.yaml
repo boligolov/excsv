@@ -35,6 +35,13 @@ error_kinds:
   - sidecar_delim_ext_mismatch
   - sidecar_checksum_mismatch
   - reference_on_inline
+  - pack_manifest_missing_layout
+  - pack_table_dir_missing
+  - pack_table_header_missing
+  - pack_column_count_mismatch
+  - pack_col_line_count_mismatch
+  - pack_section_partition_error
+  - pack_section_boundary_mismatch
 
 - id: plain/valid/001_minimal_header_only.excsv
   exercises: [A4, A6, B1, B6]
@@ -668,3 +675,144 @@ error_kinds:
   expect:
     parse: fail
     error_kind: zip_encrypted
+
+- id: pack/valid/001_single_table_unsectioned.excsv.pack.zip
+  exercises: [K1, K2, K7, L1, M4]
+  derived_from: plain/valid/009_column_minimal.excsv
+  expect:
+    parse: ok
+    warnings: []
+    header:
+      layout: pack
+      version: "0.3"
+      single-table: contacts
+    tables: 1
+    table:
+      name: contacts
+      rows: 1
+      columns: 2
+      sectioned: false
+
+- id: pack/valid/002_empty_pack.excsv.pack.zip
+  exercises: [K1, K2]
+  expect:
+    parse: ok
+    warnings: []
+    header:
+      layout: pack
+      version: "0.3"
+    tables: 0
+
+- id: pack/valid/003_two_tables_no_fk.excsv.pack.zip
+  exercises: [K2, K12, M4]
+  expect:
+    parse: ok
+    warnings: []
+    header:
+      layout: pack
+      version: "0.3"
+      table-count: 2
+    tables: 2
+
+- id: pack/valid/004_two_tables_with_fk.excsv.pack.zip
+  exercises: [K2, K9, K12]
+  expect:
+    parse: ok
+    warnings: []
+    tables: 2
+    fk_count: 1
+
+- id: pack/valid/005_pack_provenance.excsv.pack.zip
+  exercises: [K8, K10]
+  expect:
+    parse: ok
+    warnings: []
+    meta:
+      pack-name: provenance-demo
+      author: ops@example.com
+    tables: 1
+
+- id: pack/valid/006_tables_different_sql_dialects.excsv.pack.zip
+  exercises: [K2, F3]
+  expect:
+    parse: ok
+    warnings: []
+    tables: 2
+    sql:
+      dialects: [mysql, postgres-15]
+
+- id: pack/valid/007_sectioned_table.excsv.pack.zip
+  exercises: [L4, M4]
+  expect:
+    parse: ok
+    warnings: []
+    tables: 1
+    table:
+      name: metrics
+      rows: 5
+      columns: 3
+      section-size: 2
+      sectioned: true
+
+- id: pack/valid/008_mixed_sectioned_unsectioned.excsv.pack.zip
+  exercises: [K2, L4]
+  expect:
+    parse: ok
+    warnings: []
+    tables: 2
+
+- id: pack/valid/009_auto_discovery_empty_table_lines.excsv.pack.zip
+  exercises: [K11]
+  expect:
+    parse: ok
+    warnings: [pack_manifest_empty_table_registry]
+    tables: 2
+
+- id: pack/valid/010_auto_discovery_no_manifest.excsv.pack.zip
+  exercises: [K11]
+  expect:
+    parse: ok
+    warnings: [pack_manifest_missing]
+    tables: 2
+
+- id: pack/invalid/001_manifest_missing_layout.excsv.pack.zip
+  exercises: [K12]
+  expect:
+    parse: fail
+    error_kind: pack_manifest_missing_layout
+
+- id: pack/invalid/002_table_dir_missing.excsv.pack.zip
+  exercises: [K12]
+  expect:
+    parse: fail
+    error_kind: pack_table_dir_missing
+
+- id: pack/invalid/003_table_header_missing.excsv.pack.zip
+  exercises: [K12]
+  expect:
+    parse: fail
+    error_kind: pack_table_header_missing
+
+- id: pack/invalid/004_column_count_mismatch.excsv.pack.zip
+  exercises: [K12, L1]
+  expect:
+    parse: fail
+    error_kind: pack_column_count_mismatch
+
+- id: pack/invalid/005_col_line_count_mismatch.excsv.pack.zip
+  exercises: [K12, M4]
+  expect:
+    parse: fail
+    error_kind: pack_col_line_count_mismatch
+
+- id: pack/invalid/006_section_partition_error.excsv.pack.zip
+  exercises: [K12, L4]
+  expect:
+    parse: fail
+    error_kind: pack_section_partition_error
+
+- id: pack/invalid/007_section_boundary_mismatch.excsv.pack.zip
+  exercises: [K12, L4]
+  expect:
+    parse: fail
+    error_kind: pack_section_boundary_mismatch
