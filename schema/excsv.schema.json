@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://excsv.org/schema/excsv-0.3.schema.json",
+  "title": "ExCSV JSON profile",
+  "description": "A JSON serialization of an ExCSV document. Carries the same vocabulary as the text form (#!excsv header, #@ metadata, #column schema, #% aggregates, #$ SQL) so the two round-trip losslessly. The CSV text form stays canonical; this profile is for JSON-native contexts (APIs, config, LLM structured output).",
+  "type": "object",
+  "required": ["excsv"],
+  "additionalProperties": false,
+  "properties": {
+    "excsv": {
+      "description": "Format version. Mirrors #!excsv version=.",
+      "type": "string",
+      "examples": ["0.3"]
+    },
+    "layout": {
+      "description": "Document shape. inline/sidecar are single-table (use root-level columns/data/reference); pack is multi-table (use tables[]).",
+      "type": "string",
+      "enum": ["inline", "sidecar", "pack"]
+    },
+    "csv": {
+      "description": "How to reconstruct the canonical CSV text form. All optional; omit to accept defaults. Purely a round-trip hint — it does not affect the JSON data.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "delim": { "type": "string", "default": "comma", "description": "Delimiter name (comma|tab|pipe|semicolon) or a literal." },
+        "quote": { "type": "string", "default": "none", "description": "Quote name (none|double|single) or a literal." },
+        "header": { "type": "boolean", "default": true, "description": "Whether the canonical CSV carries a header row (column names come from `columns`)." },
+        "encoding": { "type": "string", "default": "UTF-8" },
+        "null": {
+          "description": "Extra non-empty strings that also mean null in the CSV form. In JSON, null is the literal null.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "meta": {
+      "description": "File-level metadata (#@ lines). Known keys below; any additional key is allowed.",
+      "type": "object",
+      "properties": {
+        "source": { "type": "string", "description": "Origin system, table, or file." },
+        "author": { "type": "string" },
+        "comment": { "type": "string" },
+        "grain": { "type": "string", "description": "What one data row represents, e.g. 'one row per order'." },
+        "created": { "type": "string", "format": "date-time" },
+        "exported": { "type": "string", "format": "date-time" },
+        "license": { "type": "string" },
+        "tool": { "type": "string" },
+        "tags": {
+          "oneOf": [
+            { "type": "array", "items": { "type": "string" } },
+            { "type": "string" }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "columns": {
+      "description": "Column schema (#column lines). Array order is the physical column order; a column's position is its index unless `index` is given explicitly.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/column" }
+    },
+    "aggregates": {
+      "description": "Pre-computed aggregates (#% lines). Each key is an aggregation name; each value is an array with one entry per physical column (null = not applicable / not computed). The array length should equal the number of physical columns.",
+      "type": "object",
+      "propertyNames": {
+        "anyOf": [
+          { "enum": ["count_nonnull", "count_null", "count_distinct", "sum", "avg", "min", "max", "len_min", "len_max"] },
+          { "type": "string" }
+        ]
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/cell" }
+      }
+    },
+    "sql": {
+      "description": "SQL companions (#$ lines).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ddl": {
+          "description": "Schema statements, executed in array order.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/statement" }
+        },
+        "dql": {
+          "description": "Queries (SELECT) for provenance; not executed.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/statement" }
+        }
+      }
+    },
+    "csvw": {
+      "description": "Optional embedded W3C CSVW metadata (arbitrary JSON object).",
+      "type": "object"
+    },
+    "schema": {
+      "description": "Which schema wins when both `columns` and `csvw` are present.",
+      "type": "string",
+      "enum": ["excsv", "csvw"],
+      "default": "excsv"
+    },
+    "checksum": {
+      "description": "Integrity fingerprint of the data, '<algorithm>:<hex-digest>'. Advisory.",
+      "type": "string",
+      "pattern": "^[a-z0-9-]+:[0-9a-f]+$"
+    },
+    "rows": {
+      "description": "Number of data rows (excluding the header). For inline data this should equal data.length.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "reference": {
+      "description": "Sidecar mode: relative path to an external CSV/TSV data file. Mutually exclusive with `data`.",
+      "type": "string"
+    },
+    "data": {
+      "description": "Data rows as an array of arrays (one inner array per row, one cell per column, in `columns` order). No header row is embedded — names live in `columns`. Absent in sidecar or header-only stubs.",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/cell" }
+      }
+    },
+    "tables": {
+      "description": "Pack (multi-table) payload. One entry per table. When present, root-level columns/aggregates/sql/data/reference are not used — those live inside each table.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/table" }
+    },
+    "fk": {
+      "description": "Pack foreign keys — an informational relationship map (#fk lines). Not enforced.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/fk" }
+    }
+  },
+  "allOf": [
+    {
+      "not": {
+        "description": "A document cannot be both inline (data) and sidecar (reference).",
+        "required": ["data", "reference"]
+      }
+    },
+    {
+      "not": {
+        "description": "A pack (tables) cannot also carry root-level inline data.",
+        "required": ["tables", "data"]
+      }
+    },
+    {
+      "not": {
+        "description": "A pack (tables) cannot also carry a root-level sidecar reference.",
+        "required": ["tables", "reference"]
+      }
+    }
+  ],
+  "$defs": {
+    "cell": {
+      "description": "One CSV cell. JSON null is a true null. For decimal/long/int64, encode as string to avoid IEEE-754 precision loss; the column `type` tells consumers how to read it.",
+      "type": ["string", "number", "boolean", "null"]
+    },
+    "scalar": {
+      "type": ["string", "number", "boolean", "null"]
+    },
+    "column": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Column identifier. No spaces." },
+        "title": { "type": "string", "description": "Human-readable display name." },
+        "description": { "type": "string" },
+        "index": { "type": "integer", "minimum": 0, "description": "Zero-based position. Defaults to the array index." },
+        "type": {
+          "type": "string",
+          "enum": ["string", "int", "long", "float", "double", "decimal", "boolean", "date", "time", "datetime", "uuid", "binary"]
+        },
+        "format": { "type": "string", "description": "Display/parse hint, e.g. '0.00'." },
+        "unit": { "type": "string", "description": "Unit of measurement, e.g. USD, kg, ms." },
+        "role": {
+          "type": "string",
+          "enum": ["id", "dimension", "measure", "time"],
+          "description": "Analytical role, independent of storage type."
+        },
+        "agg": {
+          "type": "string",
+          "enum": ["sum", "avg", "min", "max", "none"],
+          "description": "Additivity hint for role=measure."
+        },
+        "order": { "type": "string", "enum": ["none", "asc", "desc"] },
+        "separator": { "type": "string", "description": "Sub-field separator inside a single cell." },
+        "enum": {
+          "description": "Closed set of allowed non-null values (typed per `type`). In the text form this is a pipe-separated string; in JSON it is an array.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/scalar" }
+        },
+        "pattern": { "type": "string", "description": "Regex the values match." },
+        "regexp_dialect": {
+          "type": "string",
+          "enum": ["ecmascript", "pcre", "posix_ere", "re2"],
+          "default": "ecmascript"
+        },
+        "min": { "$ref": "#/$defs/scalar", "description": "Minimum value (numeric/date)." },
+        "max": { "$ref": "#/$defs/scalar", "description": "Maximum value (numeric/date)." },
+        "len_min": { "type": "integer", "minimum": 0 },
+        "len_max": { "type": "integer", "minimum": 0 },
+        "unique": { "type": "boolean", "description": "Descriptive uniqueness hint." },
+        "required": { "type": "boolean", "description": "false = nullable, true = not null." },
+        "default": { "$ref": "#/$defs/scalar", "description": "Schema/DDL default. Not applied when reading data." }
+      },
+      "patternProperties": {
+        "^x-": { "description": "Custom, tool-specific attribute." }
+      },
+      "additionalProperties": true
+    },
+    "statement": {
+      "description": "A single SQL statement, optionally tagged by dialect and version.",
+      "type": "object",
+      "required": ["stmt"],
+      "additionalProperties": false,
+      "properties": {
+        "dialect": { "type": "string", "description": "e.g. ansi, mysql, postgres, clickhouse. Omitted = ansi / header default." },
+        "version": { "type": "string", "description": "Optional dialect version, e.g. '18'." },
+        "stmt": { "type": "string", "description": "The SQL statement (single statement, no embedded newlines needed)." }
+      }
+    },
+    "table": {
+      "description": "One table inside a pack. Mirrors a single-table document, plus a name.",
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Table name. Unique within the pack." },
+        "meta": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Table-level metadata (#@ lines in the table's _header)."
+        },
+        "csv": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "delim": { "type": "string" },
+            "quote": { "type": "string" },
+            "header": { "type": "boolean" },
+            "encoding": { "type": "string" },
+            "null": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/column" }
+        },
+        "aggregates": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/cell" }
+          }
+        },
+        "sql": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ddl": { "type": "array", "items": { "$ref": "#/$defs/statement" } },
+            "dql": { "type": "array", "items": { "$ref": "#/$defs/statement" } }
+          }
+        },
+        "checksum": { "type": "string", "pattern": "^[a-z0-9-]+:[0-9a-f]+$" },
+        "rows": { "type": "integer", "minimum": 0 },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/cell" }
+          }
+        }
+      }
+    },
+    "fk": {
+      "description": "An informational foreign key: from <table>.<column> to <table>.<column>.",
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "description": "e.g. 'orders.customer_id'." },
+        "to": { "type": "string", "description": "e.g. 'customers.id'." }
+      }
+    }
+  }
+}

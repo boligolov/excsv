@@ -32,6 +32,10 @@ The same header and `#column` / `#%` / `#$` / `#@` vocabulary works everywhere; 
 
 You can also **zip** an inline or sidecar file (`.excsv.zip`) and its schema is mirrored into the archive comment, so tools preview the metadata without unzipping.
 
+## Also available as JSON
+
+When you're already working in JSON — a web app, an API response, feeding a table to an AI model — the very same content (columns, types, aggregates, SQL, provenance) has a JSON form too. It's an exact mirror of the CSV form, so a file can go CSV → JSON → CSV without losing anything. You don't need it to use ExCSV; it's there for when JSON is simply more convenient. Details (and the schema) live in [implementation/json-profile.md](implementation/json-profile.md).
+
 ---
 
 Want the exact rules a tool must follow — required fields, validation, error codes? Those live in [implementation/](implementation/).

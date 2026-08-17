@@ -1,0 +1,54 @@
+{
+  "excsv": "0.3",
+  "csv": { "delim": "comma", "quote": "double", "header": true, "encoding": "UTF-8" },
+  "meta": {
+    "author": "author@example.com",
+    "source": "sales_db.orders",
+    "comment": "Quarterly sales export with all column features demonstrated",
+    "grain": "one row per order",
+    "created": "2026-01-01T00:00:00Z",
+    "exported": "2026-03-24T12:00:00Z",
+    "license": "CC-BY-4.0",
+    "tool": "excsv-cli/0.2.0",
+    "tags": ["sales", "Q1", "2026", "demo"]
+  },
+  "columns": [
+    { "name": "id", "type": "int", "unique": true, "role": "id", "title": "Order ID", "description": "Auto-incremented order identifier" },
+    { "name": "customer", "type": "string", "required": true, "role": "dimension", "len_min": 1, "len_max": 100, "title": "Customer Name" },
+    { "name": "email", "type": "string", "required": true, "len_max": 254, "pattern": "^[^@]+@[^@]+$" },
+    { "name": "amount", "type": "decimal", "format": "0.00", "unit": "USD", "role": "measure", "agg": "sum", "min": "0", "max": "999999.99", "default": "0.00", "order": "desc" },
+    { "name": "status", "type": "string", "role": "dimension", "enum": ["pending", "completed", "cancelled"], "default": "pending" },
+    { "name": "tags", "type": "string", "separator": "|", "title": "Order Tags" },
+    { "name": "created_at", "type": "datetime", "role": "time", "title": "Created At" },
+    { "name": "note", "type": "string", "x-ui-widget": "textarea" }
+  ],
+  "sql": {
+    "ddl": [
+      { "dialect": "mysql", "stmt": "CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL, amount DECIMAL(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMP, note TEXT) ENGINE=InnoDB" },
+      { "dialect": "mysql", "stmt": "CREATE UNIQUE INDEX orders_email_uq ON orders(email)" },
+      { "dialect": "postgres", "stmt": "CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL UNIQUE, amount NUMERIC(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMPTZ, note TEXT)" }
+    ],
+    "dql": [
+      { "stmt": "SELECT * FROM orders WHERE quarter = 'Q1'" }
+    ]
+  },
+  "checksum": "sha256:a1b2c3d4e5f6",
+  "rows": 4,
+  "aggregates": {
+    "count_nonnull":  [4, 4, 4, 4, 4, 3, 4, 2],
+    "count_null":     [0, 0, 0, 0, 0, 1, 0, 2],
+    "count_distinct": [4, 3, 3, 4, 2, 3, 4, 2],
+    "sum":            [null, null, null, "1050.50", null, null, null, null],
+    "avg":            [null, null, null, "262.625", null, null, null, null],
+    "min":            [null, null, null, "50.00", null, null, null, null],
+    "max":            [null, null, null, "500.00", null, null, null, null],
+    "len_min":        [null, null, 15, null, null, 6, null, 20],
+    "len_max":        [null, null, 18, null, null, 16, null, 21]
+  },
+  "data": [
+    [1, "Acme Corp", "acme@example.com", "500.00", "completed", "urgent|wholesale", "2026-01-15T09:30:00Z", "Large wholesale order"],
+    [2, "Globex Inc", "globex@example.com", "300.50", "completed", "retail", "2026-02-20T14:00:00Z", "Paid in full, net-30"],
+    [3, "Initech", "info@initech.io", "200.00", "pending", "urgent|retail", "2026-03-01T11:45:00Z", null],
+    [4, "Acme Corp", "acme@example.com", "50.00", "pending", null, "2026-03-10T16:20:00Z", null]
+  ]
+}

@@ -19,6 +19,7 @@ For a readable, benefits-first tour of the format, see the [guide in `docs/`](..
 | ZIP container | [zip.md](zip.md) |
 | Pack container | [pack.md](pack.md) |
 | Data section | [data-section.md](data-section.md) |
+| JSON profile (+ bijection) | [json-profile.md](json-profile.md) |
 | Error handling (code registry) | [error-handling.md](error-handling.md) |
 | Full example | [full-example.md](full-example.md) |
 | Prior art | [prior-art.md](prior-art.md) |

@@ -21,6 +21,8 @@ CSV that describes itself. These pages are for anyone who works with tables — 
 | [Prior art](prior-art.md) | What ExCSV borrows from ECSV, Annotated CSV, MetaCSV |
 | [License](license.md) | CC0 |
 
+Prefer JSON? The same content has an [exact JSON form](introduction.md#also-available-as-json) that round-trips with the CSV form.
+
 ---
 
 **Building a tool, parser, or validator?** The precise rules — required fields, edge cases, validation, and the full error-code registry — live in [implementation/](implementation/). This guide deliberately leaves them out so it stays readable.
