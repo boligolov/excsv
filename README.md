@@ -11,8 +11,6 @@ You open a CSV export and lose the afternoon: which column is the amount, is `01
 | **File extensions** | `.excsv`, `.extsv` (plain — inline or sidecar); `.excsv.zip`, `.extsv.zip` (row ZIP); `.excsv.pack.zip`, `.extsv.pack.zip` (columnar pack) |
 | **MIME types** | `text/excsv` (plain); `application/excsv+zip` (row ZIP); `application/excsv-pack+zip` (pack) |
 
-> **Feeding ExCSV to an LLM?** Use [`README-LLM.md`](README-LLM.md) — condensed tables, pseudocode, translation notes. Raw paste link: `https://raw.githubusercontent.com/boligolov/excsv/main/README-LLM.md`
-
 ## Why data scientists care
 
 - **Stop guessing types.** `#column type=… unit=USD format=…` — no inferring dates, ZIP codes, or decimals from a 5-row sample that lies.

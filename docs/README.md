@@ -21,5 +21,3 @@ Human-readable specification split by topic. Start at the [root README](../READM
 | Full example | [full-example.md](full-example.md) |
 | Prior art | [prior-art.md](prior-art.md) |
 | License | [license.md](license.md) |
-
-**LLM-optimized reference:** [README-LLM.md](../README-LLM.md) and [docs/llm/](llm/).

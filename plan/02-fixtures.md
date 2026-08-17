@@ -5,7 +5,7 @@ The shared corpus that drives every implementation's tests. Defined here once, c
 ## Purpose
 
 - **Parity check.** Go and Python parsers MUST agree on every fixture's outcome. Divergence = bug in one side or ambiguity in the spec — both are tracked.
-- **Spec coverage.** Every normative MUST / SHOULD / MAY in `README-LLM.md` has at least one fixture exercising it.
+- **Spec coverage.** Every normative MUST / SHOULD / MAY in `docs/` has at least one fixture exercising it.
 - **Regression net.** Fixtures are stable artifacts. Once added, they're never deleted (only superseded). Renames happen via aliasing in the manifest, not by renaming files.
 - **Cookbook source.** Recipes in the cookbook repo reference fixtures by ID so anyone reading the cookbook can re-run the example locally.
 

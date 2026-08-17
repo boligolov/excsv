@@ -8,7 +8,7 @@ Replaces the old `golang/features.md`, which is implemented but **obsolete**: it
 
 | Path | Purpose |
 | --- | --- |
-| `README-LLM.md`, `docs/llm/` | Normative spec (v0.3) |
+| `README.md`, `docs/` | Normative spec (v0.3) |
 | `plan/01-features.md` | Abstract feature catalog — **source of truth for capabilities** |
 | `plan/02-fixtures.md` | Fixture naming, manifest rules, generation |
 | `fixtures/` | Shared test corpus (`fixtures.yaml` + `plain/`, `zip/`, `pack/`) |
@@ -47,7 +47,7 @@ A wave is "done" only when all three tracks land it.
 
 ## Rules
 
-- **Spec first, code second.** If a feature isn't in `README-LLM.md`, it doesn't get implemented. If we need behaviour the spec doesn't pin down, update the spec here first.
+- **Spec first, code second.** If a feature isn't in `README.md` / `docs/`, it doesn't get implemented. If we need behaviour the spec doesn't pin down, update the spec here first.
 - **No partial waves.** Don't start wave N+1 until wave N is fully green on all three tracks.
 - **One fixture tree.** Implementations MUST NOT fork fixtures; they point at `fixtures/` in this repo.
 - **Reserved names stay reserved.** Row/plain readers ignore pack-only keys `layout=`, `section-size=`, `table-count=`, `single-table=`, `#table`, `#fk` (warn `pack_key_on_plain`). Don't accidentally implement pack semantics on row-form readers.

@@ -12,7 +12,7 @@ When an item lands, tick it here and update the spec/fixtures/reference docs.
 
 Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ deferred (post-v0.3)
 
-**Working rule:** land decisions in the **spec only** (`docs/`, `docs/llm/`, `README-LLM.md`) + this file. **Do not edit** `fixtures/` — fixtures are refactored in one dedicated pass later; track any decision that changes an expected fixture outcome in §3 "Fixture sync".
+**Working rule:** land decisions in the **spec only** (`docs/`) + this file. **Do not edit** `fixtures/` — fixtures are refactored in one dedicated pass later; track any decision that changes an expected fixture outcome in §3 "Fixture sync".
 
 ---
 
@@ -23,7 +23,7 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ defe
 
 | Area                                              | State                                                |
 | ------------------------------------------------- | ---------------------------------------------------- |
-| Spec docs (`docs/`, `docs/llm/`, `README-LLM.md`) | v0.3 written; loose ends in §1                       |
+| Spec docs (`docs/`)                               | v0.3 written; loose ends in §1                       |
 | Website (`website/`)                              | home, spec, examples, variants, tools — live         |
 | Feature catalog (`plan/01-features.md`)           | draft; version-gating unfinished                     |
 | Plain fixtures                                    | valid 001–039, invalid 001–032 on disk + in manifest |

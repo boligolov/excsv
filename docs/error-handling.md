@@ -1,6 +1,6 @@
 # Error Handling — Canonical Code Registry
 
-The **single normative source** for ExCSV error/warning codes. The `error_kind` enum in `fixtures/fixtures.yaml` and the compact list in [`docs/llm/error-handling.md`](llm/error-handling.md) MUST match the codes here.
+The **single normative source** for ExCSV error/warning codes. The `error_kind` enum in `fixtures/fixtures.yaml` MUST match the codes here.
 
 **Severity**
 
