@@ -32,7 +32,7 @@ Carol,45,Lagos`}
 1,Acme Corp,500.00
 2,Globex Inc,250.50`}
     </CodeBlock>
-    <p class="note">See <a href="/variants/sidecar/">Sidecar</a> and <a href="/spec/#sidecar">§2.3</a>. The sidecar MUST NOT contain data rows.</p>
+    <p class="note">See <a href="/variants/sidecar/">Sidecar</a> and <a href="/spec/#sidecar">§2.2</a>. A sidecar carries metadata only — never data rows.</p>
   </section>
 
   <section class="example">
@@ -155,7 +155,7 @@ order_id,customer_id,amount
 #table name=customers dir=customers/ columns=2 original-size=512000
 #fk from=orders.customer_id to=customers.id`}
     </CodeBlock>
-    <p class="note">Pack stores each table in its own directory with <code>_header.excsv</code> and <code>.col</code> column files. See <a href="/variants/pack/">pack variant</a> and <a href="/spec/#pack-container">§10.5</a>.</p>
+    <p class="note">Pack stores each table in its own directory with <code>_header.excsv</code> and <code>.col</code> column files. See <a href="/variants/pack/">pack variant</a> and <a href="/spec/#pack-container">Pack container</a>.</p>
   </section>
 
   <section class="example">

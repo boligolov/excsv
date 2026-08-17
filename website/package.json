@@ -4,7 +4,10 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
+    "sync-schema": "node scripts/sync-schema.mjs",
+    "predev": "node scripts/sync-schema.mjs",
     "dev": "astro dev",
+    "prebuild": "node scripts/sync-schema.mjs",
     "build": "astro build",
     "preview": "npm run build && wrangler dev",
     "generate-types": "wrangler types",
