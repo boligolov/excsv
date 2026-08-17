@@ -12,10 +12,10 @@ The header line **MAY** include one of:
 ## Payload
 
 ```
-#csvw {"tableSchema": {"columns": [...]}}
+#csvw: {"tableSchema": {"columns": [...]}}
 ```
 
-`#csvw` followed by a space and value to end of line.
+`#csvw:` followed by the value to end of line. One optional leading space after `:` is skipped (readability only).
 
 - The payload **MUST** be valid JSON (after decoding if `base64url`).
 - Readers **MAY** ignore CSVW metadata entirely.

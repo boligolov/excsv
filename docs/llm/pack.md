@@ -17,7 +17,7 @@ _manifest.excsv          # layout=pack, version=0.3, original-size=sum(#table or
 #!excsv version=0.3 layout=pack original-size=<bytes> [single-table=<name>] [table-count=N]
 ```
 
-- `original-size` = sum of all `#table original-size=` (uncompressed column bytes only).
+- `original-size` = sum of all `#table original-size=` (uncompressed `.col` bytes only; excludes `_header.excsv`). Not the same as row-ZIP `original-size` (whole inner file) — see [header.md](header.md#original-size-scopes).
 - `single-table=<name>`: optional default for `--table`; dropped when second table added.
 - Manifest-only meta: `#table name= dir= columns= original-size=`, `#fk from=t.c to=t.c` (informational).
 
@@ -46,7 +46,7 @@ Authoring: pack create, table add/drop/extract.
 ## Validation highlights
 
 - Manifest first ZIP entry; version=0.3; layout=pack.
-- columns= matches #column count; original-size matches .col uncompressed sum.
+- columns= is the physical column count = non-virtual `#column` count (stored + materialized); virtual computed columns (formula= without materialized=1) have no .col and are excluded. original-size matches .col uncompressed sum.
 - Each .col (or section set) line count = rows.
 - Auto-discovery: if no #table lines, subdirs with _header.excsv, alphabetical, SHOULD warn.
 

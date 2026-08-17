@@ -91,7 +91,7 @@ Single-table example:
 | `#fk` | `#fk from=<t>.<col> to=<t>.<col>` | Informational FK (no enforcement) |
 
 - `dir` — ZIP path prefix with trailing `/`.
-- `columns` — count of `#column` lines in that table's `_header.excsv`.
+- `columns` — physical column count = non-virtual `#column` lines in that table's `_header.excsv` (stored + `materialized=1`). Virtual computed columns (`formula=` without `materialized=1`) have no `.col` and are excluded.
 - `original-size` — uncompressed sum of `.col` / section `.col` bytes under `dir/` (excludes `_header.excsv`).
 
 Never use `#table` / `#fk` in table `_header.excsv` or plain / row-ZIP files.

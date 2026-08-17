@@ -1,4 +1,4 @@
-#!excsv version=0.2 sql-dialect=postgres
+﻿#!excsv version=0.3 sql-dialect=postgres
 #$ddl: CREATE TABLE users (id BIGSERIAL PRIMARY KEY, email VARCHAR(254) NOT NULL)
 #$ddl: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES users(id), amount NUMERIC(10,2))
 #$ddl: CREATE INDEX orders_user_id_idx ON orders(user_id)

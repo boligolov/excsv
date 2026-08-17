@@ -1,13 +1,13 @@
 # Step 2 — Test Fixtures
 
-The shared corpus that drives every implementation's tests. Defined here once, consumed by Go (`03-golang.md`), Python (`04-python.md`), and the cookbook (`05-cookbook.md`). Implementation-agnostic.
+The shared corpus that drives every implementation's tests. Defined here once, consumed by [excsv-golang](https://github.com/boligolov/excsv-golang), the Python package (separate repo), and the cookbook (separate repo). Implementation-agnostic.
 
 ## Purpose
 
 - **Parity check.** Go and Python parsers MUST agree on every fixture's outcome. Divergence = bug in one side or ambiguity in the spec — both are tracked.
 - **Spec coverage.** Every normative MUST / SHOULD / MAY in `README-LLM.md` has at least one fixture exercising it.
 - **Regression net.** Fixtures are stable artifacts. Once added, they're never deleted (only superseded). Renames happen via aliasing in the manifest, not by renaming files.
-- **Cookbook source.** Recipes in `05-cookbook.md` reference fixtures by ID so anyone reading the cookbook can re-run the example locally.
+- **Cookbook source.** Recipes in the cookbook repo reference fixtures by ID so anyone reading the cookbook can re-run the example locally.
 
 ## Layout
 
@@ -30,7 +30,7 @@ fixtures/
 └── fixtures.yaml          ← manifest: per-fixture expected outcome
 ```
 
-Each implementation's test directory **MUST NOT** duplicate fixtures. Symlink, junction, or read directly from `fixtures/`. Both Go (`golang/internal/testdata`) and Python (`python/tests/data`) point at the same tree.
+Each implementation's test directory **MUST NOT** duplicate fixtures. Symlink, junction, submodule, or read directly from `fixtures/` in this repo. Both excsv-golang and the Python package point at the same tree.
 
 ## Naming
 
@@ -57,7 +57,7 @@ The manifest is the source of truth. Test runners walk it, not the directory.
     parse: ok
     warnings: []
     header:
-      version: "0.2"
+      version: "0.3"
     rows: 0
     columns: 0
 
@@ -82,7 +82,7 @@ The manifest is the source of truth. Test runners walk it, not the directory.
   expect:
     parse: ok
     comment:
-      starts_with: "#!excsv version=0.2"
+      starts_with: "#!excsv version=0.3"
       ends_with: "#@comment-truncated: 1"
 ```
 
@@ -98,7 +98,7 @@ Fields:
 - `profile` (in `expect` or top-level) — how the runner opens the fixture: `stub` (header-only, no `reference=`), `sidecar` (metadata-only + `reference=`, load sibling), `sidecar_strict` (sidecar parse MUST resolve `reference=` or fail).
 - `superseded_by` — if set, runners skip this fixture but keep it on disk for historical reference.
 
-A shared **error kind enum** lives in the manifest header so both Go and Python emit the same symbolic name. Examples: `header_missing_version`, `header_malformed_kv`, `agg_arity_mismatch`, `sql_missing_colon`, `sql_embedded_newline`, `sidecar_has_data_section`, `sidecar_missing_reference`, `sidecar_reference_not_found`, `sidecar_delim_ext_mismatch`, `sidecar_checksum_mismatch`, `zip_original_size_mismatch`, `zip_comment_not_excsv_prefix`, `pack_manifest_missing_layout`, `pack_table_dir_missing`, …
+A shared **error kind enum** lives in the manifest header so both Go and Python emit the same symbolic name. Examples: `header_missing_version`, `header_malformed_kv`, `agg_arity_mismatch`, `sql_missing_colon`, `sql_embedded_newline`, `sidecar_has_data_section`, `sidecar_missing_reference`, `sidecar_reference_not_found`, `extsv_delim_mismatch`, `sidecar_checksum_mismatch`, `zip_original_size_mismatch`, `zip_comment_not_excsv_prefix`, `pack_manifest_missing_layout`, `pack_table_dir_missing`, …
 
 ## Source-controlled vs generated
 
@@ -269,7 +269,7 @@ For each wave: **fixtures land before code**. The implementation tracks then pul
 
 ## Next
 
-This corpus is the input to:
-- `03-golang.md` — Go runner walks `fixtures.yaml`, drives `pkg/excsv` against every fixture, compares actual vs expected.
-- `04-python.md` — same corpus, idiomatic Python test harness.
-- `05-cookbook.md` — recipes cite fixtures by ID, so readers can copy-paste.
+This corpus is the input to implementation repos:
+- **excsv-golang** — test runner walks `fixtures.yaml`, drives `pkg/excsv` against every fixture, compares actual vs expected.
+- **Python** — same corpus, idiomatic test harness.
+- **Cookbook** — recipes cite fixtures by ID, so readers can copy-paste.

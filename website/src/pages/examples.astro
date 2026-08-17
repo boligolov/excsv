@@ -197,7 +197,7 @@ id,Full Name,email,segment,ltv
 #column name=id type=int unique=1
 #column name=name type=string
 #column name=dept type=string
-#csvw {"tableSchema":{"columns":[{"name":"id","datatype":"integer"},{"name":"name","datatype":"string"},{"name":"dept","datatype":"string"}]}}
+#csvw: {"tableSchema":{"columns":[{"name":"id","datatype":"integer"},{"name":"name","datatype":"string"},{"name":"dept","datatype":"string"}]}}
 id,name,dept
 1,Alice,Engineering
 2,Bob,Marketing
@@ -231,6 +231,27 @@ TMP-03,NA,ok
 TMP-04,19.8,NA`}
     </CodeBlock>
     <p class="note">Both empty fields and <code>NA</code> are treated as null. Without <code>null=NA</code>, only empty fields would be null.</p>
+  </section>
+
+  <section class="example">
+    <CodeBlock title="15. LLM-friendly: grain, enum, role, agg" description="Semantic hints that let an AI assistant reason about the table without guessing.">
+{`#!excsv version=0.3 delim=comma header=1
+#@source: sales_db.orders
+#@grain: one row per order
+#column name=order_id type=long unique=1 role=id
+#column name=status type=string role=dimension enum=pending|completed|cancelled
+#column name=amount type=decimal unit=USD role=measure agg=sum
+#column name=balance type=decimal unit=USD role=measure agg=avg
+#column name=created_at type=datetime role=time
+#%count_nonnull: 4,4,4,4,4
+#%sum: ,,1050.50,,
+order_id,status,amount,balance,created_at
+1,completed,500.00,1200.00,2026-01-15T09:30:00Z
+2,completed,300.50,900.00,2026-02-20T14:00:00Z
+3,pending,200.00,700.00,2026-03-01T11:45:00Z
+4,cancelled,50.00,650.00,2026-03-10T16:20:00Z`}
+    </CodeBlock>
+    <p class="note"><code>#@grain</code> states what one row is. <code>enum</code> gives the closed value domain for <code>status</code>. <code>role</code> tells a consumer how to use each column — group by <code>dimension</code>, aggregate <code>measure</code>, never sum an <code>id</code> — and <code>agg</code> flags additivity: <code>amount</code> sums, but <code>balance</code> (<code>agg=avg</code>) must not be summed across time. All are advisory hints; none change how a plain CSV reader sees the data.</p>
   </section>
 </Base>
 

@@ -37,7 +37,7 @@ If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, a
 | `encoding`      | MAY                        | Character encoding (default `UTF-8`)                                                                                                 |
 | `schema`        | MAY                        | Schema precedence: `excsv` (default) or `csvw`                                                                                       |
 | `sql-dialect`   | MAY                        | Default SQL dialect for unqualified `#$` lines (see [SQL](sql.md))                                                  |
-| `original-size` | **MUST** if zipped         | Uncompressed byte size of the inner `.excsv` file (decimal integer). Must match the ZIP central directory `uncompressed_size`. See [ZIP](zip.md). |
+| `original-size` | **MUST** in row-ZIP and pack manifest | Meaning depends on container: row-ZIP inner file = uncompressed bytes of the entire inner `.excsv`/`.extsv`; pack `_manifest.excsv` = sum of `#table original-size=` (column payload only). Omit on plain files. See [ZIP](zip.md) and [Pack](pack.md). |
 | `reference`     | **MUST** if sidecar        | Relative path to the CSV/TSV data file. See [File structure](file-structure.md#sidecar-detached-metadata). **MUST NOT** be set on inline documents. |
 
 ### Delimiter Values

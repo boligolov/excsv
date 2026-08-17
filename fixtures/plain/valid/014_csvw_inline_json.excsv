@@ -1,4 +1,4 @@
-#!excsv version=0.2 csvw=inline-json schema=csvw
-#csvw {"@context":"http://www.w3.org/ns/csvw","tableSchema":{"columns":[{"name":"id","datatype":"integer"}]}}
+﻿#!excsv version=0.3 csvw=inline-json schema=csvw
+#csvw: {"@context":"http://www.w3.org/ns/csvw","tableSchema":{"columns":[{"name":"id","datatype":"integer"}]}}
 id
 1

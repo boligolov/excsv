@@ -20,7 +20,7 @@ Five recognized structured kinds plus a human-comment line, by prefix:
 | `## ...`                     | Human comment (ignored by parsers; comment to end of line) | `## TODO: drop legacy status values` |
 | `#@key: value`               | File-level metadata | `#@source: sales_db.orders`              |
 | `#column ...`                | Column annotation   | `#column name=id type=int`               |
-| `#csvw ...`                  | CSVW payload        | `#csvw {"tableSchema": ...}`             |
+| `#csvw: ...`                 | CSVW payload        | `#csvw: {"tableSchema": ...}`            |
 | `#$<verb>[-<dialect>]: ...`  | SQL companion       | `#$ddl-mysql: CREATE TABLE orders (...)` |
 | `#%<name>: ...`              | Aggregation values  | `#%sum: ,, 42.5`                         |
 

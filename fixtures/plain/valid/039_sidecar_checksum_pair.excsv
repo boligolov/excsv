@@ -1,3 +1,3 @@
-#!excsv version=0.2 delim=comma header=1 rows=2 reference=039_sidecar_checksum_pair.csv checksum=sha256:0b3f39155f0904ac1a986803018c602ca7202e944afd7431ba601276f7b6344b
+﻿#!excsv version=0.3 delim=comma header=1 rows=2 reference=039_sidecar_checksum_pair.csv checksum=sha256:0b3f39155f0904ac1a986803018c602ca7202e944afd7431ba601276f7b6344b
 #column name=id type=int
 #column name=value type=decimal

@@ -98,14 +98,33 @@ id,name,price
 ## sql-dialect header (avoid suffixing every line)
 
 ```
-#!excsv version=0.3 delim=comma header=1 sql-dialect=postgres-15
+#!excsv version=0.3 delim=comma header=1 sql-dialect=postgres-18
 #$ddl: CREATE TABLE events (id BIGSERIAL PRIMARY KEY, ts TIMESTAMPTZ, payload JSONB)
 #$ddl: CREATE INDEX events_ts_brin ON events USING BRIN(ts)
 #$ddl: GRANT SELECT ON events TO readonly
 #$dql: SELECT * FROM events WHERE ts >= NOW() - INTERVAL '24 hours'
-  ^ all #$ lines have effective dialect = postgres-15 (from header)
+  ^ all #$ lines have effective dialect = postgres-18 (from header)
 id,ts,payload
 1,2026-04-01T00:00:00Z,{}
+```
+
+## LLM-friendly hints (grain, enum, role, agg)
+
+```
+#!excsv version=0.3 delim=comma header=1
+#@source: sales_db.orders
+#@grain: one row per order
+#column name=order_id type=long unique=1 role=id
+#column name=status type=string role=dimension enum=pending|completed|cancelled
+#column name=amount type=decimal unit=USD role=measure agg=sum
+#column name=balance type=decimal unit=USD role=measure agg=avg
+#column name=created_at type=datetime role=time
+#%sum: ,,1050.50,,
+order_id,status,amount,balance,created_at
+1,completed,500.00,1200.00,2026-01-15T09:30:00Z
+2,pending,200.00,700.00,2026-03-01T11:45:00Z
+  ^ #@grain = unit of one row; enum = closed value domain; role/agg = how to aggregate
+  ^ amount sums (agg=sum); balance is semi-additive (agg=avg, don't sum across time); never sum role=id
 ```
 
 ## Zipped (.excsv.zip) — inner file header

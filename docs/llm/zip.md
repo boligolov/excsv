@@ -13,6 +13,8 @@ The archive MUST contain at least one entry whose name ends in `.excsv` or `.ext
 
 Additional entries (auxiliary data, schemas, attachments) MAY appear after the primary file. Readers MUST locate the primary by the rule above and ignore other entries unless they understand them.
 
+Readers MUST NOT scan forward to find a matching entry: if the FIRST central-directory entry is not a valid primary (wrong name, or not ending in `.excsv`/`.extsv`), the archive MUST fail `zip_primary_not_first`, even if a later entry would match. Determinism > repairability — the primary is the first entry or nothing.
+
 ## Compression
 
 The primary entry SHOULD use Deflate (method 8). Store (method 0), Deflate64 (method 9), BZIP2 (method 12), LZMA (method 14), and Zstandard (method 93) MAY be used. Other methods SHOULD be rejected.
@@ -32,10 +34,10 @@ Archive MAY use standard ZIP encryption (PKZIP traditional or AES — writer cho
 The inner `.excsv` or `.extsv` file's `#!excsv` header MUST include:
 
 ```
-original-size=<bytes>   uncompressed byte size of the inner .excsv file (decimal integer)
+original-size=<bytes>   uncompressed byte size of the entire inner .excsv/.extsv file (decimal integer)
 ```
 
-This value MUST match the `uncompressed_size` field recorded in the ZIP central directory entry for the primary file. A mismatch MUST be reported as a validation error.
+Row-ZIP only — not the pack-manifest meaning (see [header.md](header.md#original-size-scopes)). This value MUST match the `uncompressed_size` field recorded in the ZIP central directory entry for the primary file. A mismatch MUST be reported as a validation error.
 
 For semantic content integrity use the `checksum=` header field (see [checksum.md](checksum.md)). It covers the data section and survives re-compression or re-archiving. `checksum=` SHOULD be set for zipped files when semantic integrity matters.
 
@@ -75,7 +77,8 @@ This is the LAST line in the comment when truncation occurred. Its presence sign
 Readers MUST treat the comment as advisory:
 
 - The comment is for fast preview / indexing without extraction. The authoritative source is always the inner `.excsv` file.
-- If the comment's `#!excsv` line disagrees with the inner file's `#!excsv` line (other than truncation), the inner file wins. Implementations MAY warn.
+- Invalid comment (not UTF-8, or not a valid ExCSV prefix) MUST NOT block extraction or parsing of the inner file. Implementations SHOULD warn (`zip_comment_not_utf8`, `zip_comment_not_excsv_prefix`).
+- If the comment's `#!excsv` line disagrees with the inner file's `#!excsv` line (other than truncation), the inner file wins. Implementations SHOULD warn.
 
 ## Reading a `.excsv.zip` (algorithm)
 
@@ -87,6 +90,22 @@ Readers MUST treat the comment as advisory:
 5. Parse extracted content as ExCSV (see parsing.md).
 6. Validate: inner #!excsv `original-size` MUST equal ZIP central dir uncompressed size.
 ```
+
+## Verification (`excsv verify`)
+
+`excsv verify ARCHIVE.excsv.zip` performs a full integrity check on the inner document:
+
+1. **ZIP structure** — primary entry present, first in central directory, name rule satisfied.
+2. **`original-size`** — inner `#!excsv` `original-size=` MUST equal the primary entry's `uncompressed_size` in the central directory.
+3. **`checksum=`** — if the inner header sets `checksum=`, recompute the digest over the data section (LF-normalized, per [checksum.md](checksum.md)) and compare. Mismatch → warn `checksum_mismatch`; NOT fatal (checksum is advisory — verify warns but does not fail on it).
+
+Structure check (1) and `original-size` (2) are MUST-fail; checksum (3) is warn-only.
+
+Warnings (non-fatal): checksum mismatch; invalid ZIP comment (not UTF-8, not a valid ExCSV prefix); ZIP comment disagrees with inner header (other than `#@comment-truncated: 1`).
+
+`excsv peek ARCHIVE.excsv.zip` reads only the ZIP comment (no extraction). `excsv verify` always extracts and parses the primary entry.
+
+Command names are flat (`excsv peek`, `excsv verify`) — not nested under `excsv zip`.
 
 ## Writing a `.excsv.zip` (algorithm)
 
@@ -108,7 +127,7 @@ sales.excsv.zip
 └── sales.excsv          (compressed deflate, 7,432 bytes; uncompressed 18,204 bytes)
 
 ZIP comment (4,128 bytes):
-#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924... original-size=18204 sql-dialect=postgres-15
+#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924... original-size=18204 sql-dialect=postgres-18
 #@source: sales_db.orders
 #@author: author@example.com
 #@created: 2026-01-01T00:00:00Z
@@ -129,6 +148,6 @@ ZIP comment (4,128 bytes):
 The inner `sales.excsv` (uncompressed):
 
 ```
-#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 schema=excsv checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924... original-size=18204 sql-dialect=postgres-15
+#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924... original-size=18204 sql-dialect=postgres-18
 ... full file: all #@ / #column / #% / #csvw lines, then data section ...
 ```

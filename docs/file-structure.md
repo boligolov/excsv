@@ -44,7 +44,9 @@ Plain `.excsv` and `.extsv` files **MAY** be **inline** (header + meta + data) o
 
 **Derived fields:** `rows=`, `checksum=`, and `#%` lines describe the **referenced** data file. Checksum verification requires opening both files.
 
-**Discovery:** when opening `sales.csv`, implementations **MAY** load `sales.excsv` from the same directory; when opening `sales.tsv`, implementations **MAY** load `sales.extsv`. When opening a sidecar, implementations **MUST** resolve `reference=` to obtain data rows.
+**Discovery:** when opening `sales.csv`, implementations **MAY** load `sales.excsv` from the same directory; when opening `sales.tsv`, implementations **MAY** load `sales.extsv`.
+
+**Parse vs open/load:** *parsing* a sidecar reads its metadata only — the referenced file is **not** required and parsing always succeeds. *Opening/loading* resolves `reference=` to get the data rows. If the referenced file does not exist, this is **not** a fatal error: implementations **MUST** warn (`sidecar_reference_not_found`) and treat the handle as **read-only, metadata-only** — data operations (reading rows, checksum/`rows=`/`#%` verification, materialization, edit-through) are unavailable because there is no source data. Never block on a missing reference; warn.
 
 **Example** — `sales.excsv`:
 

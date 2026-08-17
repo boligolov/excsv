@@ -41,8 +41,10 @@ Files SHOULD share the same basename (`sales.excsv` + `sales.csv`, or `sales.ext
 reference=<relative-path>   REQUIRED on sidecars; path to the data file, relative to the sidecar file's directory
 ```
 
-- The path MUST be relative (MUST NOT be absolute).
+- The path MUST be relative (MUST NOT be absolute, e.g. MUST NOT start with `/` or a drive letter like `C:\`).
 - Typical value is a basename only (`sales.csv`). Subpaths (`exports/sales.csv`) MAY be used.
+- The path MUST NOT contain `..` segments and MUST resolve to a location **inside** the sidecar file's directory (or a subdirectory of it). A `reference=` that escapes the sidecar's directory is a MUST-fail error (`sidecar_reference_escapes_dir`). This prevents path-traversal reads (e.g. `reference=../../etc/passwd`).
+- Implementations MUST resolve and bounds-check the path before opening the referenced file (reject symlink escapes where the platform allows checking).
 - Inline documents (with a data section) MUST NOT set `reference=`.
 - `#@source` is provenance (system/table name), not a load path — do not substitute for `reference=`.
 
@@ -57,12 +59,14 @@ reference=<relative-path>   REQUIRED on sidecars; path to the data file, relativ
 When `reference=` is set:
 
 - `rows=`, `checksum=`, and `#%` lines describe the **referenced** data file, not the sidecar bytes.
-- Checksum verification requires reading the pair (sidecar + referenced file). Parsing the sidecar alone MAY skip checksum verification.
+- Checksum verification requires reading the pair (sidecar + referenced file). Parsing the sidecar alone MAY skip checksum verification. Mismatch when the pair is validated → warn (`sidecar_checksum_mismatch`); never fatal, including under `excsv verify` (see checksum.md).
 - Data-section rules (`delim`, `quote`, `header`, `null`) apply when parsing the referenced file.
 
 ### Discovery (optional ergonomics)
 
-When opening `sales.csv`, implementations MAY look for `sales.excsv` in the same directory; when opening `sales.tsv`, implementations MAY look for `sales.extsv`. When opening a sidecar, implementations MUST resolve `reference=` to load data (strict parse MUST require the referenced file to exist; lenient MAY warn).
+When opening `sales.csv`, implementations MAY look for `sales.excsv` in the same directory; when opening `sales.tsv`, implementations MAY look for `sales.extsv`.
+
+Parse vs open/load: parsing a sidecar reads metadata only — the referenced file is NOT required, parsing always succeeds. Opening/loading resolves `reference=` to obtain data rows. A missing referenced file is NOT fatal: warn `sidecar_reference_not_found` and degrade the handle to read-only / metadata-only — data operations (read rows, checksum / `rows=` / `#%` verification, materialize, edit-through) are unavailable (no source). Never block on a missing reference; warn (same policy as checksum, see checksum.md).
 
 ### Prior art: MetaCSV
 

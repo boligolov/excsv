@@ -1,4 +1,4 @@
-#!excsv version=0.2 delim=comma header=1 reference=other.csv
+﻿#!excsv version=0.3 delim=comma header=1 reference=other.csv
 #column name=id type=int
 id,value
 1,10

@@ -10,6 +10,18 @@ Dense spec for AI assistants. Human-readable split: [docs/](docs/). Topic index 
 
 **Meta prefixes:** `##` human comment (ignore) · `#@` file metadata · `#column` schema · `#csvw` JSON · `#$` SQL · `#%` aggregations.
 
+**Three shapes (same `#!excsv`/`#column`/`#%`/`#$`/`#@` vocabulary; differ only in packaging):**
+
+| Shape | Form | Original CSV | Killer trait | Use when |
+| --- | --- | --- | --- | --- |
+| **Inline** | `#`-meta above the rows, one `.excsv`/`.extsv` | becomes ExCSV | self-describing yet still CSV-readable | you generate/share the file; LLM paste |
+| **Sidecar** | header+meta only, `reference=` → sibling `.csv`/`.tsv` (no data rows) | untouched | annotate without mutating | existing / immutable / vendor data |
+| **Pack** | `.excsv.pack.zip`: `_manifest.excsv` + per-table dirs of per-column `.col` | n/a | columnar, multi-table, selective single-column read, `#fk` | wide tables, DB snapshots |
+
+Orthogonal wrapper: `.excsv.zip` / `.extsv.zip` = an inline **or** sidecar file Deflate-wrapped, schema mirrored into the ZIP comment for no-unzip preview (optional standard password). Pack is inherently a columnar ZIP.
+
+**Selling points (data scientists):** explicit `type`/`unit`/`format` (no sample-based type inference); `#%` aggregates as a trust anchor (answer/verify totals without a full scan); `#@grain` + `role=`/`agg=` state row meaning and valid ops; `#$ddl` recreates the schema in any dialect; metadata lines all start with `#` so `grep`/`awk`/pandas/Excel keep working.
+
 **ZIP password:** `.excsv.zip` / `.extsv.zip` MAY be protected with standard ZIP encryption (writer/reader tooling prompts for password; secret not in `#!excsv` or comment). Encrypted archives need the password before parse; comment fast-path unavailable until unlocked. See [docs/llm/zip.md](docs/llm/zip.md#password-protection).
 
 ---
@@ -31,7 +43,6 @@ Dense spec for AI assistants. Human-readable split: [docs/](docs/). Topic index 
 | ZIP container | [docs/llm/zip.md](docs/llm/zip.md) |
 | Pack container | [docs/llm/pack.md](docs/llm/pack.md) |
 | Data section | [docs/llm/data-section.md](docs/llm/data-section.md) |
-| Pack-only keys | [docs/llm/reserved.md](docs/llm/reserved.md) |
 | Error handling | [docs/llm/error-handling.md](docs/llm/error-handling.md) |
 | Parsing algorithm | [docs/llm/parsing.md](docs/llm/parsing.md) |
 | Serialization algorithm | [docs/llm/serialization.md](docs/llm/serialization.md) |

@@ -11,6 +11,8 @@ The archive **MUST** contain at least one entry whose name ends in `.excsv` or `
 
 Additional entries (auxiliary data, attachments) **MAY** follow.
 
+Readers **MUST NOT** scan past the first entry to find a matching name. If the first central-directory entry is not a valid primary (wrong name, or not `.excsv`/`.extsv`), the archive **MUST** fail with `zip_primary_not_first` — even if a later entry would satisfy the name rule. Determinism beats repairability: the primary is *the first entry or nothing*.
+
 ## Compression
 
 The primary entry **SHOULD** use Deflate (method 8). Store, Deflate64, BZIP2, LZMA, and Zstandard **MAY** be used. ZIP64 extensions **MUST** be supported.
@@ -63,12 +65,22 @@ If any content was omitted, the comment **MUST** end with:
 #@comment-truncated: 1
 ```
 
-Readers **MUST** treat the comment as **advisory**: the authoritative source is the inner file. If they disagree (beyond truncation), the inner file wins.
+Readers **MUST** treat the comment as **advisory**: the authoritative source is the inner file. Invalid comment (not UTF-8, or not a valid ExCSV prefix) **MUST NOT** block extraction or parsing of the inner file — **SHOULD** warn. If comment and inner header disagree (beyond truncation), the inner file wins — **SHOULD** warn.
+
+## Verification (`excsv verify`)
+
+`excsv verify ARCHIVE.excsv.zip` checks:
+
+1. Primary entry layout (first in central directory, correct name).
+2. Inner `original-size=` matches the primary entry's `uncompressed_size`.
+3. If `checksum=` is set, recomputed data-section digest matches (see [Checksum](checksum.md)).
+
+Mismatch on (2) **MUST** fail. A checksum mismatch (3) **SHOULD** warn but **MUST NOT** fail — checksum is advisory (see [Checksum](checksum.md)). Invalid comment or comment vs inner header disagreements **SHOULD** warn.
+
+`excsv peek` reads only the ZIP comment. Commands are flat (`excsv peek`, `excsv verify`), not `excsv zip peek`.
 
 ## Pack container
 
 Multi-table columnar archives (`.excsv.pack.zip`, `.extsv.pack.zip`) are specified in **[pack.md](pack.md)**. They use `layout=pack` on the manifest and `layout=columnar` on each table's `_header.excsv`.
 
-Plain and row-oriented ZIP files **MUST NOT** use `layout=`, `#table`, or `#fk`. Writers **MUST NOT** emit pack-only keys on non-pack files.
-
-When readers encounter pack-only header keys or meta lines on a plain or row-ZIP file, they follow forward-compatibility rules: ignore unknown keys and unknown `#` lines.
+Plain and row-oriented ZIP files **MUST NOT** use pack-only keys. Reserved on row/plain (ignore, not fatal): header fields `layout=`, `section-size=`, `table-count=`; meta lines `#table`, `#fk`.

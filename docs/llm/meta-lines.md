@@ -14,6 +14,13 @@ Free-form comment to end of line. MUST be ignored by parsers — carries no stru
 
 `##` lines are NOT preserved in canonical re-serialization unless the implementation specifically opts into preserving them (round-trip mode). The default writer MAY drop them.
 
+## Line syntax: two families
+
+Every meta line falls into one of two shapes, decided by its prefix:
+
+- **Multi-attribute** (`#column`, plus header `#!excsv` and pack `#table`/`#fk`): space-separated `key=value` pairs. Quoting per [header.md](header.md).
+- **Single payload** (`#@<key>:`, `#$<verb>:`, `#%<name>:`, `#csvw:`): a `:` separates the (optional) name from the payload, which runs to end of line. Exactly one leading space after `:` is stripped if present — it is purely cosmetic and carries no meaning (so `#@author:x` and `#@author: x` are identical). For `#%`, the payload is then parsed as a CSV row.
+
 ## Prefix index
 
 | Kind | Prefix | Detail |
@@ -21,6 +28,6 @@ Free-form comment to end of line. MUST be ignored by parsers — carries no stru
 | File metadata | `#@key: value` | [file-metadata.md](file-metadata.md) |
 | Column | `#column ...` | [columns.md](columns.md) |
 | Aggregation | `#%<name>: ...` | [aggregations.md](aggregations.md) |
-| CSVW | `#csvw ...` | [csvw.md](csvw.md) |
-| SQL | `#$<verb>[-<dialect>]: ...` | [sql.md](sql.md) |
+| CSVW | `#csvw: ...` | [csvw.md](csvw.md) |
+| SQL | `#$<verb>[-<dialect-suffix>]: ...` | [sql.md](sql.md) |
 | Pack manifest | `#table`, `#fk` | [pack.md](pack.md) — `_manifest.excsv` only, v0.3 |

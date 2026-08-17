@@ -1,4 +1,4 @@
-#!excsv version=0.2
+﻿#!excsv version=0.3
 #column name=id type=int
 #column name=email type=string
 id,email,role

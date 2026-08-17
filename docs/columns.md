@@ -73,8 +73,14 @@ Allowed types:
 
 | Field      | Requirement | Description                                             |
 | ---------- | ----------- | ------------------------------------------------------- |
-| `default`  | MAY         | Default value for missing fields                        |
-| `required` | MAY         | `1` = field must not be null, `0` = nullable. If `default` is also set, the default satisfies the requirement |
+| `default`  | MAY         | Schema/DDL default (see below). **Not** applied when reading data. |
+| `required` | MAY         | `1` = field must not be null, `0` = nullable. If `default` is also set, the default satisfies the requirement at the schema level |
+
+**`default` is a schema attribute, not a read transform.** ExCSV *describes* data verbatim: an empty field, or a field equal to the file's `null` marker, reads as **null** regardless of `default`. A parser MUST NOT fabricate a value from `default`, so `count_null` and null-based validation see the data as authored — `default` never reduces the null count.
+
+In generated DDL, `default` emits as `DEFAULT <value>` (with `required=1` → `NOT NULL DEFAULT <value>`). It states what the **target database** fills in for missing values on insert — not what the current ExCSV bytes contain.
+
+Because of that split, a column can legitimately both contain nulls in the described data **and** carry a `default` (ExCSV often describes pre-existing, immutable files). The generated schema would then have no nulls in that column, disagreeing with the data as-is. This is allowed, but a validator SHOULD warn `default_with_nulls` when a `default` column's data contains any null (empty or `null`-marked). The discrepancy resolves once a writer rewrites the null cells to the default (e.g. `\N` → `AAA`). Advisory only — never fatal (same policy as checksums).
 
 ### Constraints
 
@@ -84,6 +90,7 @@ Allowed types:
 | `max`            | MAY         | Maximum value (numeric / date) |
 | `len_min`        | MAY         | Minimum string length          |
 | `len_max`        | MAY         | Maximum string length          |
+| `enum`           | MAY         | Pipe-separated list of allowed non-null values (see [Enumerations](#enumerations)) |
 | `pattern`        | MAY         | Regex pattern for validation (default dialect: ECMAScript) |
 | `regexp_dialect` | MAY         | Regex dialect for `pattern`: `ecmascript` (default), `pcre`, `posix_ere`, `re2` |
 
@@ -93,6 +100,8 @@ Allowed types:
 | -------- | ----------- | ------------------------------- |
 | `unique` | MAY         | `1` = all values must be unique |
 
+`unique=1` is a **descriptive** uniqueness hint about the data — useful to the parser and analyst (e.g. safe to treat as an identifier) — not an enforced database constraint. ExCSV has no primary-key / foreign-key construct in the descriptive layer: express keys, composite keys, and referential constraints in the SQL layer as ordered `#$ddl` statements (`ALTER TABLE … ADD CONSTRAINT …`). See [SQL companions › Keys & constraints](sql.md#keys--constraints).
+
 ### Semantics
 
 | Field       | Requirement | Description                                  |
@@ -100,12 +109,63 @@ Allowed types:
 | `order`     | MAY         | `none`, `asc`, or `desc`                     |
 | `unit`      | MAY         | Unit of measurement (e.g. `USD`, `kg`, `ms`) |
 | `separator` | MAY         | Sub-field separator within the value         |
+| `role`      | MAY         | Analytical role: `id`, `dimension`, `measure`, `time` (see [Analytical role](#analytical-role)) |
+| `agg`       | MAY         | Default aggregation hint for `role=measure`: `sum`, `avg`, `min`, `max`, `none` |
 
 ### Positional
 
 | Field   | Requirement            | Description                |
 | ------- | ---------------------- | -------------------------- |
 | `index` | **MUST** if `header=0` | Zero-based column position |
+
+## Enumerations
+
+`enum` lists the closed set of allowed **non-null** values for a column, pipe-separated (`|`):
+
+```
+#column name=status type=string enum=pending|completed|cancelled
+```
+
+- Values are interpreted according to the column's `type` (e.g. `type=int enum=1|2|3`), not always as strings.
+- `enum` constrains non-null values only. Nullability is governed by `required` and the file's `null` rules — null is allowed in addition to the listed values when the column is nullable.
+- Quoting follows the header-line rules. A value containing a space requires quoting the whole attribute: `enum="pending|in progress|done"`. Enum values themselves **MUST NOT** contain `|` (there is no escape mechanism).
+- If `separator` is also set (multi-value cell), `enum` applies to each sub-value independently.
+- If `pattern` is also set, a value **MUST** satisfy both (logical AND).
+- A non-null value outside the listed set is a validation error.
+
+## Analytical role
+
+`role` describes the **analytical** role of a column, independent of `type` (the physical/storage type). It lets a consumer choose correct operations without guessing from column names — group by dimensions, aggregate measures, and never sum identifiers. It is purely advisory and is not validated.
+
+```
+#column name=order_id   type=int      role=id
+#column name=status     type=string   role=dimension
+#column name=amount     type=decimal  role=measure agg=sum
+#column name=balance    type=decimal  role=measure agg=avg
+#column name=created_at type=datetime role=time
+```
+
+| `role`      | Meaning                                       | Typical operations            |
+| ----------- | --------------------------------------------- | ----------------------------- |
+| `id`        | Identifier of a row/entity; not for arithmetic | count, distinct, join key     |
+| `dimension` | Categorical / grouping attribute               | group by, filter, count distinct |
+| `measure`   | Numeric fact to aggregate                      | sum, avg, min, max            |
+| `time`      | Temporal axis                                  | group by period, range, trend |
+
+`role` is distinct from `order` (which describes whether the data is sorted) and from `type` (the physical type). Unknown `role` values are treated like any other unknown attribute value.
+
+### Aggregation hint (`agg`)
+
+`agg` is a **hint** (not a constraint) for `role=measure`, declaring how the measure should aggregate (its additivity):
+
+| `agg`       | Additivity                                            | Example                  |
+| ----------- | ----------------------------------------------------- | ------------------------ |
+| `sum`       | Additive — sums across any dimension                  | revenue, quantity        |
+| `avg`       | Semi-additive — must not be summed across time        | balance, price, temperature |
+| `min` / `max` | Aggregates only by extremum                         | high/low quotes          |
+| `none`      | Non-additive — not aggregated as a number             | ratio, percentage, rating |
+
+The default aggregation for a `measure` without `agg` is `sum`. `agg` carries no validation; it guides a consumer's default aggregation choice — notably to avoid summing semi-additive values across time. `agg` on a non-`measure` column is ignored.
 
 ## Unknown Attributes
 

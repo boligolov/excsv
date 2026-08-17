@@ -13,11 +13,11 @@ Dense, structured specification optimized for AI assistants. Start at [README-LL
 | SQL (`#$`) | [sql.md](sql.md) |
 | Aggregations (`#%`) | [aggregations.md](aggregations.md) |
 | CSVW (`#csvw`) | [csvw.md](csvw.md) |
+| Encoding | [encoding.md](encoding.md) |
 | Checksum | [checksum.md](checksum.md) |
 | ZIP container | [zip.md](zip.md) |
 | Pack container | [pack.md](pack.md) |
 | Data section | [data-section.md](data-section.md) |
-| Pack-only keys | [reserved.md](reserved.md) |
 | Error handling | [error-handling.md](error-handling.md) |
 | Parsing algorithm | [parsing.md](parsing.md) |
 | Serialization algorithm | [serialization.md](serialization.md) |

@@ -1,4 +1,4 @@
-#!excsv version=0.2 delim=comma header=1 rows=2 reference=037_sidecar_csv_sibling.csv
+﻿#!excsv version=0.3 delim=comma header=1 rows=2 reference=037_sidecar_csv_sibling.csv
 #@source: fixtures_db.orders
 #column name=id type=int
 #column name=customer type=string

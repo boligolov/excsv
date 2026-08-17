@@ -8,7 +8,9 @@ import Base from '../layouts/Base.astro';
     <div class="hero-text">
       <h1>CSV, but self-describing</h1>
       <p class="tagline">
-        ExCSV adds inline schema, metadata, SQL companions, and aggregations to plain CSV.
+        Built for data analysts and everyone wrangling large tabular datasets —
+        schema, stats, and provenance travel with the file, not in a separate README.
+        ExCSV adds inline metadata, SQL companions, and aggregations to plain CSV.
         Zero dependencies. CLI-friendly. Backward-compatible.
       </p>
       <div class="cta-row">
@@ -71,9 +73,51 @@ date,event,count
     </div>
   </section>
 
+  <!-- LLM-friendly -->
+  <section class="llm">
+    <div class="llm-head">
+      <span class="llm-badge">LLM-friendly</span>
+      <h2>Made for AI assistants, too</h2>
+      <p class="llm-lead">
+        Paste an ExCSV table into a chat and the model gets the schema, types, units, and
+        precomputed stats up front — no guessing delimiters, inferring types from a few rows,
+        or recomputing totals. The metadata an LLM needs to reason correctly travels with the data.
+      </p>
+    </div>
+    <div class="llm-grid">
+      <div class="llm-point">
+        <h4>Explicit types &amp; units</h4>
+        <p>Columns declare <code>type</code>, <code>unit</code>, and <code>format</code>, so an LLM reads <code>1050.50</code> as USD — not a count — and never misparses ZIP codes or dates.</p>
+      </div>
+      <div class="llm-point">
+        <h4>Aggregations as a trust anchor</h4>
+        <p><code>#%</code> rows carry sum, avg, count, and distinct counts. A model answers aggregate questions — and sanity-checks its own math — without scanning every row.</p>
+      </div>
+      <div class="llm-point">
+        <h4>Row grain, spelled out</h4>
+        <p><code>#@grain: one row per order</code> tells the model what a single row means, instead of forcing it to reverse-engineer that from column names.</p>
+      </div>
+      <div class="llm-point">
+        <h4>Enums &amp; analytical roles</h4>
+        <p><code>enum=</code> gives the closed value domain; <code>role=</code> (id / dimension / measure / time) and <code>agg=</code> let a model pick correct operations — group by dimensions, sum measures, never sum an id.</p>
+      </div>
+    </div>
+    <pre class="llm-code"><code><span class="hl-meta">#@grain: one row per order</span>
+<span class="hl-meta">#column name=order_id type=int role=id</span>
+<span class="hl-meta">#column name=status type=string role=dimension enum=pending|completed|cancelled</span>
+<span class="hl-meta">#column name=amount type=decimal unit=USD role=measure agg=sum</span>
+<span class="hl-meta">#%sum: ,,1050.50</span></code></pre>
+  </section>
+
   <!-- Why -->
   <section class="why">
     <h2>Why ExCSV?</h2>
+    <p class="why-lead">
+      Tabular exports are everywhere, but the context around them rarely is. Analysts and data engineers
+      lose hours inferring column types, re-scanning huge files for row counts and sums, and rebuilding
+      database schemas from scratch. ExCSV targets that friction: self-describing files that still open
+      in any CSV tool.
+    </p>
     <div class="grid-2">
       <div>
         <h4>Progressive enhancement</h4>
@@ -206,12 +250,71 @@ date,event,count
     margin-bottom: 0;
   }
 
+  .llm {
+    padding: 2rem 2rem 2.25rem;
+    margin-bottom: 3rem;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-card-bg);
+  }
+  .llm-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    border-radius: 999px;
+    padding: 0.2em 0.7em;
+    margin-bottom: 0.9rem;
+  }
+  .llm-head h2 {
+    border: none;
+    padding: 0;
+    margin: 0 0 0.6rem;
+  }
+  .llm-lead {
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 52rem;
+    margin: 0 0 1.75rem;
+  }
+  .llm-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 1.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .llm-point h4 {
+    margin: 0 0 0.4rem;
+    font-size: 0.98rem;
+  }
+  .llm-point p {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .llm-code {
+    font-size: 0.8rem;
+    margin: 0;
+  }
+
   .why {
     padding-bottom: 2rem;
   }
   .why h2 {
     border: none;
     padding: 0;
+  }
+  .why-lead {
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 52rem;
+    margin: 0 0 1.75rem;
   }
   .grid-2 {
     display: grid;
@@ -255,6 +358,8 @@ date,event,count
     .hero h1 { font-size: 1.8rem; }
     .features { grid-template-columns: 1fr; }
     .grid-2 { grid-template-columns: 1fr; }
+    .llm-grid { grid-template-columns: 1fr; }
+    .llm { padding: 1.5rem; }
   }
 
   @media (max-width: 480px) {

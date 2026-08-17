@@ -45,6 +45,7 @@ id,name,price
 
     <h2>1. Introduction</h2>
     <p>ExCSV is a self-describing, line-oriented tabular data format backward-compatible with plain CSV/TSV.</p>
+    <p>This specification is written for <strong>data analysts</strong> and everyone who works with <strong>large tabular datasets</strong> — people who regularly face untyped CSV exports, expensive re-scans for summary statistics, and schema reconstruction from scratch. ExCSV keeps the data section as plain CSV while optional metadata lines carry dialect, types, aggregations, provenance, and SQL companions inside the same file.</p>
     <p>It extends CSV with:</p>
     <ul>
       <li>An inline metadata header</li>
@@ -204,7 +205,7 @@ id,name,price
         <tr><td><code>## ...</code></td><td>Human comment (ignored by parsers; comment to end of line)</td><td><code>## TODO: drop legacy status values</code></td></tr>
         <tr><td><code>#@key: value</code></td><td>File-level metadata</td><td><code>#@source: sales_db.orders</code></td></tr>
         <tr><td><code>#column ...</code></td><td>Column annotation</td><td><code>#column name=id type=int</code></td></tr>
-        <tr><td><code>#csvw ...</code></td><td>CSVW payload</td><td><code>#csvw {`{"tableSchema": ...}`}</code></td></tr>
+        <tr><td><code>#csvw: ...</code></td><td>CSVW payload</td><td><code>#csvw: {`{"tableSchema": ...}`}</code></td></tr>
         <tr><td><code>#$&lt;verb&gt;[-&lt;dialect&gt;]: ...</code></td><td>SQL companion</td><td><code>#$ddl-mysql: CREATE TABLE orders (...)</code></td></tr>
         <tr><td><code>#%&lt;name&gt;: ...</code></td><td>Aggregation values</td><td><code>#%sum: ,, 42.5</code></td></tr>
         <tr><td><code>#table ...</code></td><td>Pack manifest only — table registry</td><td><code>#table name=orders dir=orders/ columns=4 original-size=1843200</code></td></tr>
@@ -221,6 +222,7 @@ id,name,price
         <tr><td><code>source</code></td><td>Origin system, table, or file</td><td><code>#@source: sales_db.orders</code></td></tr>
         <tr><td><code>author</code></td><td>Creator contact or name</td><td><code>#@author: alex@example.com</code></td></tr>
         <tr><td><code>comment</code></td><td>Free-text description of the dataset</td><td><code>#@comment: demo dataset</code></td></tr>
+        <tr><td><code>grain</code></td><td>What a single data row represents</td><td><code>#@grain: one row per order</code></td></tr>
         <tr><td><code>created</code></td><td>Creation timestamp (ISO 8601)</td><td><code>#@created: 2026-03-24T12:00:00Z</code></td></tr>
         <tr><td><code>exported</code></td><td>Export timestamp</td><td><code>#@exported: 2026-03-24T14:30:00Z</code></td></tr>
         <tr><td><code>license</code></td><td>Data license identifier</td><td><code>#@license: CC-BY-4.0</code></td></tr>
@@ -416,6 +418,7 @@ page,views
         <tr><td><code>max</code></td><td>MAY</td><td>Maximum value (numeric / date)</td></tr>
         <tr><td><code>len_min</code></td><td>MAY</td><td>Minimum string length</td></tr>
         <tr><td><code>len_max</code></td><td>MAY</td><td>Maximum string length</td></tr>
+        <tr><td><code>enum</code></td><td>MAY</td><td>Pipe-separated list of allowed non-null values (e.g. <code>pending|completed|cancelled</code>); values interpreted per <code>type</code>; combined with <code>pattern</code> as logical AND</td></tr>
         <tr><td><code>pattern</code></td><td>MAY</td><td>Regex pattern for validation (default dialect: ECMAScript)</td></tr>
         <tr><td><code>regexp_dialect</code></td><td>MAY</td><td>Regex dialect for <code>pattern</code>: <code>ecmascript</code> (default), <code>pcre</code>, <code>posix_ere</code>, <code>re2</code></td></tr>
       </tbody>
@@ -436,6 +439,8 @@ page,views
         <tr><td><code>order</code></td><td>MAY</td><td><code>none</code>, <code>asc</code>, or <code>desc</code></td></tr>
         <tr><td><code>unit</code></td><td>MAY</td><td>Unit of measurement (e.g. <code>USD</code>, <code>kg</code>, <code>ms</code>)</td></tr>
         <tr><td><code>separator</code></td><td>MAY</td><td>Sub-field separator within the value</td></tr>
+        <tr><td><code>role</code></td><td>MAY</td><td>Analytical role (independent of <code>type</code>): <code>id</code>, <code>dimension</code>, <code>measure</code>, <code>time</code> — advisory, not validated</td></tr>
+        <tr><td><code>agg</code></td><td>MAY</td><td>Default aggregation hint for <code>role=measure</code>: <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>, <code>none</code> (additivity; default <code>sum</code>)</td></tr>
       </tbody>
     </table>
 
@@ -541,7 +546,7 @@ page,views
     </table>
 
     <h3>9.2 Payload</h3>
-    <pre><code><span class="hl-meta">#csvw {`{"tableSchema": {"columns": [...]}}`}</span></code></pre>
+    <pre><code><span class="hl-meta">#csvw: {`{"tableSchema": {"columns": [...]}}`}</span></code></pre>
     <p><code>#csvw</code> followed by a space and value to end of line.</p>
     <ul>
       <li>The payload <strong>MUST</strong> be valid JSON (after decoding if <code>base64url</code>).</li>

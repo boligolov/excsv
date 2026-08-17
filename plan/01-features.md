@@ -247,8 +247,8 @@ Not user-visible features per se; they shape the implementation contracts.
 | P4 | Locale-aware number / date parsing (opt-in) | All | Default: C locale. |
 | P5 | Encoding fidelity (read non-UTF-8 sources) | All | Re-emit as UTF-8 by default. |
 | P6 | Auto-sync of derived fields after Mode B writes | All | `rows=`, `checksum=`, `#%`, `#@exported`. |
-| P7 | Forward-compatible parsing (unknown header keys / `#` lines ignored) | All | Required for reserved-name compatibility. |
-| P8 | Reserved-name awareness | RF plain, RF zip | Recognise but don't act on `layout=`, `mode=`, `section-size=`, `#table`, `#fk`. |
+| P7 | Forward-compatible parsing (unknown header keys / `#` lines ignored) | All | Unknown keys/lines ignored per meta-lines.md. |
+| P8 | Pack dispatch + guardrail | RF plain, RF zip | `layout=pack` first entry → pack path (`parsing.md` step 0). Pack-only keys (`layout=`, `section-size=`, `table-count=`, `single-table=`, `#table`, `#fk`) on plain/row → warn `pack_key_on_plain`, ignore. |
 
 ---
 
@@ -281,9 +281,9 @@ Counts of `✓` (native), `≈` (format-specific), `⊕` (pack-only) for quick t
 
 ## Next steps
 
-This catalog feeds the downstream plans:
+This catalog feeds downstream work:
 
-- **`02-fixtures.md`** (next) — define the shared test-fixture corpus: every feature above gets at least one success and (where applicable) one failure fixture. Drives parity between Go and Python.
-- **`03-golang.md`** — map each feature to packages / commands; sequence per the waves in `README.md`; tests walk the fixture corpus.
-- **`04-python.md`** — mirror of the Go plan; parity tests run against the **same** fixture corpus.
-- **`05-cookbook.md`** — 30–50 most common user workflows as terminal recipes; each cites the fixture it uses so readers can reproduce locally.
+- **`02-fixtures.md`** — shared test-fixture corpus: every feature above gets at least one success and (where applicable) one failure fixture. Drives parity between Go and Python.
+- **[excsv-golang](https://github.com/boligolov/excsv-golang)** — map each feature to packages / commands; sequence per the waves in `README.md`; tests walk the fixture corpus.
+- **Python repo (TBD)** — mirror of the Go plan; parity tests run against the **same** fixture corpus.
+- **Cookbook repo (TBD)** — 30–50 most common user workflows as terminal recipes; each cites the fixture it uses so readers can reproduce locally.

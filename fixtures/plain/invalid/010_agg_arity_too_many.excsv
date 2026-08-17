@@ -1,4 +1,4 @@
-#!excsv version=0.2
+﻿#!excsv version=0.3
 #column name=id type=int
 #column name=amount type=decimal
 #%sum: ,10.00,20.00

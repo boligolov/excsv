@@ -1,4 +1,4 @@
-error_kinds:
+﻿error_kinds:
   - header_missing_version
   - header_malformed_kv
   - header_malformed_magic
@@ -18,6 +18,7 @@ error_kinds:
   - first_field_hash_unquoted
   - quoted_value_raw_newline
   - checksum_mismatch
+  - checksum_malformed
   - invalid_utf8
   - encoding_mismatch
   - zip_missing_original_size
@@ -50,7 +51,7 @@ error_kinds:
     warnings: []
     profile: stub
     header:
-      version: "0.2"
+      version: "0.3"
     rows: 0
 
 - id: plain/valid/002_no_header_defaults.excsv
@@ -318,7 +319,7 @@ error_kinds:
     warnings: []
     profile: sidecar
     header:
-      version: "0.2"
+      version: "0.3"
       reference: 037_sidecar_csv_sibling.csv
     rows: 2
     columns: 3
@@ -446,9 +447,11 @@ error_kinds:
 
 - id: plain/invalid/017_checksum_mismatch.excsv
   exercises: [M2, M3]
+  # C3: checksum mismatch is warn-only, never fatal (even under `excsv verify`).
+  # Outcome is now VALID-with-warning; relocate to plain/valid/ in the fixtures pass.
   expect:
-    parse: fail
-    error_kind: checksum_mismatch
+    parse: ok
+    warnings: [checksum_mismatch]
 
 - id: plain/invalid/018_header_value_invalid.excsv
   exercises: [B5]
@@ -477,8 +480,8 @@ error_kinds:
 - id: plain/invalid/022_sql_unknown_verb.excsv
   exercises: [F1, F8]
   expect:
-    parse: fail
-    error_kind: sql_unknown_verb
+    parse: ok
+    warnings: [sql_unknown_verb]
 
 - id: plain/invalid/023_quoted_value_raw_newline.excsv
   exercises: [G6]
@@ -542,9 +545,9 @@ error_kinds:
   exercises: [A11, M3]
   data_sibling: plain/invalid/032_sidecar_checksum_mismatch.csv
   expect:
-    parse: fail
+    parse: ok
+    warnings: [sidecar_checksum_mismatch]
     profile: sidecar
-    error_kind: sidecar_checksum_mismatch
 
 - id: zip/valid/001_simple_primary_match.excsv.zip
   exercises: [A1, J1, J5]
@@ -574,7 +577,7 @@ error_kinds:
     parse: ok
     warnings: []
     comment:
-      starts_with: "#!excsv version=0.2"
+      starts_with: "#!excsv version=0.3"
 
 - id: zip/valid/005_comment_truncated.excsv.zip
   exercises: [J3, J5]
@@ -649,14 +652,14 @@ error_kinds:
 - id: zip/invalid/005_comment_not_excsv_prefix.excsv.zip
   exercises: [J3]
   expect:
-    parse: fail
-    error_kind: zip_comment_not_excsv_prefix
+    parse: ok
+    warnings: [zip_comment_not_excsv_prefix]
 
 - id: zip/invalid/006_comment_not_utf8.excsv.zip
   exercises: [J3]
   expect:
-    parse: fail
-    error_kind: zip_comment_not_utf8
+    parse: ok
+    warnings: [zip_comment_not_utf8]
 
 - id: zip/invalid/007_unsupported_compression_method.excsv.zip
   exercises: [J1]

@@ -1,0 +1,315 @@
+# ExCSV — Remaining Work (single source)
+
+Consolidated backlog and the single actionable list. It absorbed and replaced the old `ROADMAP.md` (remaining work) and `fable5.md` (spec audit: contradictions C*, proposals P*, LLM affordances L*) — both deleted. The item IDs (C*/P*/L*) are kept as stable handles and described inline below.
+
+Still-live reference docs in `plan/` (not backlog, not superseded):
+
+- `README.md` — repo charter: layout, implementation repos, wave sequencing, rules.
+- `01-features.md` — abstract capability catalog (source of truth for features).
+- `02-fixtures.md` — fixture corpus conventions (naming, manifest, generation).
+
+When an item lands, tick it here and update the spec/fixtures/reference docs.
+
+Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ deferred (post-v0.3)
+
+**Working rule:** land decisions in the **spec only** (`docs/`, `docs/llm/`, `README-LLM.md`) + this file. **Do not edit** `fixtures/` — fixtures are refactored in one dedicated pass later; track any decision that changes an expected fixture outcome in §3 "Fixture sync".
+
+---
+
+
+
+## 0. Status snapshot
+
+
+| Area                                              | State                                                |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| Spec docs (`docs/`, `docs/llm/`, `README-LLM.md`) | v0.3 written; loose ends in §1                       |
+| Website (`website/`)                              | home, spec, examples, variants, tools — live         |
+| Feature catalog (`plan/01-features.md`)           | draft; version-gating unfinished                     |
+| Plain fixtures                                    | valid 001–039, invalid 001–032 on disk + in manifest |
+| Manifest zip/pack entries                         | present in `fixtures.yaml`                           |
+| `fixtures/zip/`, `fixtures/pack/` binaries        | **empty** — generators never run/committed           |
+| Implementation (Go/Python/cookbook)               | not started in-repo; waves 1–5 open                  |
+
+
+---
+
+
+
+## 1. Spec loose ends (spec audit — still unresolved)
+
+
+
+### Blockers for parity tests / fixtures
+
+- ✅ **C3 — checksum severity.** DONE. Decision: **warn everywhere, never fail — including** `excsv verify`**.** Checksum is advisory, not an access gate; warn loudly, don't block the expert. Landed in `checksum.md` (+ llm), `parsing.md` step 8, `zip.md` verify (+ llm), `file-structure.md` (llm), `error-handling.md` (+ llm) with codes `checksum_mismatch` / `sidecar_checksum_mismatch` / `checksum_malformed` / `checksum_unknown_algorithm` (all warn+skip). `rows=` and `original-size=` keep their own stricter rules (untouched). Fixture `plain/invalid/017_checksum_mismatch` flipped to `parse: ok` + warning; **relocate to** `plain/valid/` **in the fixtures pass**.
+- ✅ **C5 —** `mode=` **ghost key.** DONE. Purged `mode=` from `plan/README.md`, `01-features.md` (and the now-deleted ROADMAP); spec expresses single-table mode via `single-table=` + one `#table`. `single-table=` folded into the `pack_key_on_plain` guardrail. Remaining: `02-fixtures.md` pack targets that still name `mode=` (see §3).
+- ✅ **C6 — pack vs row-ZIP dispatch.** DONE. `parsing.md` step 0 now dispatches: first entry `_manifest.excsv` with `layout=pack` (or `.pack.zip` ext) → pack path; else row-ZIP; row parser handed a pack → MUST-fail `row_parser_got_pack`. Also landed `pack_key_on_plain` warn (steps 1 & 3g) and **deleted** `docs/llm/reserved.md` (redundant with meta-lines.md ignore rule + zip.md pointer); reframed `01-features.md` P8 to "pack dispatch + guardrail".
+- ✅ **P5 — error-code registry.** DONE. `docs/error-handling.md` rewritten as the **canonical registry** (grouped tables: code · severity · verify-override · meaning) and declared the single normative source; `docs/llm/error-handling.md` reduced to a compact index that points to it, with code names filled in for the previously-unnamed items (`column_unknown_attribute`, `agg_type_incompatible`, `sql_unknown_dialect`, `sql_no_match`, `sql_dialect_family`, `sql_version_mismatch`, `zip_comment_header_disagree`). Verify semantics pinned: only `rows_mismatch` escalates (→FAIL); checksum/`column_count_mismatch`/`agg_arity_mismatch`/`default_with_nulls`/`sidecar_reference_not_found` are `never`. Resolved the `column_count_mismatch` vs `column_name_header_mismatch` overlap (count/position vs name disagreement). `fixtures.yaml` enum reconciliation → §3.
+
+
+
+### Semantic gaps (cheaper to fix before a parser ships)
+
+- ✅ **C4 — sidecar parse vs open/load.** DONE. Two operations, normatively split: *parse sidecar* (metadata only — the referenced file is **not** required, always succeeds) vs *open/load* (needs the data). Missing referenced file is **not** a hard fail: warn `sidecar_reference_not_found` and **degrade the handle to read-only, metadata-only** — any data operation (read rows, checksum verify, `rows=`/`#%` check, materialize, edit-through) is unavailable because there is no source. Same philosophy as C3: never block the expert, warn loudly. `sidecar_reference_not_found` moved **MUST-fail → SHOULD-warn**. Landed in `file-structure.md` (+ llm, Discovery §), `error-handling.md` (+ llm). Fixture that expected fail → §3.
+- ✅ **P2 —** `default=` **vs empty=null.** DONE. Reversed the old framing (empty ≠ "fill with default"). `default=` is a **schema/DDL attribute**, not a read transform: reading describes data verbatim, so an empty field or a `null`-marked field is **null** regardless of `default`; parsers MUST NOT substitute it, and `count_null` sees data as authored. In DDL, `default=` emits `DEFAULT <v>` (with `required=1` → `NOT NULL DEFAULT <v>`) — what the target DB fills on insert, not the current bytes. A column may legitimately hold nulls **and** carry `default=` (we describe pre-existing files); the generated schema would then have no nulls there → advisory warn `default_with_nulls`, resolved once a writer rewrites null cells to the default (`\N` → `AAA`). Never fatal (C3 policy). Landed in `columns.md` (+ llm), `error-handling.md` (+ llm). New code `default_with_nulls` → §3/P5 enum + registry.
+- ✅ **P9 — column-count source.** DONE. Two normative metrics (format is descriptive, schema MAY lag data): **PHYSICAL** = field count of the first present row (header if `header=1`, else first data row); counts stored + `materialized=1`, excludes virtual; UNKNOWN when no row exists (sidecar not loaded per C4, header-only stub, `header=0` no data) → defer arity checks, read as-is. **DECLARED** = number of `#column` lines (stored + materialized + virtual). Consistent file: DECLARED = PHYSICAL + virtual, every `index=` in [0,PHYSICAL); fewer `#column` than PHYSICAL is fine (unannotated), not a mismatch. Contradiction (`index=`≥PHYSICAL, too many positioned columns, header-vs-`#column name=` clash) → warn `column_count_mismatch`, never fatal. **Read-lenient / write-strict:** structural mutations (drop/rename/reorder, materialize, edit-through) MUST refuse while a contradiction stands — reconcile first. `#%` arity softened to SHOULD vs PHYSICAL (fewer ok, more → warn `agg_arity_mismatch`, never fatal). Landed in `parsing.md` step 8b/9, `aggregations.md` (+ llm), `error-handling.md` (+ llm), `pack.md` (+ llm) `columns=` = non-virtual count. New code `column_count_mismatch`; `agg_arity_mismatch` MUST-fail→warn → §3/P5.
+- 🟢 **C10 — CLI tree wording.** Reconcile `zip.md` ("flat `peek`/`verify`, not nested under `excsv zip`") vs the wave-2 backlog (§4: `excsv zip`/`unzip`). Fix: `excsv zip <file>` / `excsv unzip <archive>` are verbs; `peek`/`verify` flat; no `excsv zip <subcmd>` namespace. One canonical command tree, referenced everywhere.
+- 🟢 **C11 — "canonical example" not canonical.** DONE. `canonical-example.md` retitled **"Annotated Example (all features)"** with a note that it deliberately shows defaults for teaching; dropped the noise `schema=excsv` (no `#csvw` present to arbitrate) and the misleading "excsv schema wins" annotation. Also removed `schema=excsv` from the two `zip.md` (llm) example headers.
+- ✅ **C12 — rename** `sidecar_delim_ext_mismatch` **→** `extsv_delim_mismatch`**.** DONE. Renamed in `error-handling.md` (+ llm) and `02-fixtures.md` example list. Fixture id + enum rename → §3.
+- ✅ **P11 — ZIP primary-not-first behavior.** DONE. `zip.md` (+ llm) File-naming: readers **MUST NOT** scan forward — if the first central-dir entry isn't a valid primary (wrong name or not `.excsv`/`.extsv`) → MUST-fail `zip_primary_not_first` even if a later entry would match. Added to `error-handling.md` (+ llm) MUST-fail; registry notes it subsumes `zip_primary_bad_name`.
+- ✅ **Bump SQL dialect versions in examples to latest.** DONE. `postgres-15→17`, `postgres-16→18` (adjacent pair preserved for family/version-mismatch demos), `mysql-8→9`, `clickhouse-24→25` across `sql.md` (+ llm), `header.md` (llm), `quick-reference.md` (llm), `zip.md` (llm). `full-example.md`/`canonical-example.md` carry only unversioned tokens (`sql-dialect=mysql`) — nothing to bump. Tokens are illustrative (string match), semantics unchanged.
+
+---
+
+
+
+## 2. LLM-affordance items
+
+- 🟡 **L1 — "trust aggregates" rule.** The one wrong-answer bug: someone copies a truncated slice of a big table into an LLM, it sums the visible rows, and returns a confidently wrong total. Fix is a single spec norm in `parsing.md` / `aggregations.md`: *"When* `#%` *aggregates are present, a consumer MUST trust* `#%` *over values recomputed from the visible/partial rows.* `#%` *describe the dataset as authored; a slicing/preview tool MUST NOT recompute them for a partial copy."*
+  - **Detection needs no new field:** `rows=` already states the authored row count, so `rows=` ≠ visible-row count ⇒ obviously incomplete (`rows_mismatch` warn, per P4).
+  - `#@preview` **(and its** `<shown>-of-<total>` **marker +** `#%`**-semantic flip) is dropped entirely** — format overcomplication; `rows=` + trust-aggregates cover the case. It never entered the normative spec, so nothing to remove there.
+  - A CLI `head` / `preview` MAY emit an honest slice (real `rows=N`, keep the authored `#%`, omit `checksum=`), but that is tooling behavior, not a format field.
+- ✅ **L5 — keys: no dedicated construct (WON'T ADD).** DONE by decision. Rejected `#@key`, `#key`, `#$key`, `#$fk` — keys are enforcement, not description, so they must not live in the describe layer. Split by layer instead:
+  - **describe layer** (facts about the data, for the target audience): `unique=1` on `#column` (candidate-key / uniqueness hint); pack keeps the informational `#fk` (bundle relationship map). Unchanged.
+  - **execute layer** (build/show in a DB): primary/foreign keys, constraints, indexes → ordinary `#$ddl-<dialect>` statements as an **ordered series** (`CREATE TABLE …` then `ALTER TABLE … ADD CONSTRAINT …`). `ddl` is already repeatable+ordered and lists `ALTER`; multi-statement sequencing is the author's responsibility (`sql.md`). The provenance query stays `#$dql`.
+  - Kept the `#$<verb>[-<dialect>]:` grammar (verb NOT dropped): `ddl` vs `dql` distinguishes "run to build schema" from "the query that produced the data" — collapsing to `#$<dialect>:` would lose that and break `excsv sql ddl <dialect>` selection.
+  - Landed: `sql.md` (+ llm) "Keys & constraints" note; `columns.md` (+ llm) Keys section cross-ref (`unique=` = describe hint; PK/FK = SQL layer). No new codes, no fixture churn.
+- 🟢 **L6 — second tier.** `example=` on column; lightweight `references=` hint for plain (FK is pack-only today); `#@as-of:` snapshot date; `currency=` split from `unit=`.
+- ⛔ **L7 — do NOT add** a task/prompt field to the format. Data ≠ query.
+
+---
+
+
+
+## 3. Fixtures
+
+> All fixture work is **deferred to one dedicated pass** (working rule above). Spec changes below are already normative; the fixture tree lags and must be reconciled here.
+
+
+
+### Fixture sync (spec already changed — fixtures not yet)
+
+- 🟡 **C3 checksum warn-only** — `fixtures.yaml` entry `plain/invalid/017_checksum_mismatch` was flipped to `parse: ok` + `warnings: [checksum_mismatch]` (done); still needs **physical relocation to** `plain/valid/` and a fresh `NNN` id. Enum gained `checksum_malformed` (no fixture yet). *(These two* `fixtures/` *touches predate the "spec only" rule.)*
+- 🟡 `mode=` **purge (C5)** — no plain fixture references `mode=`; pack targets below that name `mode=` are dropped/rewritten in the pass.
+- 🟡 `pack_key_on_plain` **(C5/C6)** — new warn code; add reserved-keys fixture (see below) with `warnings: [pack_key_on_plain]`.
+- 🟡 **Computed columns (§5)** — new `formula=` attribute + codes; add fixtures per §5.8 (none exist yet).
+- 🟡 **C4 sidecar warn-only** — `plain/invalid/031_sidecar_reference_not_found.excsv` was `parse: fail`; flip to `parse: ok` + `warnings: [sidecar_reference_not_found]` and **relocate to** `plain/valid/` in the pass. `sidecar_strict` profile drops (no strict-fail mode for missing reference).
+- 🟡 **P2** `default_with_nulls` — new warn code; add to `fixtures.yaml` enum + a `plain/valid/` fixture: a `default=` column with `null`-marked/empty cells → `parse: ok` + `warnings: [default_with_nulls]`.
+- 🟡 **P9 arity warn-only** — `plain/invalid/009_agg_arity_too_few` and `010_agg_arity_too_many` were `parse: fail`; flip: `009` (too few) → `parse: ok`, no warn (trailing columns unaggregated); `010` (too many) → `parse: ok` + `warnings: [agg_arity_mismatch]`; relocate both to `plain/valid/`. New code `column_count_mismatch` → enum + a `plain/valid/` fixture (`#column index=` beyond data width → warn).
+- 🟡 **C12 rename** — `fixtures.yaml` enum `sidecar_delim_ext_mismatch` → `extsv_delim_mismatch`; rename fixture `plain/invalid/029_sidecar_delim_ext_mismatch.extsv` (+ `.tsv` sibling + `data_sibling`) to `029_extsv_delim_mismatch.*`.
+- 🟡 **P5 enum reconciliation** — align `fixtures.yaml` `error_kinds` to the canonical registry in `error-handling.md`. Add missing codes: `unknown_version`, `column_unknown_attribute`, `column_count_mismatch`, `default_with_nulls`, `duplicate_column`, `duplicate_csvw`, `agg_type_incompatible`, `sql_unknown_dialect`, `sql_dialect_family`, `sql_version_mismatch`, `sql_no_match`, `encoding_not_ascii_compatible`, `encoding_unsupported`, `checksum_unknown_algorithm`, `original_size_on_plain`, `rows_mismatch`, `zip_comment_header_disagree`, `pack_key_on_plain`, `row_parser_got_pack`, `sidecar_reference_escapes_dir`. Drop/merge `zip_primary_bad_name` (subsumed by `zip_primary_not_first`). Reconcile `encoding_mismatch` naming. Consider a `severity`/`verify` field per fixture so the enum carries the registry's metadata.
+
+
+
+### Plain — missing
+
+- 🟡 `plain/valid/NNN_sql_unknown_dialect_warn.excsv` — `#$ddl-bogus:` → parse ok, warn `unknown SQL dialect`.
+- 🟡 `plain/valid/NNN_sql_versioned.excsv` — `-postgres-15/-16`, `-mysql-8`.
+- 🟡 `plain/valid/NNN_sql_version_mismatch.excsv` — only `postgres-15` DDL; `sql ddl postgres-16` → version-mismatch warn.
+- 🟡 `plain/valid/NNN_reserved_keys_forward_compat.excsv` — `layout=`, `section-size=`, `table-count=`, `single-table=`, `#table`, `#fk` on a plain file → parse ok, ignored, warn `pack_key_on_plain` (key set final per C5).
+- 🟢 `plain/valid/NNN_big_100k_rows.excsv` — streaming/perf; **generate on-demand in CI, do not commit** (02-fixtures open-q #4).
+- 🟢 Remaining "still required" from `02-fixtures.md`: non-UTF-8 encoding fixture; custom-key-heavy `#@`; `##` round-trip-preservation fixture (if impl supports it). *(Note: the "Still required (~51)" table in* `02-fixtures.md` *is stale — 021–039 already landed. Update that table too.)*
+
+
+
+### Pack — invalid, missing scenarios (02-fixtures targets not in manifest)
+
+- 🟡 manifest missing `mode=` → **drop this target** (see C5; `mode=` is gone).
+- 🟡 two `#table primary=1` → add `pack/invalid/NNN_two_primary.excsv.pack.zip`. *(Requires deciding whether* `primary=` *even exists —* `pack.md` *currently uses* `single-table=`*, not per-table* `primary=`*. Resolve alongside C5.)*
+- 🟡 `single-table=` set but two `#table` lines → `pack/invalid/NNN_single_table_two_tables.excsv.pack.zip`.
+
+
+
+### Generated corpora — **the big gap**
+
+- 🔴 Run `fixtures/generate/make_zip_fixtures.py` and `make_pack_fixtures.py`; commit output into `fixtures/zip/` and `fixtures/pack/` (currently empty). Parity tests can't touch zip/pack until binaries exist.
+- 🟡 Add CI job: regenerate + assert byte-identical to committed (deterministic generators; fixed `#@created: 2026-01-01T00:00:00Z`).
+- 🟢 `fixtures/fixtures.schema.json` validating `fixtures.yaml` (02-fixtures open-q #2).
+
+---
+
+
+
+## 4. Implementation waves (Go → Python → cookbook, lockstep)
+
+No wave is "done" until all three tracks land it. All open.
+
+
+| Wave | Scope                | Key deliverables                                                                                                                                                                            |
+| ---- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔴 1 | row plain `.excsv`   | `#$` parser/writer; dialect resolver (`MatchKind`, `--strict`); sidecar parse/load; full CLI; `SQLStatement{Verb,Dialect,Version,Payload,Line}`; `Header.SQLDialect`, `Header.OriginalSize` |
+| 🔴 2 | row zip `.excsv.zip` | `OpenZip`/`WriteZip`/`PeekZip`; `excsv zip`/`unzip`/`peek`/`verify`; transparent `.excsv.zip` on existing commands                                                                          |
+| ↗ 3  | pack unsectioned     | manifest+table read, `col get/list`, `table list`                                                                                                                                           |
+| ↗ 4  | pack multi-table     | `pack create`, `table add/drop/extract`, `#fk`                                                                                                                                              |
+| ↗ 5  | pack sectioned       | `section-size=`, section-aware random access                                                                                                                                                |
+
+
+External repos still to create: **Python package** (mirror models + parser, ZIP read+peek), **Cookbook** (30–50 recipes citing fixture IDs). Go plan doc lives in excsv-golang.
+
+`01-features.md` version-gating (`[v0.3]`/`[later]` tags) finishes once the Go command tree is drafted.
+
+---
+
+
+
+## 5. NEW FEATURE — Computed (virtual) columns
+
+**Goal:** a column that stores a *formula*, not data. Values are derived from other columns on read. Zero stored bytes. The payoff is largest in **pack**: a computed column is pure metadata — no `.col` entry, no section folder — yet fully projectable (reader decompresses only the dependency columns and evaluates).
+
+### 5.1 Syntax — `#column formula=` (DECIDED)
+
+```
+#column name=total     type=decimal formula="price * quantity"                  # virtual (no stored data)
+#column name=margin     type=decimal formula="(price - cost) / price"
+#column name=full_name  type=string  formula="concat(first_name, ' ', last_name)"
+#column name=total     type=decimal formula="price * quantity" materialized=1    # values ALSO cached in the data
+```
+
+> **DECISION D-1 (owner, resolved):** the spec isn't live and there are no parsers to keep compatible — so we take the simplest schema. `formula=` on `#column` marks a **computed column**; no separate `#compute` kind, no version gate. Fold straight into v0.3.
+
+`formula=` is the column's **definition** and is never dropped. `formula-dialect=` is optional. A computed column MUST NOT carry `index=` (position is by declaration order / `name`, not a physical slot).
+
+`formula=` **(definition) vs** `materialized=` **(cache) — the STORED-vs-VIRTUAL split.** This mirrors PostgreSQL generated columns exactly:
+
+
+|                    | `materialized` absent / `0` (**virtual**)  | `materialized=1` (**materialized**)              |
+| ------------------ | ------------------------------------------ | ------------------------------------------------ |
+| Values in the data | none                                       | present (header cell + fields / `.col`)          |
+| Storage cost       | zero                                       | full column                                      |
+| `formula=` kept    | yes                                        | **yes** (still derived, regenerable)             |
+| DDL emitted        | `GENERATED … VIRTUAL` (ClickHouse `ALIAS`) | `GENERATED … STORED` (ClickHouse `MATERIALIZED`) |
+
+
+Key point: **materialization is a reversible cache toggle, not a conversion.** `formula=` survives it, so you can always dematerialize back to zero-storage. A materialized computed column is still "derived" — it is NOT a plain stored column and still cannot be referenced by other formulas (§5.4).
+
+### 5.2 Placement & arity rules
+
+Physical presence follows the `materialized` flag, not the mere presence of `formula=`.
+
+- **Virtual** (`formula=`, no `materialized=1`) — occupies **no** physical position:
+  - plain/row: **no header cell, no field in data rows.** A virtual column exists ONLY as its `#column formula=` line. Data-row arity counts non-computed + materialized columns; a virtual column is excluded. `#%` arity likewise excludes it.
+  - pack: no `.col`/section folder. Table `columns=` excludes it; `original-size=` unaffected (0 bytes).
+  - Do **not** emit an empty placeholder cell — a virtual column is absent from the tabular data entirely (never "header present, value blank"; that would break arity or waste per-row delimiters and be ambiguous with a null column).
+- **Materialized** (`formula= materialized=1`) — occupies a physical position like any stored column:
+  - plain/row: header cell present, one field per row (the cached computed value). Counted in data-row and `#%` arity.
+  - pack: a real `.col`/section folder exists; counted in `columns=` and `original-size=`.
+  - Consistency is enforced: `materialized=1` MUST have the physical column present, and a `formula=` column WITHOUT `materialized=1` MUST NOT — mismatch → MUST-fail `computed_materialized_mismatch`.
+- **Position for display/projection** follows declaration order; referencing a computed column is by `name` (never by `index`).
+- **header=0 files:** a **virtual** computed column is name-only (no `index`); a **materialized** one occupies its declaration-order slot.
+
+
+
+### 5.3 Formula language — portable "core" subset
+
+`formula-dialect=core` (default): dialect-neutral, so both a local evaluator and generated SQL agree.
+
+- **References:** bare column `name` (identifier `[A-Za-z_][A-Za-z0-9_-]`*) — **stored columns only** (see §5.4).
+- **Literals:** number, single-quoted string, `true` / `false` / `null`.
+- **Operators:** `+ - * / %`, unary `-`, comparisons `= <> < <= > >=`, `and or not`, grouping `( )`. **No** `||` — in MySQL `||` is logical OR, not concat; use `concat(...)` for string joins (portable across PG / MySQL / ClickHouse).
+- **Functions (whitelist):** `abs round floor ceil coalesce nullif least greatest length lower upper trim substr concat` and `case when … then … [else …] end`.
+- **Escape hatch:** `formula-dialect=sql` → interpret payload as a scalar SQL expression in the file's effective `sql-dialect`. Tools without that engine MUST still round-trip the string; evaluating MAY be refused. Non-`core` dialect → portability warning `formula_dialect_nonportable`.
+
+
+
+### 5.4 Dependency rules — stored columns only (no chaining)
+
+**DECISION (owner):** a formula may reference **only stored (non-**`formula`**) columns**, exactly like PostgreSQL generated columns. No computed-on-computed chaining. This kills the whole dependency-graph problem: no DAG, no cycles, no topological ordering, and no need to inline chains when emitting Postgres DDL. Simpler to spec, evaluate, and translate.
+
+- Reference to another computed column → MUST-fail `formula_references_computed`.
+- Reference to unknown column → MUST-fail `formula_unknown_reference`.
+- Parse error in expression → MUST-fail `formula_parse_error`.
+- `index=` on a virtual (`formula=`) column → MUST-fail `formula_index_forbidden`.
+- `default`/`required` on a computed column are moot → ignore + MAY warn `computed_default_ignored`.
+- (Cycles are impossible by construction, so there is no `formula_cycle`.)
+
+
+
+### 5.5 Interactions
+
+- **SQL DDL (F5/F6):** a computed column always emits as generated (formula is authoritative); the `materialized` flag picks STORED vs VIRTUAL. No inlining (deps are stored columns).
+  - **PostgreSQL ≥18** / **MySQL ≥5.7:** `col type GENERATED ALWAYS AS (<expr>) VIRTUAL` (or `STORED` if `materialized=1`).
+  - **PostgreSQL <18:** no virtual keyword → emit `STORED`; a truly virtual column falls back to `STORED` or a `-- computed:` comment + warn.
+  - **ClickHouse:** not `GENERATED` syntax — emit `col type ALIAS <expr>` (virtual) or `MATERIALIZED <expr>` (`materialized=1`).
+  - **Other/unknown dialect:** `-- computed: total = price * quantity` comment (or a plain nullable column) + warn. `core` maps to ANSI-ish SQL; `sql` passes through.
+- **Aggregations (**`#%`**):** arity excludes virtual columns; a `materialized=1` computed column has a physical slot and MAY carry a `#%` position like any stored column.
+- **Materialize / dematerialize (Mode B) — reversible cache toggle,** `formula=` **always kept:**
+  - `excsv column materialize <name>` → compute values, write the physical column (row cell / `.col`), set `materialized=1`. Does NOT drop `formula=`.
+  - `excsv column dematerialize <name>` → erase the physical values, clear `materialized=` → back to zero-storage virtual.
+  - `excsv column compute add <name> --formula "…"` → author a virtual column by hand (adds one `#column formula=` line, no data).
+  - **ZIP/pack:** `excsv unzip --materialize` MAY compute and emit materialized columns on extraction (the archived form stays virtual). Extraction = unpack **+ optionally realize derived columns**.
+- **Staleness:** for `materialized=1`, cached values SHOULD equal `recompute(formula)`; a mismatch is advisory → warn `computed_stale` (never fatal, mirrors checksum/C3). Mode B writers refresh it.
+- **Validation:** `enum`/`pattern`/`min`/`max` on a computed column MAY be checked against evaluated values in Mode B.
+
+
+
+### 5.6 Feature-catalog additions (`01-features.md`)
+
+
+| New ID | Feature                                                                     | RF plain | RF zip | PF  | Notes                                           |
+| ------ | --------------------------------------------------------------------------- | -------- | ------ | --- | ----------------------------------------------- |
+| D7     | Declare computed column (`#column formula=`, Mode A)                        | ✓        | ✓      | ✓   | PF: no `.col`; metadata only                    |
+| G8     | Evaluate computed column values (Mode B)                                    | ≈        | ≈      | ✓   | RF: scan + eval. PF: selective dep-column reads |
+| H14    | Materialize / dematerialize (toggle `materialized=` cache; `formula=` kept) | ✓        | ✓      | ✓   | reversible; unzip MAY materialize on extract    |
+| L7     | Pack computed column = zero-byte metadata                                   | —        | —      | ⊕   | The headline pack win                           |
+| F5b    | DDL emit `GENERATED ALWAYS AS` for computed cols                            | ✓        | ✓      | ✓   | dialect-gated fallback to comment               |
+
+
+
+
+### 5.7 Error/warning codes to register (ties into P5)
+
+`formula_references_computed`, `formula_unknown_reference`, `formula_parse_error`, `formula_index_forbidden`, `computed_materialized_mismatch` (MUST-fail); `computed_default_ignored`, `formula_dialect_nonportable`, `computed_stale` (SHOULD-warn).
+
+### 5.8 Fixtures to add
+
+- `plain/valid/NNN_compute_basic.excsv` — virtual `total = price * quantity`, absent from header/data (D7, G8).
+- `plain/valid/NNN_compute_materialized.excsv` — `formula= materialized=1`: header cell + values present, formula retained.
+- `plain/valid/NNN_compute_case_coalesce.excsv` — `case`/`coalesce`/`concat` functions.
+- `plain/invalid/NNN_compute_references_computed.excsv` — formula referencing another computed column → `formula_references_computed`.
+- `plain/invalid/NNN_compute_unknown_ref.excsv` — `formula_unknown_reference`.
+- `plain/invalid/NNN_compute_index_forbidden.excsv` — virtual column with `index=` (header=0) → `formula_index_forbidden`.
+- `plain/invalid/NNN_compute_materialized_mismatch.excsv` — `materialized=1` but no physical column (or virtual but data present) → `computed_materialized_mismatch`.
+- `pack/valid/NNN_compute_no_col.excsv.pack.zip` — virtual computed column, `columns=` excludes it, no `.col` present (L7).
+
+
+
+### 5.9 Docs to touch when implementing
+
+- `columns.md` (+ llm) — `formula=` / `formula-dialect=` / `materialized=` attributes; virtual-vs-materialized rules; consistency (`computed_materialized_mismatch`). Optionally a dedicated `docs/computed-columns.md` if the section grows.
+- `data-section.md` — arity excludes virtual (`formula=`, not `materialized=1`) columns; materialized ones occupy a slot.
+- `pack.md` (+ llm) — `columns=` excludes virtual computed cols (no `.col`); materialized ones have a `.col`.
+- `sql.md` (+ llm) — `GENERATED ALWAYS AS` emission + fallback.
+- `aggregations.md` — `#%` arity note.
+- `error-handling.md` — new codes.
+
+
+
+### 5.10 DB parity notes (generated columns — researched 2026)
+
+Why our model (virtual, stored-only deps, `concat()` not `||`) is the portable intersection:
+
+
+| DB             | Syntax                                                       | Virtual                         | Stored           | Refs other computed?  | Concat                  |
+| -------------- | ------------------------------------------------------------ | ------------------------------- | ---------------- | --------------------- | ----------------------- |
+| **PostgreSQL** | `GENERATED ALWAYS AS (expr) [VIRTUAL|STORED]`                | ✅ **PG18+** (default); ❌ before | ✅ PG12+          | ❌ **forbidden**       | `||`                    |
+| **MySQL**      | `[GENERATED ALWAYS] AS (expr) [VIRTUAL|STORED]`              | ✅ default (5.7+)                | ✅ 5.7+           | ✅ if declared earlier | `concat()` (`||` = OR!) |
+| **ClickHouse** | `col type ALIAS expr` / `MATERIALIZED expr` (no `GENERATED`) | ✅ `ALIAS`                       | ✅ `MATERIALIZED` | ✅ (loop-checked)      | `||` / `concat()`       |
+
+
+- All three: immutable/deterministic scalar expr over the current row; no subqueries.
+- **Stored-only deps** (our rule, §5.4) matches PostgreSQL's hardest restriction → guaranteed translatable to all three with no rewriting.
+- `concat()` **not** `||` because MySQL's `||` is logical OR unless `PIPES_AS_CONCAT` is set.
+- ClickHouse has **no** `GENERATED` **keyword** → emit the `ALIAS`/`MATERIALIZED` column form instead (§5.5).
+
+---
+
+
+
+## 6. Deferred / out-of-scope (unchanged)
+
+- F9 pack cross-table DDL ordered by FK; E8 pack cross-table aggregations; M2/M3 pack checksum strategy; L5 per-column `sha256=`; N6 FK-graph viz.
+- DuckDB-backed `excsv sql --query`; plugin protocol; encryption; server/daemon; in-process pack query engine.
+
+---
+
