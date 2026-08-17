@@ -8,7 +8,7 @@ Meta lines appear after the header line and before the data section.
 - Meta lines **MUST** precede the data section.
 - Parsing of meta lines **MUST** stop at the first non-`#` line.
 - Lines starting with `##` are **human comments** — they carry no structured meaning and **MUST** be ignored by parsers. Writers **MUST NOT** emit `##` as part of any structured field; it is reserved for free-form notes ("comment to end of line").
-- Other unrecognized `#` lines **MUST** be ignored (forward-compatibility for future meta kinds).
+- Other unrecognized `#` lines **MUST** be ignored.
 - Recommended order: `#@` metadata first, then `#column`, then `#csvw`, then `#$` SQL, then `#%` aggregations. Order within each group does not matter, except where stated (e.g. `#$ddl` execution order). Parsers **MUST** accept any order. `##` comments **MAY** appear anywhere in the meta block.
 
 ## Types of Meta Lines

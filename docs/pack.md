@@ -2,34 +2,18 @@
 
 Column-oriented multi-table archive: **`.excsv.pack.zip`** / **`.extsv.pack.zip`**. Standard ZIP container; each table is stored in its own subdirectory, one `.col` file per column (optionally sectioned).
 
-Plain `.excsv` / `.extsv` and row-form `.excsv.zip` / `.extsv.zip` are unchanged. Pack is additive — wide tables, multi-table snapshots, selective column reads.
+Plain `.excsv` / `.extsv` and row-form `.excsv.zip` / `.extsv.zip` are unchanged; pack is additive.
 
-## Introduction
+## Structure
 
-**Always structurally plural.** Even a single-table pack uses manifest + one table directory. Tools always iterate tables; the loop runs once.
+A pack is always structurally plural: even a single-table pack uses a manifest plus one table directory.
 
 **Single-table vs multi-table** (manifest header only):
 
-- **`single-table=<name>` absent** — multi-table. Table-scoped commands require `--table` (or explicit table name).
+- **`single-table=<name>` absent** — multi-table. Table-scoped commands require `--table` (or an explicit table name).
 - **`single-table=<name>` present** — default table for table-scoped commands. Adding another table drops `single-table=` from the manifest; not an error.
 
 `single-table=` is optional metadata, not a lock.
-
-## When to use pack
-
-1. **Selective column reads** — `col get` opens one `.col` entry.
-2. **Better compression** on homogeneous typed columns vs row-oriented ZIP.
-3. **Column-wise aggregations** without scanning all columns.
-4. **Cheap append-column** — add a `.col`, rewrite `_header.excsv`.
-5. **Multi-table snapshots** — one file, pack-level + per-table provenance.
-6. **Future column encodings** (RLE, dictionaries) — layout supports them.
-
-## When not to use pack
-
-1. No plain CSV/TSV after unzip — tree of `.col` files.
-2. Row iteration needs N column reads per row.
-3. Extra format surface for tooling.
-4. Parquet wins at scale; pack targets lighter, text-based, self-describing bundles.
 
 ## Top-level layout
 
@@ -240,18 +224,3 @@ Archives **MAY** use standard ZIP encryption. Password via tooling (`--password`
 - Column file count matches `#column` count; indices align.
 - Unsectioned: each `.col` has `rows` lines.
 - Sectioned: sections partition `[0, rows)`; line counts sum to `rows`.
-
-## What pack enables
-
-- Database snapshots in one file.
-- Pack- vs table-level provenance.
-- Selective decompress (few columns / sections).
-- Foundation for SQL-over-pack tooling.
-
-## What pack does not provide
-
-- Not a database (snapshot only).
-- Not a built-in query engine.
-- Not versioning / diffing.
-- Not nested packs.
-- Not a replacement for plain or row-ZIP forms.

@@ -73,7 +73,7 @@ Iterate all `#$ddl` lines in file order; include lines whose MatchKind is `exact
 
 ## Keys & constraints
 
-ExCSV has **no dedicated key/foreign-key construct**. Keys are enforcement, which belongs to the SQL layer, not to the descriptive schema. Express them as ordinary `#$ddl` statements in whatever dialect you target — typically a `CREATE TABLE` followed by `ALTER TABLE … ADD CONSTRAINT …`:
+ExCSV has **no dedicated key/foreign-key construct** in the descriptive layer. Express keys as ordinary `#$ddl` statements in the target dialect — typically a `CREATE TABLE` followed by `ALTER TABLE … ADD CONSTRAINT …`:
 
 ```
 #$ddl-postgres-18: CREATE TABLE orders (order_id BIGINT, line_no INT, customer_id BIGINT, email TEXT)
@@ -82,7 +82,7 @@ ExCSV has **no dedicated key/foreign-key construct**. Keys are enforcement, whic
 #$ddl-postgres-18: ALTER TABLE orders ADD CONSTRAINT fk_customer FOREIGN KEY (customer_id) REFERENCES customers(id)
 ```
 
-`#$ddl` is repeatable and executed in file order, so the sequence is the author's responsibility. The descriptive layer stays separate: `#column unique=1` is a uniqueness *hint* about the data (for the parser and analyst), not a DB constraint; in pack, `#fk` is an informational relationship map for the bundle. See [Columns](columns.md#keys) and [Pack](pack.md).
+`#$ddl` is repeatable and executed in file order; sequencing is the author's responsibility. In the descriptive layer, `#column unique=1` is a uniqueness hint (not a constraint) and pack `#fk` is an informational relationship map. See [Columns](columns.md#keys) and [Pack](pack.md).
 
 ## Tooling
 

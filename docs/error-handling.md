@@ -1,17 +1,17 @@
 # Error Handling — Canonical Code Registry
 
-This is the **single normative source** for ExCSV error/warning codes. The `error_kind` enum in `fixtures/fixtures.yaml` and the compact list in [`docs/llm/error-handling.md`](llm/error-handling.md) MUST match the codes here.
+The **single normative source** for ExCSV error/warning codes. The `error_kind` enum in `fixtures/fixtures.yaml` and the compact list in [`docs/llm/error-handling.md`](llm/error-handling.md) MUST match the codes here.
 
 **Severity**
 
-- **FAIL** — a conforming reader **MUST** reject the file (hard error).
-- **WARN** — a conforming reader **MUST NOT** fail; it **SHOULD** surface the code and continue (ExCSV is a *descriptive* format — see [introduction](introduction.md#a-descriptive-meta-format-normative)). Reading is lenient; only **structural mutations** may be refused (see `column_count_mismatch`).
+- **FAIL** — a conforming reader **MUST** reject the file.
+- **WARN** — a conforming reader **MUST NOT** fail; it **SHOULD** surface the code and continue. Only **structural mutations** may be refused (see `column_count_mismatch`).
 
 **Verify column** — behaviour under `excsv verify`:
 
-- `—` — same as normal (WARN stays WARN, FAIL stays FAIL).
-- `→FAIL` — the WARN escalates to a hard failure under `excsv verify`.
-- `never` — stays a WARN **even under `excsv verify`** (advisory by design; documented explicitly so it is never "tightened" later).
+- `—` — WARN stays WARN, FAIL stays FAIL.
+- `→FAIL` — the WARN escalates to a hard failure.
+- `never` — stays a WARN even under `excsv verify`.
 
 ## Header
 
@@ -99,7 +99,7 @@ This is the **single normative source** for ExCSV error/warning codes. The `erro
 
 | Code | Severity | Verify | Meaning |
 | --- | --- | --- | --- |
-| `zip_primary_not_first` | FAIL | — | First central-directory entry is not a valid primary (wrong name or not `.excsv`/`.extsv`). Readers **MUST NOT** scan forward. Subsumes the old `zip_primary_bad_name`. |
+| `zip_primary_not_first` | FAIL | — | First central-directory entry is not a valid primary (wrong name or not `.excsv`/`.extsv`). Readers **MUST NOT** scan forward. |
 | `zip_primary_missing` | FAIL | — | No `.excsv`/`.extsv` entry in the archive. |
 | `zip_missing_original_size` | FAIL | — | Inner header lacks `original-size=`. |
 | `zip_original_size_mismatch` | FAIL | — | Inner uncompressed size ≠ header `original-size=`. |
@@ -124,7 +124,3 @@ This is the **single normative source** for ExCSV error/warning codes. The `erro
 | `pack_col_line_count_mismatch` | FAIL | — | A `.col` line count ≠ `rows`. |
 | `pack_section_partition_error` | FAIL | — | Section partitioning is inconsistent with `section-size=`. |
 | `pack_section_boundary_mismatch` | FAIL | — | Section boundaries do not line up across columns. |
-
-## Planned (not yet in the live spec)
-
-Computed-column codes land with [computed columns](../plan/TODO.md) §5: `formula_references_computed`, `formula_unknown_reference`, `formula_parse_error`, `formula_index_forbidden`, `computed_materialized_mismatch` (FAIL); `computed_default_ignored`, `formula_dialect_nonportable`, `computed_stale` (WARN). Pack multi-primary guards: `pack_two_primary`, `pack_single_table_two_tables` (FAIL).

@@ -12,7 +12,7 @@ ExCSV stands on the shoulders of prior work that proved a CSV file can carry its
 - Free-form file-level `meta:` block.
 - Plain CSV data section that round-trips through every standard tool.
 
-ExCSV adopts the same overall shape but **swaps ECSV's nested YAML header for line-oriented `key=value` pairs**. Each meta line stands on its own — easier to `grep`, easier to `diff`, easier to write by hand. The tradeoff: ExCSV doesn't try to carry rich Python-typed objects (masked columns, mixin columns, multidimensional arrays). That's deliberate — ExCSV is a tabular interchange format, not an in-memory object serializer.
+ExCSV adopts the same overall shape but **swaps ECSV's nested YAML header for line-oriented `key=value` pairs**. Each meta line stands on its own — easier to `grep`, `diff`, and hand-write. ExCSV does not carry rich Python-typed objects (masked columns, mixin columns, multidimensional arrays); it is a tabular interchange format, not an in-memory object serializer.
 
 ## InfluxDB Annotated CSV
 
@@ -43,8 +43,6 @@ Column types are **index-based** (`col/0/type`, `col/1/type`, …) with rich, lo
 Pairing is by convention (`data.csv` + `data.mcsv`); ExCSV uses the same basename pattern (`data.csv` + `data.excsv`, `data.tsv` + `data.extsv`) plus normative `reference=`.
 
 MetaCSV targets **interpretation and typing** for SQL/ODS export; it does not define aggregations, SQL companions, checksums, or ZIP containers. A minimal MetaCSV sidecar may list only non-default keys; ExCSV canonical writers similarly omit default header fields.
-
-**Possible cross-pollination (non-normative):** per-column null markers (`data,col/n/null_value` in MetaCSV) map naturally to future `#column`-level overrides; auto-generated `.mcsv` from sniffers (e.g. ColumnDet, csvsniffer) is analogous to ExCSV tools inferring schema from data (Mode B).
 
 ## What ExCSV adds beyond all of the above
 

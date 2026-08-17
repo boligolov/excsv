@@ -11,7 +11,7 @@ The archive **MUST** contain at least one entry whose name ends in `.excsv` or `
 
 Additional entries (auxiliary data, attachments) **MAY** follow.
 
-Readers **MUST NOT** scan past the first entry to find a matching name. If the first central-directory entry is not a valid primary (wrong name, or not `.excsv`/`.extsv`), the archive **MUST** fail with `zip_primary_not_first` — even if a later entry would satisfy the name rule. Determinism beats repairability: the primary is *the first entry or nothing*.
+Readers **MUST NOT** scan past the first entry to find a matching name. If the first central-directory entry is not a valid primary (wrong name, or not `.excsv`/`.extsv`), the archive **MUST** fail with `zip_primary_not_first`, even if a later entry would satisfy the name rule.
 
 ## Compression
 

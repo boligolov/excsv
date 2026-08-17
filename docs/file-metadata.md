@@ -22,7 +22,7 @@ Each `#@` key is unique per file (last-wins on duplicates).
 
 ## `grain` — what one row represents
 
-`grain` is free-text describing the unit of one data row (for example `one row per order`, `one row per customer per day`, or `pre-aggregated monthly totals`). It is purely descriptive and carries no validation semantics. It tells a consumer how to interpret and aggregate the table — for instance whether rows are raw events or already aggregated — instead of forcing it to infer the grain from column names.
+`grain` is free-text describing the unit of one data row (for example `one row per order`, `one row per customer per day`, or `pre-aggregated monthly totals`). It is descriptive and carries no validation semantics.
 
 Example:
 

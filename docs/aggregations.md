@@ -10,7 +10,7 @@
 
 - `<name>` **MUST** be a well-known aggregation name (see below).
 - One optional space after `:` is skipped. The remaining payload **MUST** be parsed using the file's CSV dialect (delimiter, quote character, escapes), as if it were a single CSV row.
-- Value count **SHOULD** equal the number of **physical** columns (stored + materialized; virtual computed columns have no value slot). Fewer values → the trailing columns simply carry no aggregate; more values → warn (`agg_arity_mismatch`). This is advisory, never fatal — the description may lag the data (see [parsing](llm/parsing.md), [introduction](introduction.md#a-descriptive-meta-format-normative)).
+- Value count **SHOULD** equal the number of **physical** columns (stored + materialized; virtual computed columns have no value slot). Fewer values → the trailing columns carry no aggregate; more values → warn (`agg_arity_mismatch`). Advisory, never fatal.
 - Aggregation line order does not matter. Parsers **MUST** accept any order.
 - Aggregations **MUST** be parsed using the resolved CSV dialect. If the header is absent, the default dialect **MUST** be used.
 

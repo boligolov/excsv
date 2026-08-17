@@ -76,11 +76,11 @@ Allowed types:
 | `default`  | MAY         | Schema/DDL default (see below). **Not** applied when reading data. |
 | `required` | MAY         | `1` = field must not be null, `0` = nullable. If `default` is also set, the default satisfies the requirement at the schema level |
 
-**`default` is a schema attribute, not a read transform.** ExCSV *describes* data verbatim: an empty field, or a field equal to the file's `null` marker, reads as **null** regardless of `default`. A parser MUST NOT fabricate a value from `default`, so `count_null` and null-based validation see the data as authored — `default` never reduces the null count.
+`default` is a schema attribute, not a read transform. An empty field, or a field equal to the file's `null` marker, reads as **null** regardless of `default`; a parser MUST NOT substitute `default`, so `count_null` and null-based validation see the data as authored.
 
-In generated DDL, `default` emits as `DEFAULT <value>` (with `required=1` → `NOT NULL DEFAULT <value>`). It states what the **target database** fills in for missing values on insert — not what the current ExCSV bytes contain.
+In generated DDL, `default` emits as `DEFAULT <value>` (with `required=1` → `NOT NULL DEFAULT <value>`) — what the target database fills for missing values on insert.
 
-Because of that split, a column can legitimately both contain nulls in the described data **and** carry a `default` (ExCSV often describes pre-existing, immutable files). The generated schema would then have no nulls in that column, disagreeing with the data as-is. This is allowed, but a validator SHOULD warn `default_with_nulls` when a `default` column's data contains any null (empty or `null`-marked). The discrepancy resolves once a writer rewrites the null cells to the default (e.g. `\N` → `AAA`). Advisory only — never fatal (same policy as checksums).
+A column MAY carry `default` while its data still contains nulls; a validator SHOULD warn `default_with_nulls` in that case (advisory, never fatal).
 
 ### Constraints
 
@@ -100,7 +100,7 @@ Because of that split, a column can legitimately both contain nulls in the descr
 | -------- | ----------- | ------------------------------- |
 | `unique` | MAY         | `1` = all values must be unique |
 
-`unique=1` is a **descriptive** uniqueness hint about the data — useful to the parser and analyst (e.g. safe to treat as an identifier) — not an enforced database constraint. ExCSV has no primary-key / foreign-key construct in the descriptive layer: express keys, composite keys, and referential constraints in the SQL layer as ordered `#$ddl` statements (`ALTER TABLE … ADD CONSTRAINT …`). See [SQL companions › Keys & constraints](sql.md#keys--constraints).
+`unique=1` is a descriptive uniqueness hint, not an enforced constraint. ExCSV has no primary-key / foreign-key construct in the descriptive layer: express keys, composite keys, and referential constraints in the SQL layer as ordered `#$ddl` statements (`ALTER TABLE … ADD CONSTRAINT …`). See [SQL companions › Keys & constraints](sql.md#keys--constraints).
 
 ### Semantics
 
@@ -135,7 +135,7 @@ Because of that split, a column can legitimately both contain nulls in the descr
 
 ## Analytical role
 
-`role` describes the **analytical** role of a column, independent of `type` (the physical/storage type). It lets a consumer choose correct operations without guessing from column names — group by dimensions, aggregate measures, and never sum identifiers. It is purely advisory and is not validated.
+`role` describes the **analytical** role of a column, independent of `type` (the physical/storage type). It is advisory and not validated.
 
 ```
 #column name=order_id   type=int      role=id
