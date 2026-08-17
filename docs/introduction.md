@@ -1,39 +1,37 @@
 # Introduction
 
-ExCSV is a self-describing, line-oriented tabular data format backward-compatible with plain CSV/TSV.
+You open a CSV someone sent you. Which column is the amount? Is `01720` a ZIP code or the number 1720? Is `2026-01-02` the 2nd of January or the 1st of February? Are these *all* the rows, or just the first thousand your viewer loaded? And what's the total — do you trust it, or re-add the column yourself?
 
-## A descriptive meta-format (normative)
+The answers used to live somewhere else: a README, a Slack thread, someone's memory. **ExCSV puts them back in the file.** Column types and units, a one-line description of what a row means, pre-computed totals, where the data came from, even the `CREATE TABLE` that would recreate it — all written as `#` comment lines that every CSV reader already skips.
 
-ExCSV is a **descriptive meta-format over CSV/TSV: it describes data, it does not define or alter it.** The data section **MUST** remain byte-for-byte valid CSV/TSV; every `#`-prefixed line only annotates those rows.
+Your file stays plain CSV. `grep`, `awk`, `cut`, pandas, Excel keep working exactly as before. It just stops being anonymous.
 
-- A parser **MUST NOT** rewrite cell values from metadata. `default=` is a schema/DDL attribute and is **not** substituted on read; `null` markers read as null.
-- Integrity and consistency signals (`checksum=`, `rows=` vs the visible row count, `default=` vs actual nulls) are advisory: a mismatch is a **warning, never an access gate**, and **MUST NOT** block reading.
-- Where a description and a generated artifact diverge (e.g. a DDL `NOT NULL DEFAULT` vs nulls present in the data), the file records both and flags the gap. Rewriting data (materialization, `null` → default) is an explicit tooling operation, never a side effect of reading.
+## It describes; it never changes your data
 
-ExCSV puts a table's context back **in the file** — dialect, column types and units, aggregations, provenance, an integrity checksum, and optional SQL — all as `#`-prefixed lines that any CSV reader ignores.
+ExCSV is a layer of description on top of CSV. The rows themselves stay byte-for-byte the same CSV they always were — ExCSV only *annotates* them. Reading an ExCSV file never rewrites a value, never fills in a blank, never "corrects" anything. What you see in the data section is what's there. That's the whole point: you can trust the file to describe reality, not reshape it.
 
-It extends CSV with:
+## What you can add
 
-- An inline metadata header (`#!excsv`)
-- Column schema annotations (`#column` — types, units, `role`/`agg`, enums, patterns)
-- Optional aggregation metadata (`#%` — sum/avg/count/… as a trust anchor)
-- Optional file metadata and provenance (`#@` — including `#@grain`, `#@source`)
-- Optional SQL companions (`#$` — DDL/DQL with dialect tagging)
-- Optional embedded [CSVW](https://www.w3.org/TR/tabular-data-primer/) compatibility
-- Optional integrity checksum (`checksum=`, advisory)
-- Optional ZIP container with the summary carried in the archive comment
-- Optional **pack** container: multi-table columnar `.excsv.pack.zip` — see [pack.md](pack.md)
+Every piece is optional. Add a header, then types, then stats, then SQL — each layer stands on its own, and you stop wherever it's useful enough.
 
-## Three shapes, one format
+- **A header line** (`#!excsv`) — declares the dialect: delimiter, quote, encoding, whether row one is a header, how many rows there are.
+- **Column schema** (`#column`) — types, units, display formats, allowed values (enums), and analytical roles like *id* / *measure* / *time*.
+- **Aggregations** (`#%`) — sum / avg / min / max / counts, pre-computed, so a total is a fact in the file, not something a preview tool guesses.
+- **File metadata** (`#@`) — source, author, license, tags, and `#@grain` ("one row per order") that says what a single row *is*.
+- **SQL companions** (`#$`) — DDL to recreate the schema and DQL queries for provenance, tagged by dialect (MySQL / Postgres / ClickHouse / …).
+- **A checksum** — an integrity fingerprint of the data.
+- **CSVW** — W3C tabular metadata carried inline, if you already use it.
 
-The same header and `#column` / `#%` / `#$` / `#@` vocabulary applies to every form; the shapes differ only in **how the data is packaged**. See [file structure](file-structure.md) and [pack](pack.md) for the normative details.
+## Three shapes, one vocabulary
 
-- **Inline** — metadata at the top of the file, above the rows; one artifact that is still a valid CSV.
-- **Sidecar** — a header-and-meta-only `.excsv`/`.extsv` next to an untouched `data.csv`/`.tsv`, bound with `reference=`; no data rows are copied.
-- **Pack** — `.excsv.pack.zip`: a manifest plus one directory per table, each column stored as its own `.col` entry. Columnar and multi-table.
+The same header and `#column` / `#%` / `#$` / `#@` vocabulary works everywhere; the shapes differ only in **how the data is packaged**. See [file structure](file-structure.md) and [pack](pack.md).
 
-The **ZIP container** (`.excsv.zip`, `.extsv.zip`) Deflate-wraps a single inline or sidecar file and mirrors its schema and stats into the ZIP comment. Pack is inherently a columnar ZIP.
+- **Inline** — metadata at the top, rows below, one file that's still valid CSV.
+- **Sidecar** — a metadata-only `.excsv`/`.extsv` next to an untouched `data.csv`, bound with `reference=`. Nothing is copied; the original never changes. This is how you annotate data you're not allowed to touch.
+- **Pack** — `.excsv.pack.zip`: a columnar, multi-table archive — read a few columns out of many without unpacking the rest.
 
-## Terminology
+You can also **zip** an inline or sidecar file (`.excsv.zip`) and its schema is mirrored into the archive comment, so tools preview the metadata without unzipping.
 
-The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** in this document are to be interpreted as described in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119).
+---
+
+Want the exact rules a tool must follow — required fields, validation, error codes? Those live in [implementation/](implementation/).

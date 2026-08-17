@@ -122,10 +122,11 @@ More tools: [excsv.org/tools](https://excsv.org/tools/).
 | ZIP container | [docs/zip.md](docs/zip.md) |
 | Pack container | [docs/pack.md](docs/pack.md) |
 | Data section | [docs/data-section.md](docs/data-section.md) |
-| Error handling | [docs/error-handling.md](docs/error-handling.md) |
 | Full example | [docs/full-example.md](docs/full-example.md) |
 | Prior art | [docs/prior-art.md](docs/prior-art.md) |
 | License | [docs/license.md](docs/license.md) |
+
+The docs above are written for people who work with tables. **Building a tool or parser?** The normative spec — parser rules, validation, and the error-code registry — lives in [docs/implementation/](docs/implementation/).
 
 ## License
 

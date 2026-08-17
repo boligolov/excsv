@@ -1,54 +1,34 @@
-﻿# File Structure
+﻿# File structure
 
-An ExCSV file **MUST** consist of, in order:
+An ExCSV file reads top to bottom in three parts:
 
 ```
 ┌─────────────────────────┐
-│  Header Line            │  ← zero or one, optional
+│  Header line            │  ← one line naming the dialect (optional)
 ├─────────────────────────┤
-│  Meta Lines             │  ← zero or more
+│  Meta lines             │  ← the # description lines (optional, any number)
 ├─────────────────────────┤
-│  Data Section           │  ← standard CSV/TSV rows
+│  Data section           │  ← ordinary CSV/TSV rows
 └─────────────────────────┘
 ```
 
-An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=double`, `header=1`, `encoding=UTF-8`).
+Everything above the data is optional. Drop the header and it's read as plain comma-separated CSV with a header row — i.e. a normal `.csv`. Add just a `#!excsv version=0.3` line and you have the smallest possible ExCSV file (a template with no data yet).
 
-The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.3` (a **header-only stub** with no data and no `reference=`).
+## The three shapes
 
-## Document profiles (plain)
-
-| Profile | Data section | `reference=` |
+| Shape | Data lives… | Best for |
 | --- | --- | --- |
-| **Inline** (default) | present | **MUST NOT** be set |
-| **Sidecar** | absent | **REQUIRED** — see [Sidecar](#sidecar-detached-metadata) |
-| **Header-only stub** | absent | absent (templates, exports) |
+| **Inline** | in the same file, below the metadata | exports you generate, files you share, snippets you paste somewhere |
+| **Sidecar** | in a separate, untouched `.csv`/`.tsv` | data you can't or won't modify — vendor dumps, regulated files, anything with its own checksum |
+| **Header-only stub** | nowhere yet | templates and schemas you'll fill in later |
 
-See also the [storage forms overview](https://excsv.org/variants/) on the project website.
+## Sidecar — annotate without touching the data
 
-## Sidecar (detached metadata)
+A **sidecar** is an ExCSV file with header and `#` lines but **no rows**. It points at a real data file with `reference=`, and describes it from the outside. The data file stays exactly as it was — same bytes, still opens as plain CSV.
 
-A **sidecar** is a plain ExCSV file containing only the `#!excsv` header and `#` meta lines — **no data section** — that describes tabular data in a separate CSV or TSV file.
+Pair by basename: `sales.excsv` describes `sales.csv`; `sales.extsv` describes `sales.tsv` (tab-separated). The `reference=` path is relative to the sidecar.
 
-**Pairing:** `sales.excsv` with `sales.csv`, or `sales.extsv` with `sales.tsv`. Same basename; the sidecar extension signals metadata. A `.extsv` file (inline or sidecar) **SHOULD** declare `delim=tab`.
-
-Plain `.excsv` and `.extsv` files **MAY** be **inline** (header + meta + data) or **sidecar** (header + meta only, with `reference=`).
-
-**Required field:** the header **MUST** include `reference=<relative-path>` — path to the data file, relative to the sidecar's directory, **MUST NOT** be absolute. Example: `reference=sales.csv`.
-
-**Invariants:**
-
-- After meta lines, the file **MUST** end. Any data row while `reference=` is set **MUST** fail validation.
-- Inline files (with data rows) **MUST NOT** set `reference=`.
-- `#@source` is provenance, not a filesystem path — do not use it instead of `reference=`.
-
-**Derived fields:** `rows=`, `checksum=`, and `#%` lines describe the **referenced** data file. Checksum verification requires opening both files.
-
-**Discovery:** when opening `sales.csv`, implementations **MAY** load `sales.excsv` from the same directory; when opening `sales.tsv`, implementations **MAY** load `sales.extsv`.
-
-**Parse vs open/load:** *parsing* a sidecar reads its metadata only — the referenced file is **not** required, and parsing always succeeds. *Opening/loading* resolves `reference=` to obtain the data rows. A missing referenced file is **not** fatal: implementations **MUST** warn (`sidecar_reference_not_found`) and treat the handle as **read-only, metadata-only** — data operations (reading rows, checksum/`rows=`/`#%` verification, materialization, edit-through) are unavailable.
-
-**Example** — `sales.excsv`:
+`sales.excsv`:
 
 ```
 #!excsv version=0.3 delim=comma quote=double header=1 rows=2 reference=sales.csv
@@ -58,7 +38,7 @@ Plain `.excsv` and `.extsv` files **MAY** be **inline** (header + meta + data) o
 #%sum: ,,750.50
 ```
 
-`sales.csv` (ordinary CSV, no ExCSV header):
+`sales.csv` — an ordinary CSV, no ExCSV header, never modified:
 
 ```
 id,customer,amount
@@ -66,9 +46,10 @@ id,customer,amount
 2,Globex Inc,250.50
 ```
 
-Sidecar pairs are **not** combined into `.excsv.zip` or `.extsv.zip`; materialize inline or ship two plain files.
+Row count, checksum, and aggregations in the sidecar describe the *referenced* file. You can keep several sidecars describing the same data for different audiences. When you open the plain `sales.csv`, a tool can pick up `sales.excsv` sitting next to it automatically.
 
-## Line Endings and BOM
+Why bother instead of just editing the CSV? Because a lot of data isn't yours to edit — immutable lakes, files under contract, anything with a hash someone else checks. A sidecar lets you layer types, stats, and SQL onto it without changing a byte.
 
-- Files **MAY** use LF or CRLF line endings. Parsers **MUST** accept both.
-- Parsers **MUST** ignore UTF-8 BOM (`U+FEFF`) at start of file.
+## Line endings and encoding
+
+LF and CRLF both work. A UTF-8 byte-order mark at the start of the file is fine. Encoding defaults to UTF-8; set `encoding=` on the header if it's something else.

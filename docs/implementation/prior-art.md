@@ -40,7 +40,7 @@ ExCSV's `#%` aggregation rows are direct descendants of this idea — one row pe
 
 Column types are **index-based** (`col/0/type`, `col/1/type`, …) with rich, locale-aware parameters (e.g. `date/yyyy-MM-dd`, `boolean/vrai/faux`, `currency/post/€/decimal/,/.`). ExCSV sidecars instead use **line-oriented `#` meta** (same vocabulary as inline ExCSV), optional **name-based** `#column` when `header=1`, and an explicit `reference=` bind to the data file.
 
-Pairing is by convention (`data.csv` + `data.mcsv`); ExCSV uses the same basename pattern (`data.csv` + `data.excsv`, `data.tsv` + `data.extsv`) plus an explicit `reference=`.
+Pairing is by convention (`data.csv` + `data.mcsv`); ExCSV uses the same basename pattern (`data.csv` + `data.excsv`, `data.tsv` + `data.extsv`) plus normative `reference=`.
 
 MetaCSV targets **interpretation and typing** for SQL/ODS export; it does not define aggregations, SQL companions, checksums, or ZIP containers. A minimal MetaCSV sidecar may list only non-default keys; ExCSV canonical writers similarly omit default header fields.
 

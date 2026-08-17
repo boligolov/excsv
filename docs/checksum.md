@@ -1,13 +1,11 @@
 # Checksum
 
-If present in the header line:
+A `checksum=` on the header is an integrity fingerprint of the data — a way to tell whether the rows are still exactly what they were when the file was written.
 
 ```
 checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924...
 ```
 
-- The checksum **MUST** apply to the **entire data section** (everything after the last meta line), including the header row if `header=1` and the trailing newline if present.
-- Newlines **MUST** be normalized to `\n` (LF) before computing.
-- Format: `<algorithm>:<hex-digest>`.
-- Covers semantic content integrity of the data section regardless of packaging or transport.
-- `checksum=` is advisory. A mismatch is always a **warning, never a failure — including under `excsv verify`**. An unknown algorithm or malformed digest → warn and skip verification. (`rows=` and `original-size=` have their own, stricter rules.)
+It's written as `<algorithm>:<hex-digest>` and covers the whole data section, so it survives being zipped, re-zipped, or moved around — the fingerprint is of the *content*, not the packaging.
+
+It's advisory: a mismatch is a heads-up ("this data changed since it was fingerprinted"), not a lock. It never stops you from reading the file. If you want to catch silent edits or corruption, check it; if you don't care, ignore it.

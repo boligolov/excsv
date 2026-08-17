@@ -1,6 +1,6 @@
-# Aggregations
+# Aggregations (`#%`)
 
-## Aggregation Values
+Here's the quiet superpower. A `#%` line carries a pre-computed statistic for the whole dataset — one value per column, laid out like a CSV row so it lines up under the columns it describes:
 
 ```
 #%count_nonnull: ,98,100
@@ -8,52 +8,38 @@
 #%avg: ,,1542.81
 ```
 
-- `<name>` **MUST** be a well-known aggregation name (see below).
-- One optional space after `:` is skipped. The remaining payload **MUST** be parsed using the file's CSV dialect (delimiter, quote character, escapes), as if it were a single CSV row.
-- Value count **SHOULD** equal the number of **physical** columns (stored + materialized; virtual computed columns have no value slot). Fewer values → the trailing columns carry no aggregate; more values → warn (`agg_arity_mismatch`). Advisory, never fatal.
-- Aggregation line order does not matter. Parsers **MUST** accept any order.
-- Aggregations **MUST** be parsed using the resolved CSV dialect. If the header is absent, the default dialect **MUST** be used.
+Read that as: column 2 has 98 non-null values, column 3 has 100; column 3 sums to 154,280.50 and averages 1,542.81. Empty slots mean "no aggregate for this column."
 
-## Standard Aggregations
+**Why it matters:** the total is now a *fact written in the file*, not something a tool recomputes from whatever rows it happened to load. Paste the first 50 rows of a million-row table into anything, and `#%sum` still tells the truth about the full dataset — the visible slice can't lie to you. That's the difference between "the sum of what I can see" and "the sum of the data."
 
-**Universal** (any type):
+## The aggregates
 
-| Name             | Description              |
-| ---------------- | ------------------------ |
-| `count_nonnull`  | Count of non-null values |
-| `count_null`     | Count of null values     |
-| `count_distinct` | Count of distinct values |
+**Any type:**
 
-**Numeric** (`int`, `long`, `float`, `double`, `decimal`):
+| Name | Meaning |
+| --- | --- |
+| `count_nonnull` | How many values aren't null |
+| `count_null` | How many are null |
+| `count_distinct` | How many distinct (non-null) values |
 
-| Name  | Description     |
-| ----- | --------------- |
-| `sum` | Sum of values   |
-| `avg` | Arithmetic mean |
-| `min` | Minimum value   |
-| `max` | Maximum value   |
+**Numbers** (`int`, `long`, `float`, `double`, `decimal`):
 
-**String** (`string`):
+| Name | Meaning |
+| --- | --- |
+| `sum` | Total |
+| `avg` | Mean |
+| `min` | Smallest |
+| `max` | Largest |
 
-| Name     | Description               |
-| -------- | ------------------------- |
-| `len_min` | Length of shortest string |
-| `len_max` | Length of longest string  |
+**Strings:**
 
-## Null Handling
+| Name | Meaning |
+| --- | --- |
+| `len_min` | Shortest string's length |
+| `len_max` | Longest string's length |
 
-Aggregations follow SQL semantics: null values are **excluded** from computation.
+## Nulls
 
-- `sum`, `avg`, `min`, `max`, `len_min`, `len_max` — nulls are skipped.
-- `count_nonnull` — counts non-null values only.
-- `count_null` — counts null values only.
-- `count_distinct` — counts distinct **non-null** values only.
+Aggregates follow the same rules SQL does: nulls sit out. `sum`, `avg`, `min`, `max`, `len_min`, `len_max` skip them; `count_distinct` counts distinct non-null values; `count_null` counts only the nulls. So the numbers mean what you'd expect from a database.
 
-## Type Compatibility
-
-- Implementations **SHOULD** validate aggregation compatibility with the column type.
-- Implementations **MAY** ignore invalid combinations with a warning.
-
-## Missing Values
-
-An empty field in an aggregation row **MUST** mean "not applicable" or "not computed."
+The values are written in the file's own CSV dialect, and the line order doesn't matter — put `sum` before or after `avg`, it's the same.

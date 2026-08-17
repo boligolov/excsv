@@ -1,84 +1,54 @@
-﻿# Header Line
+﻿# Header line
 
-## Syntax
-
-If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, and **MUST** contain at least the `version` field.
+The first line, when present, names the CSV dialect and a few facts about the file. It starts with `#!excsv` and always carries `version`:
 
 ```
 #!excsv version=0.3 delim=comma header=1
 ```
 
-## Key-Value Pairs
+Everything else is `key=value`, separated by spaces. Values with spaces go in double quotes (`"like this"`); a literal double quote inside is written `""`. Leave out any field you don't need — sensible defaults fill in.
 
-- Header fields **MUST** be encoded as `key=value`.
-- Pairs **MUST** be separated by one or more spaces.
-- Parsing **MUST** split on the **first** `=` character (values may contain `=`).
-- Unknown keys **MUST** be ignored by conforming parsers.
+## Fields
 
-## Value Rules
+| Field | Usual? | What it says |
+| --- | --- | --- |
+| `version` | always | Format version (`0.3`) |
+| `delim` | common | The delimiter. A name (`comma`, `tab`, `pipe`, `semicolon`) or a literal like `::`. Default: `comma` |
+| `quote` | common | The quote character. `none`, `double`, `single`, or a literal. Default: `none` |
+| `header` | common | `1` if the first data row is a header row, `0` if not. Default: `1` |
+| `null` | optional | An extra string that also means null (e.g. `null=NA`, `null=\N`). Empty fields are always null already |
+| `rows` | optional | How many data rows there are (excluding the header) |
+| `checksum` | optional | Integrity fingerprint of the data — see [Checksum](checksum.md) |
+| `encoding` | optional | Character encoding. Default: `UTF-8` |
+| `sql-dialect` | optional | Default SQL dialect for `#$` lines that don't name one — see [SQL](sql.md) |
+| `csvw` | optional | How CSVW metadata is embedded, if any — see [CSVW](csvw.md) |
+| `schema` | optional | Which schema wins if both ExCSV and CSVW are present: `excsv` (default) or `csvw` |
+| `reference` | sidecar only | Relative path to the data file this sidecar describes — see [File structure](file-structure.md#sidecar--annotate-without-touching-the-data) |
+| `original-size` | ZIP/pack only | Uncompressed byte size, used inside `.excsv.zip` and pack archives — see [ZIP](zip.md) and [Pack](pack.md) |
 
-- Values without spaces **MUST NOT** be quoted.
-- Values with spaces **MUST** be wrapped in double quotes (`"`).
-- Inside quoted values, double quote **MUST** be escaped by doubling (`""`).
-- No other escape sequences are allowed.
+## Delimiter values
 
-## Header Fields
-
-| Field           | Requirement                | Description                                                                                                                          |
-| --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `version`       | **MUST**                   | Format version (`0.3`)                                                                                                               |
-| `delim`         | SHOULD                     | Delimiter — a known name **or** a literal character/sequence (see below). Default: `comma`                                            |
-| `quote`         | SHOULD                     | Quote — a known name **or** a literal character (see below). Default: `none`                                                          |
-| `header`        | SHOULD                     | `1` if the first data row is a header row, `0` otherwise. Default: `1`                                                                |
-| `null`          | MAY                        | Additional non-empty string representing null. Empty fields are **always** null by default. Use only when a non-empty value also means null (e.g. `null=NA`, `null=\N`). `null=""` is redundant. |
-| `rows`          | MAY                        | Total number of data rows (excluding header)                                                                                         |
-| `checksum`      | MAY                        | Checksum of the data section (see [Checksum](checksum.md))                                                                          |
-| `csvw`          | MAY                        | CSVW embedding mode (see [CSVW](csvw.md))                                                                         |
-| `encoding`      | MAY                        | Character encoding (default `UTF-8`)                                                                                                 |
-| `schema`        | MAY                        | Schema precedence: `excsv` (default) or `csvw`                                                                                       |
-| `sql-dialect`   | MAY                        | Default SQL dialect for unqualified `#$` lines (see [SQL](sql.md))                                                  |
-| `original-size` | **MUST** in row-ZIP and pack manifest | Meaning depends on container: row-ZIP inner file = uncompressed bytes of the entire inner `.excsv`/`.extsv`; pack `_manifest.excsv` = sum of `#table original-size=` (column payload only). Omit on plain files. See [ZIP](zip.md) and [Pack](pack.md). |
-| `reference`     | **MUST** if sidecar        | Relative path to the CSV/TSV data file. See [File structure](file-structure.md#sidecar-detached-metadata). **MUST NOT** be set on inline documents. |
-
-### Delimiter Values
-
-The `delim` field accepts either a **well-known name** or a **literal character/sequence**.
-
-**Well-known names:**
-
-| Name        | Character         |
-| ----------- | ----------------- |
-| `comma`     | `,`               |
-| `tab`       | `\t`              |
-| `pipe`      | `\|`              |
-| `semicolon` | `;`               |
-
-**Literal delimiters:**
-
-Any value that is not a well-known name **MUST** be treated as the literal delimiter string.
-
-| Example      | Delimiter used              |
-| ------------ | --------------------------- |
-| `delim=,`    | `,`                         |
-| `delim=tab`  | Tab character (well-known)  |
-| `delim=::`   | Two-colon sequence `::`     |
-| `delim=|`    | `\|` (literal pipe)          |
-
-- If the value is not a well-known name, it is used as the literal delimiter.
-- Parsers **MUST** first check against the well-known name table; if no match, treat the value as a literal.
-
-### Quote Values
-
-The `quote` field accepts either a **well-known name** or a **literal character**.
-
-**Well-known names:**
+Use a friendly name, or just the character itself:
 
 | Name | Character |
-|---|---|
-| `none` | No quoting (default) |
-| `double` | `"` (double quote) |
-| `single` | `'` (single quote) |
+| --- | --- |
+| `comma` | `,` |
+| `tab` | tab |
+| `pipe` | `\|` |
+| `semicolon` | `;` |
 
-Any value that is not a well-known name **MUST** be treated as the literal quote character.
+Anything that isn't one of those names is taken literally: `delim=::` means a two-character `::` delimiter, `delim=|` a literal pipe.
 
-- Parsers **MUST** first check against the well-known name table; if no match, treat the value as a literal.
+## Quote values
+
+| Name | Character |
+| --- | --- |
+| `none` | no quoting (default) |
+| `double` | `"` |
+| `single` | `'` |
+
+As with `delim`, any other value is used as the literal quote character.
+
+## Extra keys
+
+You can add your own keys — a tool that doesn't recognize them just leaves them alone. If you invent one, prefix it with `x-` (e.g. `x-team=analytics`) so it never collides with a future standard field.

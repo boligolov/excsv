@@ -1,7 +1,5 @@
-# Data Section
+# Data section
 
-- The data section **MUST** follow the CSV dialect defined in the header (`delim`, `quote`, etc.).
-- Quoted values **MUST NOT** contain raw newlines. All values are single-line.
-- If the first field of the first data row begins with `#` (unquoted), it is ambiguous with meta lines. To avoid this: if quoting is enabled, the value **MUST** be quoted. If quoting is disabled (`quote=none`), the first field **MUST NOT** start with `#`. Note: `#` itself **MAY** be used as the quote character (e.g. `quote=#`), which resolves the ambiguity.
-- If `quote=none`, values **MUST NOT** contain delimiter characters.
-- A trailing newline after the last data row is **OPTIONAL**. If present, it is included in checksum computation.
+Below the metadata, it's just CSV. The rows follow the dialect the header declared — the delimiter, the quote character, the encoding — and nothing more. No ExCSV-specific syntax lives down here; this is the part `grep`, `awk`, pandas, and Excel read without knowing ExCSV exists.
+
+Each value is on a single line (values don't span line breaks), and a trailing newline at the end of the file is optional. That's the whole contract: your data stays ordinary CSV, and everything that makes it *self-describing* sits in the `#` lines above.

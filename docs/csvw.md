@@ -1,28 +1,16 @@
-# CSVW Compatibility
+# CSVW
 
-## Declaration
+If you already use [W3C CSVW](https://www.w3.org/TR/tabular-data-primer/) metadata, you can carry it inline instead of (or alongside) `#column` lines. Declare how it's embedded on the header:
 
-The header line **MAY** include one of:
+| `csvw=` | Meaning |
+| --- | --- |
+| `inline-json` | The CSVW metadata is plain JSON |
+| `base64url` | The CSVW metadata is Base64URL-encoded JSON |
 
-| Value              | Meaning                                 |
-| ------------------ | --------------------------------------- |
-| `csvw=inline-json` | CSVW metadata is inline JSON            |
-| `csvw=base64url`   | CSVW metadata is Base64URL-encoded JSON |
-
-## Payload
+Then put the payload on a `#csvw:` line:
 
 ```
 #csvw: {"tableSchema": {"columns": [...]}}
 ```
 
-`#csvw:` followed by the value to end of line. One optional leading space after `:` is skipped (readability only).
-
-- The payload **MUST** be valid JSON (after decoding if `base64url`).
-- Readers **MAY** ignore CSVW metadata entirely.
-
-## Schema Precedence
-
-| `schema` value    | Behavior                                    |
-| ----------------- | ------------------------------------------- |
-| `excsv` (default) | ExCSV `#column` annotations take precedence |
-| `csvw`            | CSVW `tableSchema` takes precedence         |
+If both ExCSV `#column` annotations and CSVW are present, `schema=` on the header decides who wins — `excsv` (the default) or `csvw`. Tools that don't care about CSVW simply skip it.

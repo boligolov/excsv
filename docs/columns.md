@@ -1,141 +1,97 @@
-# Column Schema
+# Column schema (`#column`)
 
-## Column Definition
-
-Column annotations are **OPTIONAL**. A file without any `#column` lines is valid (schema-less mode). Partial coverage is also valid — not every column needs a `#column` line; missing columns have no schema (user's responsibility). If present, each column is described with one `#column` line:
+This is where guessing ends. One `#column` line per column tells anyone — a person or a tool — exactly what it holds: the type, the unit, the display format, the allowed values, what the column is *for*.
 
 ```
 #column name=id type=int unique=1
-#column name=email type=string required=1 len_max=254
+#column name=email type=string len_max=254
 #column name=amount type=decimal format=0.00 unit=USD
 ```
 
-## Required Fields
+Columns are optional and you can annotate as few or as many as you like. No `#column` lines at all is a perfectly valid file — you just get plain CSV with no schema. Describe the three columns that matter and skip the rest; that's fine too.
 
-| Field | `header=1` | `header=0` |
-|---|---|---|
-| `name` | **MUST** | MAY |
-| `index` | not used | **MUST** |
+You identify a column by `name` (matched to the header row) when the file has a header, or by `index` (zero-based position) when it doesn't.
 
-## Name Rules
-
-- `name` **MUST NOT** contain spaces.
-- `name` **SHOULD** match the regex `[A-Za-z_][A-Za-z0-9_-]*`.
-
-## Header Mapping
-
-**When `header=1`:**
-
-- A data header row **MUST** exist as the first row of the data section.
-- If `title` is present, the header cell **MUST** match `title`. Otherwise it **MUST** match `name`.
-- Missing or extra columns **MUST** be treated as a validation error.
-
-**When `header=0`:**
-
-- Each `#column` **MUST** have `index` (zero-based) to define its position.
-- `name` is optional — if omitted, the column is referenced by index only.
-
-## Column Attributes
+## The attributes
 
 ### Identity
 
-| Field         | Requirement | Description                                                     |
-| ------------- | ----------- | --------------------------------------------------------------- |
-| `name`        | **MUST** if `header=1`, MAY if `header=0` | Column identifier               |
-| `title`       | MAY         | Human-readable display name (MUST be quoted if contains spaces) |
-| `description` | MAY         | Free-text description (quoted)                                  |
+| Field | Meaning |
+| --- | --- |
+| `name` | Column identifier (matches the header cell). No spaces |
+| `title` | Human-readable display name (quote it if it has spaces) |
+| `description` | Free-text note about the column (quoted) |
 
-### Type System
+### Type and format
 
-| Field    | Requirement | Description               |
-| -------- | ----------- | ------------------------- |
-| `type`   | SHOULD      | Data type (see below)     |
-| `format` | MAY         | Display/parse format hint |
+| Field | Meaning |
+| --- | --- |
+| `type` | The data type — see the table below |
+| `format` | A display/parse hint, e.g. `format=0.00` for money |
 
-Allowed types:
+| Type | What it is |
+| --- | --- |
+| `string` | Text |
+| `int` | 32-bit integer |
+| `long` | 64-bit integer |
+| `float` | 32-bit floating point |
+| `double` | 64-bit floating point |
+| `decimal` | Exact decimal (money — no float rounding) |
+| `boolean` | `true`/`false` (also `1`/`0`) |
+| `date` | `YYYY-MM-DD` |
+| `time` | `HH:MM:SS` |
+| `datetime` | ISO 8601 date-time |
+| `uuid` | A UUID |
+| `binary` | Base64-encoded bytes |
 
-| Type       | Description                                               |
-| ---------- | --------------------------------------------------------- |
-| `string`   | Text in the file's encoding (see `encoding` header field) |
-| `int`      | 32-bit signed integer                                     |
-| `long`     | 64-bit signed integer                                     |
-| `float`    | 32-bit IEEE 754                                           |
-| `double`   | 64-bit IEEE 754                                           |
-| `decimal`  | Arbitrary-precision decimal                               |
-| `boolean`  | Canonical lexical forms: `true`, `false`, `1`, `0`         |
-| `date`     | ISO 8601 date (`YYYY-MM-DD`)                              |
-| `time`     | ISO 8601 time (`HH:MM:SS`)                                |
-| `datetime` | ISO 8601 datetime                                         |
-| `uuid`     | Textual UUID representation                               |
-| `binary`   | Base64-encoded binary                                     |
+This is the answer to "is `01720` a number or a ZIP code" and "is that a float or exact money" — you write it down once and no one guesses again.
 
-### Default / Required
+### Units and semantics
 
-| Field      | Requirement | Description                                             |
-| ---------- | ----------- | ------------------------------------------------------- |
-| `default`  | MAY         | Schema/DDL default (see below). **Not** applied when reading data. |
-| `required` | MAY         | `1` = field must not be null, `0` = nullable. If `default` is also set, the default satisfies the requirement at the schema level |
+| Field | Meaning |
+| --- | --- |
+| `unit` | Unit of measurement — `USD`, `kg`, `ms`, … |
+| `role` | What the column is *for* analytically: `id`, `dimension`, `measure`, `time` |
+| `agg` | For a measure, how it should be aggregated: `sum`, `avg`, `min`, `max`, `none` |
+| `order` | Whether the data is sorted: `none`, `asc`, `desc` |
+| `separator` | If a cell packs several values, the character between them |
 
-`default` is a schema attribute, not a read transform. An empty field, or a field equal to the file's `null` marker, reads as **null** regardless of `default`; a parser MUST NOT substitute `default`, so `count_null` and null-based validation see the data as authored.
+### Allowed values and shape
 
-In generated DDL, `default` emits as `DEFAULT <value>` (with `required=1` → `NOT NULL DEFAULT <value>`) — what the target database fills for missing values on insert.
+| Field | Meaning |
+| --- | --- |
+| `enum` | A closed set of allowed values, pipe-separated |
+| `pattern` | A regex the values match |
+| `regexp_dialect` | Which regex flavor `pattern` uses: `ecmascript` (default), `pcre`, `posix_ere`, `re2` |
+| `min` / `max` | Value bounds (numeric or date) |
+| `len_min` / `len_max` | String length bounds |
 
-A column MAY carry `default` while its data still contains nulls; a validator SHOULD warn `default_with_nulls` in that case (advisory, never fatal).
+### Keys and defaults
 
-### Constraints
+| Field | Meaning |
+| --- | --- |
+| `unique` | `1` = values are meant to be unique (a hint) |
+| `required` | `1` = not nullable, `0` = nullable |
+| `default` | The default the *database* would use on insert — a schema fact, not applied when reading |
 
-| Field            | Requirement | Description                    |
-| ---------------- | ----------- | ------------------------------ |
-| `min`            | MAY         | Minimum value (numeric / date) |
-| `max`            | MAY         | Maximum value (numeric / date) |
-| `len_min`        | MAY         | Minimum string length          |
-| `len_max`        | MAY         | Maximum string length          |
-| `enum`           | MAY         | Pipe-separated list of allowed non-null values (see [Enumerations](#enumerations)) |
-| `pattern`        | MAY         | Regex pattern for validation (default dialect: ECMAScript) |
-| `regexp_dialect` | MAY         | Regex dialect for `pattern`: `ecmascript` (default), `pcre`, `posix_ere`, `re2` |
-
-### Keys
-
-| Field    | Requirement | Description                     |
-| -------- | ----------- | ------------------------------- |
-| `unique` | MAY         | `1` = all values must be unique |
-
-`unique=1` is a descriptive uniqueness hint, not an enforced constraint. ExCSV has no primary-key / foreign-key construct in the descriptive layer: express keys, composite keys, and referential constraints in the SQL layer as ordered `#$ddl` statements (`ALTER TABLE … ADD CONSTRAINT …`). See [SQL companions › Keys & constraints](sql.md#keys--constraints).
-
-### Semantics
-
-| Field       | Requirement | Description                                  |
-| ----------- | ----------- | -------------------------------------------- |
-| `order`     | MAY         | `none`, `asc`, or `desc`                     |
-| `unit`      | MAY         | Unit of measurement (e.g. `USD`, `kg`, `ms`) |
-| `separator` | MAY         | Sub-field separator within the value         |
-| `role`      | MAY         | Analytical role: `id`, `dimension`, `measure`, `time` (see [Analytical role](#analytical-role)) |
-| `agg`       | MAY         | Default aggregation hint for `role=measure`: `sum`, `avg`, `min`, `max`, `none` |
-
-### Positional
-
-| Field   | Requirement            | Description                |
-| ------- | ---------------------- | -------------------------- |
-| `index` | **MUST** if `header=0` | Zero-based column position |
+A note on `default`: it describes what a target database fills in for a missing value (it shows up as `DEFAULT …` in generated DDL). It is **not** applied when you read the file — an empty cell reads as null, always, so your counts and stats reflect the data as it actually is. Describe reality; don't quietly patch it.
 
 ## Enumerations
 
-`enum` lists the closed set of allowed **non-null** values for a column, pipe-separated (`|`):
+`enum` lists the allowed non-null values, separated by `|`:
 
 ```
 #column name=status type=string enum=pending|completed|cancelled
 ```
 
-- Values are interpreted according to the column's `type` (e.g. `type=int enum=1|2|3`), not always as strings.
-- `enum` constrains non-null values only. Nullability is governed by `required` and the file's `null` rules — null is allowed in addition to the listed values when the column is nullable.
-- Quoting follows the header-line rules. A value containing a space requires quoting the whole attribute: `enum="pending|in progress|done"`. Enum values themselves **MUST NOT** contain `|` (there is no escape mechanism).
-- If `separator` is also set (multi-value cell), `enum` applies to each sub-value independently.
-- If `pattern` is also set, a value **MUST** satisfy both (logical AND).
-- A non-null value outside the listed set is a validation error.
+- Values are read according to the column's `type` (so `type=int enum=1|2|3` means the integers 1, 2, 3).
+- Null is still allowed on top of the list unless the column is `required=1`.
+- If a value contains a space, quote the whole attribute: `enum="pending|in progress|done"`. (Enum values can't themselves contain `|`.)
+- If both `enum` and `pattern` are set, a value fits both.
 
 ## Analytical role
 
-`role` describes the **analytical** role of a column, independent of `type` (the physical/storage type). It is advisory and not validated.
+`role` says what a column *means* for analysis, separately from its storage `type`. It's the difference between a number you sum and a number you never sum (an id).
 
 ```
 #column name=order_id   type=int      role=id
@@ -145,29 +101,22 @@ A column MAY carry `default` while its data still contains nulls; a validator SH
 #column name=created_at type=datetime role=time
 ```
 
-| `role`      | Meaning                                       | Typical operations            |
-| ----------- | --------------------------------------------- | ----------------------------- |
-| `id`        | Identifier of a row/entity; not for arithmetic | count, distinct, join key     |
-| `dimension` | Categorical / grouping attribute               | group by, filter, count distinct |
-| `measure`   | Numeric fact to aggregate                      | sum, avg, min, max            |
-| `time`      | Temporal axis                                  | group by period, range, trend |
+| `role` | What it is | What you do with it |
+| --- | --- | --- |
+| `id` | Identifies a row/entity | count, distinct, join — **never** sum |
+| `dimension` | A category to group or filter by | group by, filter, count distinct |
+| `measure` | A number to aggregate | sum, avg, min, max |
+| `time` | A time axis | group by period, trend, range |
 
-`role` is distinct from `order` (which describes whether the data is sorted) and from `type` (the physical type). Unknown `role` values are treated like any other unknown attribute value.
+### The `agg` hint
 
-### Aggregation hint (`agg`)
+For a measure, `agg` says how it's meant to combine — its *additivity*. This is the guardrail against the classic mistake of summing something you shouldn't:
 
-`agg` is a **hint** (not a constraint) for `role=measure`, declaring how the measure should aggregate (its additivity):
+| `agg` | Behavior | Examples |
+| --- | --- | --- |
+| `sum` | Add it up across anything | revenue, quantity |
+| `avg` | Don't sum across time | balance, price, temperature |
+| `min` / `max` | Combine only by extremum | high/low quotes |
+| `none` | Not a number to aggregate | ratio, percentage, rating |
 
-| `agg`       | Additivity                                            | Example                  |
-| ----------- | ----------------------------------------------------- | ------------------------ |
-| `sum`       | Additive — sums across any dimension                  | revenue, quantity        |
-| `avg`       | Semi-additive — must not be summed across time        | balance, price, temperature |
-| `min` / `max` | Aggregates only by extremum                         | high/low quotes          |
-| `none`      | Non-additive — not aggregated as a number             | ratio, percentage, rating |
-
-The default aggregation for a `measure` without `agg` is `sum`. `agg` carries no validation; it guides a consumer's default aggregation choice — notably to avoid summing semi-additive values across time. `agg` on a non-`measure` column is ignored.
-
-## Unknown Attributes
-
-- Unknown attributes **MUST** be ignored by parsers.
-- Custom attributes **SHOULD** use the prefix `x-` (e.g. `x-source=erp`).
+A measure with no `agg` defaults to `sum`. `agg` is a hint that steers the *default* choice — notably away from summing a balance across months.
