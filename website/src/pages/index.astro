@@ -2,22 +2,21 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="ExCSV — CSV, but self-describing" wide>
-  <!-- Hero -->
+<Base
+  title="ExCSV — CSV, but self-describing"
+  description="Types, units, stats, and SQL travel with the rows. The data is still CSV."
+  wide
+>
   <section class="hero">
     <div class="hero-text">
       <h1>CSV, but self-describing</h1>
       <p class="tagline">
-        Built for data analysts and everyone wrangling large tabular datasets —
-        schema, stats, and provenance travel with the file, not in a separate README.
-        ExCSV adds inline metadata, SQL companions, and aggregations to plain CSV.
-        Zero dependencies. CLI-friendly. Backward-compatible.
+        Types, units, stats, and SQL sit in the file — not in a README.
+        The rows stay CSV. pandas, Excel, and <code>awk</code> don't notice.
       </p>
       <div class="cta-row">
-        <a href="/spec/" class="btn btn-primary">Read the spec</a>
-        <a href="/variants/" class="btn btn-secondary">Storage forms</a>
-        <a href="/examples/" class="btn btn-secondary">See examples</a>
-        <a href="/tools/" class="btn btn-secondary">Tools</a>
+        <a href="/examples/" class="btn btn-primary">See examples</a>
+        <a href="/variants/" class="btn btn-secondary">Formats</a>
       </div>
       <p class="version-tag">v0.3 — Draft</p>
     </div>
@@ -37,125 +36,117 @@ date,event,count
     </div>
   </section>
 
-  <!-- Features -->
-  <section class="features">
-    <div class="card">
-      <h3>Backward-compatible</h3>
-      <p>Any CSV reader can consume the data section. Metadata lines are comments. Nothing breaks.</p>
-    </div>
-    <div class="card">
-      <h3>Sidecar for legacy CSV</h3>
-      <p>Keep <code>data.csv</code> unchanged. Put schema, SQL, and stats in <code>data.excsv</code> with <code>reference=data.csv</code> — metadata only, no duplicated rows.</p>
-    </div>
-    <div class="card">
-      <h3>CLI-friendly</h3>
-      <p>All metadata lines start with <code>#</code>, so <code>grep</code>, <code>awk</code>, <code>head</code>, and <code>cut</code> work on the data section out of the box.</p>
-    </div>
-    <div class="card">
-      <h3>Built-in aggregations</h3>
-      <p>Embed sum, avg, count, min/max, and more as metadata rows. Consumers get stats without scanning the data.</p>
-    </div>
-    <div class="card">
-      <h3><a href="/variants/zip/">Zipped</a> distribution</h3>
-      <p><code>.excsv.zip</code> and <code>.extsv.zip</code> archives carry their summary in the ZIP comment — read schema and aggregations without unzipping. No extraction needed for preview.</p>
-    </div>
-    <div class="card">
-      <h3><a href="/variants/pack/">Multi-table pack</a></h3>
-      <p><code>.excsv.pack.zip</code> — multi-table, columnar: manifest + <code>.col</code> files per column. Selective reads and database snapshots without row-oriented ZIP overhead.</p>
-    </div>
-    <div class="card">
-      <h3>Schema annotations</h3>
-      <p>Define column types, constraints, defaults, and validation patterns inline — or in a <a href="/variants/sidecar/">sidecar</a> next to plain CSV.</p>
-    </div>
-    <div class="card">
-      <h3>SQL companions</h3>
-      <p>Ship DDL and DQL alongside data, tagged per dialect (<code>mysql</code>, <code>postgres</code>, <code>clickhouse</code>...). Recreate the schema in any database.</p>
+  <section class="block">
+    <h2>What's in the file</h2>
+    <p class="lead">
+      Tabular exports are everywhere; the note explaining them isn't.
+      You infer types, rescan for totals, rebuild DDL from memory.
+      ExCSV is that note — written as <code>#</code> lines any CSV reader already skips.
+    </p>
+    <div class="cards cards-3">
+      <div class="card">
+        <h3>Still CSV</h3>
+        <p>Metadata is comments. The data section is ordinary rows. Nothing breaks.</p>
+      </div>
+      <div class="card">
+        <h3>Types &amp; units</h3>
+        <p><code>01720</code> is a ZIP code. <code>1050.50</code> is USD. Write it once, stop guessing.</p>
+      </div>
+      <div class="card">
+        <h3>Stats in the file</h3>
+        <p>Sum, avg, count, min/max on <code>#%</code> lines. The total is a fact, not a second pass over 2M rows.</p>
+      </div>
+      <div class="card">
+        <h3>SQL travels with it</h3>
+        <p>DDL and queries, tagged <code>postgres</code> / <code>mysql</code> / <code>clickhouse</code>. Recreate the table where you're loading.</p>
+      </div>
+      <div class="card">
+        <h3>Unix tools just work</h3>
+        <p><code>grep</code>, <code>awk</code>, <code>cut</code> on the rows. pandas: <code>comment="#"</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Add layers as you go</h3>
+        <p>Header, then types, then stats, then SQL. Stop whenever it's useful. Line-oriented <code>key=value</code> — not a nested blob.</p>
+      </div>
     </div>
   </section>
 
-  <!-- LLM-friendly -->
-  <section class="llm">
-    <div class="llm-head">
-      <span class="llm-badge">LLM-friendly</span>
-      <h2>Made for AI assistants, too</h2>
-      <p class="llm-lead">
-        Paste an ExCSV table into a chat and the model gets the schema, types, units, and
-        precomputed stats up front — no guessing delimiters, inferring types from a few rows,
-        or recomputing totals. The metadata an LLM needs to reason correctly travels with the data.
-      </p>
+  <section class="block">
+    <h2>Four ways to ship it</h2>
+    <p class="lead">Same language. Different packaging — whether you can touch the CSV, how big it is, one table or several.</p>
+    <div class="cards cards-4">
+      <a class="card card-link" href="/variants/#plain">
+        <span class="ext">.excsv</span>
+        <h3>Plain</h3>
+        <p>One file. Schema and rows together. The default.</p>
+      </a>
+      <a class="card card-link" href="/variants/#sidecar">
+        <span class="ext">.excsv + .csv</span>
+        <h3>Sidecar</h3>
+        <p>Annotate a CSV you can't — or won't — modify.</p>
+      </a>
+      <a class="card card-link" href="/variants/#zip">
+        <span class="ext">.excsv.zip</span>
+        <h3>ZIP</h3>
+        <p>Compress a table. Peek schema and sums without unzipping.</p>
+      </a>
+      <a class="card card-link" href="/variants/#pack">
+        <span class="ext">.excsv.pack.zip</span>
+        <h3>Pack</h3>
+        <p>Wide tables and multi-table snapshots, column by column.</p>
+      </a>
     </div>
-    <div class="llm-grid">
-      <div class="llm-point">
-        <h4>Explicit types &amp; units</h4>
-        <p>Columns declare <code>type</code>, <code>unit</code>, and <code>format</code>, so an LLM reads <code>1050.50</code> as USD — not a count — and never misparses ZIP codes or dates.</p>
+  </section>
+
+  <section class="block">
+    <p class="kicker">LLM-friendly</p>
+    <h2>Made for AI assistants, too</h2>
+    <p class="lead">
+      Paste a table into a chat. The model gets schema, types, units, and totals up front —
+      no guessing the delimiter, no inferring types from five rows, no recomputing the sum.
+    </p>
+    <div class="cards cards-2">
+      <div class="card">
+        <h3>Types &amp; units</h3>
+        <p>An LLM reads <code>1050.50</code> as USD, not a count, and doesn't treat a ZIP code as an integer.</p>
       </div>
-      <div class="llm-point">
-        <h4>Aggregations as a trust anchor</h4>
-        <p><code>#%</code> rows carry sum, avg, count, and distinct counts. A model answers aggregate questions — and sanity-checks its own math — without scanning every row.</p>
+      <div class="card">
+        <h3>Aggregations as a check</h3>
+        <p><code>#%</code> rows carry sum, avg, count. The model answers — and sanity-checks its own math — without scanning every row.</p>
       </div>
-      <div class="llm-point">
-        <h4>Row grain, spelled out</h4>
-        <p><code>#@grain: one row per order</code> tells the model what a single row means, instead of forcing it to reverse-engineer that from column names.</p>
+      <div class="card">
+        <h3>Grain, spelled out</h3>
+        <p><code>#@grain: one row per order</code> says what a row <em>is</em>, instead of forcing the model to reverse-engineer it from column names.</p>
       </div>
-      <div class="llm-point">
-        <h4>Enums &amp; analytical roles</h4>
-        <p><code>enum=</code> gives the closed value domain; <code>role=</code> (id / dimension / measure / time) and <code>agg=</code> let a model pick correct operations — group by dimensions, sum measures, never sum an id.</p>
+      <div class="card">
+        <h3>Roles &amp; enums</h3>
+        <p><code>role=</code> (id / dimension / measure / time) and <code>enum=</code> tell it what to group by, what to sum, and what not to invent.</p>
       </div>
     </div>
-    <pre class="llm-code"><code><span class="hl-meta">#@grain: one row per order</span>
+    <pre class="snippet"><code><span class="hl-meta">#@grain: one row per order</span>
 <span class="hl-meta">#column name=order_id type=int role=id</span>
 <span class="hl-meta">#column name=status type=string role=dimension enum=pending|completed|cancelled</span>
 <span class="hl-meta">#column name=amount type=decimal unit=USD role=measure agg=sum</span>
 <span class="hl-meta">#%sum: ,,1050.50</span></code></pre>
   </section>
 
-  <!-- Why -->
-  <section class="why">
-    <h2>Why ExCSV?</h2>
-    <p class="why-lead">
-      Tabular exports are everywhere, but the context around them rarely is. Analysts and data engineers
-      lose hours inferring column types, re-scanning huge files for row counts and sums, and rebuilding
-      database schemas from scratch. ExCSV targets that friction: self-describing files that still open
-      in any CSV tool.
-    </p>
-    <div class="grid-2">
-      <div>
-        <h4>Progressive enhancement</h4>
-        <p>Start with plain CSV. Add a header line. Add column types when you need them. Add aggregations or SQL when you want them. Every layer is optional.</p>
-      </div>
-      <div>
-        <h4>No JSON required</h4>
-        <p>Metadata is line-oriented key-value, not a nested structure. Easy to read, easy to write, easy to diff.</p>
-      </div>
-      <div>
-        <h4>Multi-dialect SQL</h4>
-        <p>One file can ship MySQL, PostgreSQL, and ClickHouse DDL side-by-side. Pick the right flavor when you load the data into a database.</p>
-      </div>
-      <div>
-        <h4>Self-describing files</h4>
-        <p>The file carries its own schema, provenance, and statistics. No external metadata files, no guessing column types.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Prior art -->
-  <section class="inspired-by">
+  <section class="block inspired">
     <h2>Inspired by</h2>
-    <div class="grid-2">
+    <div class="cards cards-3">
       <div>
-        <h4><a href="https://docs.astropy.org/en/stable/io/ascii/ecsv.html" target="_blank" rel="noopener">ECSV</a> — Astropy's Enhanced Character-Separated Values</h4>
-        <p>Showed that a CSV file can carry a versioned signature, per-column schema, and table-level metadata as <code>#</code>-prefixed lines and still round-trip through every plain CSV reader. ExCSV adopts the same shape but trades nested YAML for line-oriented <code>key=value</code> pairs — friendlier to <code>grep</code>, <code>diff</code>, and humans.</p>
+        <h3><a href="https://docs.astropy.org/en/stable/io/ascii/ecsv.html" target="_blank" rel="noopener">ECSV</a> — Astropy</h3>
+        <p>A CSV can carry a versioned header and per-column schema as <code>#</code> lines and still round-trip through every plain reader. ExCSV keeps the shape, swaps nested YAML for <code>key=value</code>.</p>
       </div>
       <div>
-        <h4><a href="https://docs.influxdata.com/influxdb/v2/reference/syntax/annotated-csv/" target="_blank" rel="noopener">Annotated CSV</a> — InfluxDB</h4>
-        <p>Established the "one annotation row, one value per data column" pattern with <code>#datatype</code>, <code>#group</code>, and <code>#default</code> rows. ExCSV's <code>#%</code> aggregation rows (<code>sum</code>, <code>avg</code>, <code>min</code>, ...) inherit this layout directly.</p>
+        <h3><a href="https://docs.influxdata.com/influxdb/v2/reference/syntax/annotated-csv/" target="_blank" rel="noopener">Annotated CSV</a> — InfluxDB</h3>
+        <p>One annotation row, one value per data column. ExCSV's <code>#%</code> aggregations (<code>sum</code>, <code>avg</code>, <code>min</code>, …) inherit that layout.</p>
       </div>
       <div>
-        <h4><a href="https://github.com/MetaCSV/MetaCSV" target="_blank" rel="noopener">MetaCSV</a> — sidecar <code>.mcsv</code></h4>
-        <p>Typed metadata in a sibling CSV (<code>domain,key,value</code>) beside plain <code>data.csv</code>. ExCSV's <a href="/variants/sidecar/">sidecar</a> pursues the same goal with <code>#</code> lines and <code>reference=</code> instead of a second CSV vocabulary.</p>
+        <h3><a href="https://github.com/MetaCSV/MetaCSV" target="_blank" rel="noopener">MetaCSV</a> — sidecar</h3>
+        <p>Typed metadata beside a plain <code>data.csv</code>. Same idea; ExCSV uses <code>#</code> lines and <code>reference=</code> instead of a second CSV vocabulary. See <a href="/variants/#sidecar">sidecar</a>.</p>
       </div>
     </div>
-    <p class="full-credit">Full credit and a translation guide on the <a href="/spec/#prior-art">specification</a>.</p>
+    <p class="credit">Full credit and a field mapping on the <a href="/spec/#prior-art">guide</a>.</p>
   </section>
 </Base>
 
@@ -165,7 +156,7 @@ date,event,count
     grid-template-columns: 1fr 1fr;
     gap: 3rem;
     align-items: center;
-    padding: 3rem 0 4rem;
+    padding: 2.5rem 0 3.25rem;
   }
   .hero h1 {
     font-size: 2.5rem;
@@ -176,6 +167,7 @@ date,event,count
     font-size: 1.1rem;
     color: var(--color-muted);
     line-height: 1.7;
+    max-width: 28rem;
   }
   .cta-row {
     display: flex;
@@ -185,7 +177,7 @@ date,event,count
     margin-top: 1.5rem;
   }
   .version-tag {
-    margin-top: 1.2rem;
+    margin-top: 1.1rem;
     font-size: 0.78rem;
     color: var(--color-muted);
     letter-spacing: 0.05em;
@@ -195,7 +187,6 @@ date,event,count
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 auto;
     padding: 0.55em 1.1em;
     border-radius: 8px;
     font-weight: 600;
@@ -203,16 +194,16 @@ date,event,count
     line-height: 1.25;
     white-space: nowrap;
     text-decoration: none;
-    transition: opacity 0.15s, border-color 0.15s;
+    transition: opacity 0.15s, border-color 0.15s, filter 0.15s;
   }
-  .btn:hover { text-decoration: none; opacity: 0.9; }
+  .btn:hover { text-decoration: none; }
   .btn-primary {
     background: var(--color-accent);
     color: #fff;
   }
-  .btn-primary:hover {
-    opacity: 1;
-    filter: brightness(1.05);
+  .btn-primary:hover { filter: brightness(1.05); }
+  :global(html[data-theme="dark"]) .btn-primary {
+    color: #111;
   }
   .btn-secondary {
     border: 1px solid var(--color-border);
@@ -221,127 +212,114 @@ date,event,count
   }
   .btn-secondary:hover {
     border-color: var(--color-muted);
-    opacity: 1;
+    color: var(--color-text);
   }
   .hero-code pre {
     font-size: 0.82rem;
     margin: 0;
   }
 
-  .features {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    padding-bottom: 3rem;
+  .block {
+    padding-bottom: 2.75rem;
   }
+  .block h2 {
+    border: none;
+    padding: 0;
+    margin-top: 0;
+  }
+  .kicker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 0.35rem;
+  }
+  .lead {
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 46rem;
+    margin: 0 0 1.5rem;
+  }
+
+  .cards {
+    display: grid;
+    gap: 1rem;
+  }
+  .cards-2 { grid-template-columns: 1fr 1fr; }
+  .cards-3 { grid-template-columns: repeat(3, 1fr); }
+  .cards-4 { grid-template-columns: repeat(4, 1fr); }
+
   .card {
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
     border-radius: 10px;
-    padding: 1.5rem;
+    padding: 1.2rem 1.25rem 1.3rem;
   }
   .card h3 {
-    margin-top: 0;
-    font-size: 1.05rem;
+    margin: 0 0 0.4rem;
+    font-size: 1.02rem;
   }
   .card p {
     color: var(--color-muted);
-    font-size: 0.92rem;
-    margin-bottom: 0;
-  }
-
-  .llm {
-    padding: 2rem 2rem 2.25rem;
-    margin-bottom: 3rem;
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    background: var(--color-card-bg);
-  }
-  .llm-badge {
-    display: inline-block;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    border: 1px solid var(--color-accent);
-    border-radius: 999px;
-    padding: 0.2em 0.7em;
-    margin-bottom: 0.9rem;
-  }
-  .llm-head h2 {
-    border: none;
-    padding: 0;
-    margin: 0 0 0.6rem;
-  }
-  .llm-lead {
-    color: var(--color-muted);
-    font-size: 1rem;
-    line-height: 1.7;
-    max-width: 52rem;
-    margin: 0 0 1.75rem;
-  }
-  .llm-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem 1.75rem;
-    margin-bottom: 1.75rem;
-  }
-  .llm-point h4 {
-    margin: 0 0 0.4rem;
-    font-size: 0.98rem;
-  }
-  .llm-point p {
-    color: var(--color-muted);
     font-size: 0.9rem;
-    line-height: 1.6;
+    line-height: 1.55;
     margin: 0;
   }
-  .llm-code {
-    font-size: 0.8rem;
-    margin: 0;
+  .card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  .card-link:hover {
+    border-color: var(--color-accent);
+    text-decoration: none;
+    color: inherit;
+  }
+  .ext {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: 0.45rem;
   }
 
-  .why {
-    padding-bottom: 2rem;
+  .snippet {
+    font-size: 0.8rem;
+    margin: 1.25rem 0 0;
   }
-  .why h2 {
+
+  .inspired {
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .inspired .cards {
+    gap: 1.5rem 1.75rem;
+  }
+  .inspired .cards > div {
+    background: none;
     border: none;
     padding: 0;
   }
-  .why-lead {
-    color: var(--color-muted);
-    font-size: 1rem;
-    line-height: 1.7;
-    max-width: 52rem;
-    margin: 0 0 1.75rem;
+  .inspired h3 {
+    font-size: 1.02rem;
+    margin: 0 0 0.4rem;
   }
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-  }
-  .grid-2 h4 { margin-top: 0; }
-  .grid-2 h4 a {
+  .inspired h3 a {
     color: var(--color-text);
     text-decoration: none;
   }
-  .grid-2 h4 a:hover { color: var(--color-accent); }
-  .grid-2 p {
+  .inspired h3 a:hover { color: var(--color-accent); }
+  .inspired p {
     color: var(--color-muted);
-    font-size: 0.92rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin: 0;
   }
-  .inspired-by {
-    padding: 1rem 0 2.5rem;
-    border-top: 1px solid var(--color-border);
-    margin-top: 1rem;
-  }
-  .inspired-by h2 {
-    border: none;
-    padding: 0;
-  }
-  .full-credit {
-    margin-top: 1.5rem;
+  .credit {
+    margin: 1.5rem 0 0;
     font-size: 0.88rem;
     color: var(--color-muted);
   }
@@ -350,19 +328,19 @@ date,event,count
     .hero {
       grid-template-columns: 1fr;
       gap: 2rem;
-      padding: 2rem 0 3rem;
+      padding: 1.5rem 0 2.5rem;
     }
+    .cards-4 { grid-template-columns: 1fr 1fr; }
   }
 
   @media (max-width: 768px) {
     .hero h1 { font-size: 1.8rem; }
-    .features { grid-template-columns: 1fr; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .llm-grid { grid-template-columns: 1fr; }
-    .llm { padding: 1.5rem; }
+    .cards-3,
+    .cards-2 { grid-template-columns: 1fr; }
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 560px) {
+    .cards-4 { grid-template-columns: 1fr; }
     .cta-row {
       flex-direction: column;
       align-items: stretch;

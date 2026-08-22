@@ -1,51 +1,403 @@
 ---
-import Variant from '../../layouts/Variant.astro';
+import Base from '../../layouts/Base.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
 ---
 
-<Variant
-  title="ExCSV storage forms"
-  description="Overview of ExCSV document profiles: plain inline, sidecar metadata, ZIP container, and pack format."
-  heading="Storage forms"
-  lede="ExCSV is one format with several ways to ship it. Pick the profile that matches how your data is stored on disk."
+<Base
+  title="ExCSV formats"
+  description="Four ways to ship the same ExCSV: a single file, a sidecar next to plain CSV, a peekable ZIP, or a columnar multi-table pack."
+  wide
 >
-  <div class="format-grid">
-    <div class="format-card">
-      <span class="badge badge-stable">v0.3</span>
-      <h3><a href="/variants/plain/">Plain (inline)</a></h3>
-      <p>Metadata and data rows in a single <code>.excsv</code> or <code>.extsv</code> file. The canonical form.</p>
-      <a href="/variants/plain/">Read more →</a>
-    </div>
-    <div class="format-card">
-      <span class="badge badge-stable">v0.3</span>
-      <h3><a href="/variants/sidecar/">Sidecar</a></h3>
-      <p>Schema and stats in <code>sales.excsv</code> or <code>sales.extsv</code>; rows stay in <code>sales.csv</code> or <code>sales.tsv</code>. Legacy CSV/TSV friendly.</p>
-      <a href="/variants/sidecar/">Read more →</a>
-    </div>
-    <div class="format-card">
-      <span class="badge badge-stable">v0.3</span>
-      <h3><a href="/variants/zip/">ZIP container</a></h3>
-      <p>One inner <code>.excsv</code> or <code>.extsv</code> inside <code>.excsv.zip</code> or <code>.extsv.zip</code>. Summary in the ZIP comment.</p>
-      <a href="/variants/zip/">Read more →</a>
-    </div>
-    <div class="format-card">
-      <span class="badge badge-stable">v0.3</span>
-      <h3><a href="/variants/pack/">Pack</a></h3>
-      <p>Manifest + per-table <code>.col</code> columns. Multi-table snapshots and selective column reads.</p>
-      <a href="/variants/pack/">Read more →</a>
-    </div>
-  </div>
+  <article class="formats">
+    <h1>Formats</h1>
+    <p class="lede">
+      ExCSV is one language — types, units, stats, SQL — sitting on top of CSV.
+      The variants are just packaging: how that language travels with the rows.
+      Pick the one that matches whether you can touch the CSV, how big the file is,
+      and whether you're shipping one table or a snapshot of several.
+    </p>
 
-  <h2>How they relate</h2>
-  <pre><code>plain (inline)     sales.excsv | sales.extsv     header + meta + data rows
-sidecar            sales.excsv + sales.csv         meta only + reference=
-                   sales.extsv + sales.tsv
-zip                sales.excsv.zip | sales.extsv.zip   inner file (usually inline)
-pack               dataset.excsv.pack.zip            manifest + .col columns</code></pre>
+    <nav class="jump" aria-label="Formats">
+      <a href="#plain">Plain</a>
+      <a href="#sidecar">Sidecar</a>
+      <a href="#zip">ZIP</a>
+      <a href="#pack">Pack</a>
+    </nav>
 
-  <p>
-    Details live in the <a href="/spec/">specification</a>.
-    Sidecar: <a href="/spec/#sidecar">§2.2</a>.
-    Row ZIP: <a href="/spec/#zip-container">§11</a>.
-    Pack: <a href="/spec/#pack-container">§11.5</a>.
-  </p>
-</Variant>
+    <div class="pick-grid">
+      <a class="pick" href="#plain">
+        <span class="pick-ext">.excsv</span>
+        <h2>Plain</h2>
+        <p>One file. Schema and rows together. The default.</p>
+      </a>
+      <a class="pick" href="#sidecar">
+        <span class="pick-ext">.excsv + .csv</span>
+        <h2>Sidecar</h2>
+        <p>Annotate a CSV you can't — or won't — modify.</p>
+      </a>
+      <a class="pick" href="#zip">
+        <span class="pick-ext">.excsv.zip</span>
+        <h2>ZIP</h2>
+        <p>Compress a table. Peek schema and sums without unzipping.</p>
+      </a>
+      <a class="pick" href="#pack">
+        <span class="pick-ext">.excsv.pack.zip</span>
+        <h2>Pack</h2>
+        <p>Wide tables and multi-table snapshots, column by column.</p>
+      </a>
+    </div>
+
+    <h2 id="pick">Which one</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>You have…</th>
+            <th>Use</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A table you produce</td>
+            <td><a href="#plain">Plain</a></td>
+            <td>One artifact. Diff it, email it, <code>pd.read_csv(..., comment="#")</code>.</td>
+          </tr>
+          <tr>
+            <td>A CSV you must not change</td>
+            <td><a href="#sidecar">Sidecar</a></td>
+            <td>Original bytes stay. Excel / Tableau still open <code>sales.csv</code>.</td>
+          </tr>
+          <tr>
+            <td>A large table to send</td>
+            <td><a href="#zip">ZIP</a></td>
+            <td>Smaller. Schema and aggregations sit in the ZIP comment — preview before extract.</td>
+          </tr>
+          <tr>
+            <td>A wide table, or several related ones</td>
+            <td><a href="#pack">Pack</a></td>
+            <td>Read <code>amount</code> without loading <code>note</code>. Ship orders + customers as one file.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <section class="form" id="plain">
+      <p class="kicker">Default</p>
+      <h2>Plain — one file</h2>
+      <p>
+        Header, <code>#</code> lines, then ordinary CSV rows, all in <code>sales.excsv</code>
+        (or <code>sales.extsv</code> if the delimiter is a tab). This is the canonical form:
+        what you export, version, paste into a chat, or drop next to a notebook.
+      </p>
+      <p>
+        Every CSV reader that ignores <code>#</code> comments already reads the data.
+        pandas: <code>pd.read_csv("sales.excsv", comment="#")</code>.
+        <code>grep</code> / <code>awk</code> / <code>cut</code> work on the rows as usual.
+      </p>
+
+      <div class="pros">
+        <h3>Why</h3>
+        <ul>
+          <li><strong>One artifact.</strong> No pair to keep together, no archive to unpack.</li>
+          <li><strong>Readable diffs.</strong> Git sees the schema change and the row change in the same file.</li>
+          <li><strong>CLI-native.</strong> Meta lines start with <code>#</code>, so Unix tools skip them for free.</li>
+          <li><strong>Pasteable.</strong> Drop a snippet into Slack or an LLM — types and totals come with it.</li>
+        </ul>
+      </div>
+
+      <CodeBlock title="sales.excsv" description="Schema and rows in one place.">
+{`#!excsv version=0.3 delim=comma header=1
+#@grain: one row per order
+#column name=id type=int role=id
+#column name=customer type=string
+#column name=amount type=decimal unit=USD role=measure
+#%sum: ,,750.50
+id,customer,amount
+1,Acme Corp,500.00
+2,Globex Inc,250.50`}
+      </CodeBlock>
+
+      <p class="skip">If the CSV already exists and you can't rewrite it — that's sidecar.</p>
+    </section>
+
+    <section class="form" id="sidecar">
+      <p class="kicker">Legacy-friendly</p>
+      <h2>Sidecar — annotate without touching the CSV</h2>
+      <p>
+        <code>sales.csv</code> stays a normal CSV — same bytes, same checksum, still opens in Excel.
+        Next to it, <code>sales.excsv</code> holds only metadata and points at the data with
+        <code>reference=sales.csv</code>. No rows in the sidecar. Tabs use
+        <code>sales.extsv</code> + <code>sales.tsv</code>.
+      </p>
+      <p>
+        You open whichever you have. Opening the CSV, an ExCSV-aware tool looks for the sibling.
+        Opening the sidecar, it follows <code>reference=</code>. Everyone else just reads the CSV.
+      </p>
+
+      <div class="pros">
+        <h3>Why</h3>
+        <ul>
+          <li><strong>Don't touch the source.</strong> Vendor dumps, regulated extracts, lake files with a hash someone else checks.</li>
+          <li><strong>Existing tools keep working.</strong> Tableau, Excel, a random <code>COPY</code> script — they see a CSV, not a new format.</li>
+          <li><strong>Several views of the same data.</strong> Different sidecars can describe the same file for different audiences.</li>
+          <li><strong>Stats describe the CSV, not the sidecar.</strong> Row count, checksum, <code>#%</code> totals are about the referenced file.</li>
+        </ul>
+      </div>
+
+      <div class="pair">
+        <CodeBlock title="sales.excsv" description="Metadata only — no data rows.">
+{`#!excsv version=0.3 delim=comma header=1 rows=2 reference=sales.csv
+#@source: sales_db.orders
+#column name=id type=int
+#column name=customer type=string
+#column name=amount type=decimal unit=USD
+#%sum: ,,750.50`}
+        </CodeBlock>
+        <CodeBlock title="sales.csv" description="Ordinary CSV. Unchanged.">
+{`id,customer,amount
+1,Acme Corp,500.00
+2,Globex Inc,250.50`}
+        </CodeBlock>
+      </div>
+
+      <p class="skip">If you control the export, a plain <code>.excsv</code> is enough.</p>
+    </section>
+
+    <section class="form" id="zip">
+      <p class="kicker">Distribution</p>
+      <h2>ZIP — compress, still peekable</h2>
+      <p>
+        Wrap a plain file as <code>sales.excsv.zip</code> (or <code>.extsv.zip</code>).
+        Inside: the same inline ExCSV. Outside: a normal ZIP that anything can open.
+        pandas will take it with <code>pd.read_csv("sales.excsv.zip", comment="#")</code>.
+      </p>
+      <p>
+        The trick is the ZIP comment. It repeats the header, columns, and <code>#%</code> aggregations,
+        so you can see schema and totals <em>without extracting</em> — useful when a folder is full of
+        200&nbsp;MB exports and you need to know which one is Q1 sales.
+      </p>
+
+      <div class="pros">
+        <h3>Why</h3>
+        <ul>
+          <li><strong>Smaller to send.</strong> Email, S3, Slack — same table, less bytes.</li>
+          <li><strong>Preview before unzip.</strong> Schema, grain, sums in the archive comment.</li>
+          <li><strong>Still a ZIP.</strong> No custom container. Password-protect it the usual way if you need to.</li>
+        </ul>
+      </div>
+
+      <pre><code>sales.excsv.zip
+└── sales.excsv          ← ordinary plain file (header + rows)</code></pre>
+
+      <p class="skip">
+        Stay on plain if you want <code>zcat | awk</code> without an archive.
+        Several tables is pack. A sidecar stays two files on disk — ZIP is for one plain file.
+      </p>
+    </section>
+
+    <section class="form" id="pack">
+      <p class="kicker">Columnar · multi-table</p>
+      <h2>Pack — columns and several tables</h2>
+      <p>
+        A <code>.excsv.pack.zip</code> is a small warehouse dump. Instead of storing rows,
+        it stores each <strong>column</strong> as its own file, and can hold <strong>several tables</strong>
+        plus the foreign keys between them. Same ExCSV metadata — types, stats, SQL — per table.
+      </p>
+      <p>
+        Think: you exported orders, customers, and products, and you usually only need
+        <code>amount</code> and <code>date</code> out of a 200-column fact table.
+        A row ZIP makes you decompress everything. A pack lets you open one <code>.col</code>.
+      </p>
+
+      <div class="pros">
+        <h3>Why</h3>
+        <ul>
+          <li><strong>Selective reads.</strong> Pull two columns from a wide table without paying for the rest.</li>
+          <li><strong>Better compression.</strong> A file of one type (IDs, amounts, dates) squeezes harder than mixed rows.</li>
+          <li><strong>A snapshot, not a sheet.</strong> Related tables and their FKs travel as one file.</li>
+          <li><strong>Cheap extra column.</strong> Add a <code>.col</code>, rewrite that table's header. Don't rebuild the whole dump.</li>
+        </ul>
+      </div>
+
+      <pre><code>sales.excsv.pack.zip
+├── _manifest.excsv          ← tables + foreign keys
+├── orders/
+│   ├── _header.excsv        ← schema + stats for this table
+│   ├── 00-id.col
+│   ├── 01-customer_id.col
+│   └── 02-amount.col
+├── customers/
+│   └── ...
+└── products/
+    └── ...</code></pre>
+
+      <p>
+        Wide fact tables can split each column into row chunks (default 10k) so a single cell
+        is a short scan, not a full-column read. Small lookup tables stay as one file per column.
+      </p>
+      <p class="skip">
+        Stay on plain or ZIP if you want to stream rows. Pack is in v0.3;
+        the <a href="/tools/">Go CLI</a> doesn't open it yet.
+      </p>
+    </section>
+
+    <p class="more">
+      More of the file language on the <a href="/spec/">guide</a>.
+      Concrete files on <a href="/examples/">Examples</a>.
+    </p>
+  </article>
+</Base>
+
+<style>
+  .formats h1 {
+    margin-top: 0;
+    letter-spacing: -0.03em;
+  }
+
+  .lede {
+    font-size: 1.1rem;
+    color: var(--color-muted);
+    line-height: 1.7;
+    max-width: 46rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  .jump a {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-decoration: none;
+    padding: 0.35em 0.75em;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+  }
+  .jump a:hover {
+    color: var(--color-text);
+    border-color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .pick-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .pick {
+    display: block;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.15rem 1.2rem 1.25rem;
+    background: var(--color-card-bg);
+    text-decoration: none;
+    color: inherit;
+  }
+  .pick:hover {
+    border-color: var(--color-accent);
+    text-decoration: none;
+    color: inherit;
+  }
+  .pick-ext {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: 0.55rem;
+  }
+  .pick h2 {
+    font-size: 1.05rem;
+    margin: 0 0 0.4rem;
+    border: none;
+    padding: 0;
+  }
+  .pick p {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+  .table-wrap table {
+    margin-bottom: 0;
+  }
+
+  .form {
+    padding-top: 2rem;
+    scroll-margin-top: 4.5rem;
+  }
+  .form > h2 {
+    margin-top: 0.25rem;
+  }
+  .kicker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 0.35rem;
+  }
+
+  .pros {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.15rem 1.35rem 0.85rem;
+    margin: 1.25rem 0 1.5rem;
+  }
+  .pros h3 {
+    margin: 0 0 0.6rem;
+    font-size: 0.95rem;
+  }
+  .pros ul {
+    margin-bottom: 0.5rem;
+  }
+  .pros li {
+    margin-bottom: 0.45rem;
+  }
+
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .skip {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+  }
+
+  .more {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-muted);
+  }
+
+  @media (max-width: 900px) {
+    .pick-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .pair {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .pick-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

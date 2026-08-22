@@ -1,415 +1,455 @@
 ﻿---
 import Base from '../layouts/Base.astro';
+import CodeBlock from '../components/CodeBlock.astro';
 ---
 
-<Base title="ExCSV Specification v0.3" description="ExCSV — CSV that describes itself. What you can put in a file, what it means, and why it helps: types, units, aggregations, SQL companions, sidecars, ZIP and pack containers.">
-  <article class="spec">
-    <h1>ExCSV v0.3 — Specification</h1>
-    <p><strong>CSV that describes itself.</strong></p>
-    <p class="lead-note">This is the guide for people who work with tables — analysts, data scientists, anyone who opens a CSV and wishes it came with a note explaining what's inside. It covers <strong>what you can put in a file, what it means, and why it's worth it</strong>. The precise rules for building parsers and validators (required fields, edge cases, error codes) live in the <a href="https://github.com/boligolov/excsv/tree/main/docs/implementation">implementation docs</a>.</p>
+<Base
+  title="ExCSV guide"
+  description="What you write in an ExCSV file — types, grain, stats, SQL — and why it makes a table easier to trust."
+  wide
+>
+  <article class="guide">
+    <h1>Guide</h1>
+    <p class="lede">
+      What you can write in an ExCSV file, and why a data scientist would.
+      Every line is optional. The rows stay CSV.
+    </p>
 
-    <table>
-      <tbody>
-        <tr><td><strong>Version</strong></td><td>0.3</td></tr>
-        <tr><td><strong>Status</strong></td><td>Draft / Experimental</td></tr>
-        <tr><td><strong>File extensions</strong></td><td><code>.excsv</code>, <code>.extsv</code> (plain); <code>.excsv.zip</code>, <code>.extsv.zip</code> (row ZIP); <code>.excsv.pack.zip</code>, <code>.extsv.pack.zip</code> (pack)</td></tr>
-        <tr><td><strong>MIME types</strong></td><td><code>text/excsv</code> (plain); <code>application/excsv+zip</code> (zipped)</td></tr>
-      </tbody>
-    </table>
-    <p>Storage forms: <a href="/variants/">overview</a> — <a href="/variants/plain/">inline</a>, <a href="/variants/sidecar/">sidecar</a>, <a href="/variants/zip/">ZIP</a>, <a href="/variants/pack/">pack</a>.</p>
+    <nav class="jump" aria-label="Guide">
+      <a href="#glance">A file</a>
+      <a href="#header">Header</a>
+      <a href="#columns">Columns</a>
+      <a href="#grain">Grain</a>
+      <a href="#aggregations">Aggregations</a>
+      <a href="#sql">SQL</a>
+      <a href="#open">Open it</a>
+      <a href="#formats">Formats</a>
+    </nav>
 
-    <h3>What's new in 0.3</h3>
-    <ul>
-      <li><strong>Pack</strong> — <code>.excsv.pack.zip</code> / <code>.extsv.pack.zip</code>: multi-table, columnar archives. See <a href="#pack-container">Pack container</a> and the <a href="/variants/pack/">pack variant</a>.</li>
-      <li><strong>JSON profile</strong> — the same content, expressed as JSON, for when you're already in JSON land. See <a href="#json-profile">Also available as JSON</a>.</li>
-    </ul>
+    <section class="block" id="glance">
+      <p class="kicker">The idea</p>
+      <h2 id="full-example">A file at a glance</h2>
+      <p>
+        You open a CSV. Which column is the amount? Is <code>01720</code> a ZIP code or 1720?
+        Are these <em>all</em> the rows? What's the total — do you trust the preview, or re-sum it yourself?
+      </p>
+      <p>
+        Those answers used to live in a README. Here they sit in the file, as <code>#</code> lines
+        every CSV reader already skips. The data does not change. ExCSV only describes it.
+      </p>
 
-    <h3>Quick example</h3>
-    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1</span>
-<span class="hl-meta">#column name=id type=int</span>
-<span class="hl-meta">#column name=name type=string</span>
-<span class="hl-meta">#column name=price type=decimal unit=USD</span>
-id,name,price
-1,Widget,9.99
-2,Gadget,24.50</code></pre>
-    <p>It's just CSV with a self-describing header. See the <a href="#full-example">full example</a> for schema, metadata, SQL, and aggregations all at once.</p>
+      <CodeBlock title="sales.excsv" description="Types, grain, a total, and the rows — one artifact.">
+{`#!excsv version=0.3 delim=comma header=1
+#@source: sales_db.orders
+#@grain: one row per order
+#column name=order_id type=int role=id
+#column name=status type=string role=dimension enum=pending|completed|cancelled
+#column name=amount type=decimal unit=USD role=measure agg=sum
+#column name=created_at type=datetime role=time
+#%sum: ,,1050.50,
+#$ddl-postgres: CREATE TABLE orders (order_id INTEGER, status TEXT, amount NUMERIC(10,2), created_at TIMESTAMPTZ)
+order_id,status,amount,created_at
+1,completed,500.00,2026-01-15T09:30:00Z
+2,completed,300.50,2026-02-20T14:00:00Z
+3,pending,250.00,2026-03-01T11:45:00Z`}
+      </CodeBlock>
 
-    <hr />
+      <p>
+        pandas: <code>pd.read_csv("sales.excsv", comment="#")</code>.
+        Excel and <code>awk</code> see ordinary CSV. An ExCSV-aware tool also gets the schema and the sum.
+      </p>
+    </section>
 
-    <h2>1. Introduction</h2>
-    <p>You open a CSV someone sent you. Which column is the amount? Is <code>01720</code> a ZIP code or the number 1720? Is <code>2026-01-02</code> the 2nd of January or the 1st of February? Are these <em>all</em> the rows, or just the first thousand your viewer loaded? And what's the total — do you trust it, or re-add the column yourself?</p>
-    <p>The answers used to live somewhere else: a README, a Slack thread, someone's memory. <strong>ExCSV puts them back in the file.</strong> Column types and units, a one-line description of what a row means, pre-computed totals, where the data came from, even the <code>CREATE TABLE</code> that would recreate it — all written as <code>#</code> comment lines that every CSV reader already skips.</p>
-    <p>Your file stays plain CSV. <code>grep</code>, <code>awk</code>, <code>cut</code>, pandas, Excel keep working exactly as before. It just stops being anonymous.</p>
+    <section class="block" id="header">
+      <h2>The first line</h2>
+      <p>
+        <code>#!excsv</code> names the dialect so nobody has to sniff it.
+        Leave out what you don't need — defaults fill in (comma, UTF-8, first row is a header).
+      </p>
+      <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1 rows=18432 null=NA</span></code></pre>
 
-    <h3>1.1 It describes; it never changes your data</h3>
-    <p>ExCSV is a layer of description on top of CSV. The rows themselves stay byte-for-byte the same CSV they always were — ExCSV only <em>annotates</em> them. Reading an ExCSV file never rewrites a value, never fills in a blank, never "corrects" anything. What you see in the data section is what's there. That's the whole point: you can trust the file to describe reality, not reshape it.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>You set this…</th><th>…when</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>delim</code></td><td>It isn't a comma. Names: <code>comma</code>, <code>tab</code>, <code>pipe</code>, <code>semicolon</code> — or the character itself (<code>delim=::</code>).</td></tr>
+            <tr><td><code>quote</code></td><td>Fields are quoted. <code>double</code>, <code>single</code>, or <code>none</code> (default).</td></tr>
+            <tr><td><code>header=0</code></td><td>There is no header row. Identify columns by <code>index=</code> instead of <code>name=</code>.</td></tr>
+            <tr><td><code>null=NA</code></td><td>Your dump uses a sentinel. Empty cells are already null.</td></tr>
+            <tr><td><code>rows</code></td><td>You want the count in the header — useful when a viewer only loaded the first thousand.</td></tr>
+            <tr><td><code>sql-dialect</code></td><td>Untagged <code>#$</code> lines should default to <code>postgres</code>, <code>duckdb</code>, …</td></tr>
+            <tr><td><code>reference</code></td><td>This file is a <a href="/variants/#sidecar">sidecar</a> — it points at the CSV, it doesn't contain rows.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Tabs usually live in <code>.extsv</code>. Invented keys go as <code>x-team=analytics</code>.
+        An optional <code>checksum=sha256:…</code> fingerprints the data section — a heads-up if the rows moved, not a lock.
+      </p>
+    </section>
 
-    <h3>1.2 What you can add</h3>
-    <p>Every piece is optional. Add a header, then types, then stats, then SQL — each layer stands on its own, and you stop wherever it's useful enough.</p>
-    <ul>
-      <li><strong>A header line</strong> (<code>#!excsv</code>) — declares the dialect: delimiter, quote, encoding, whether row one is a header, how many rows there are.</li>
-      <li><strong>Column schema</strong> (<code>#column</code>) — types, units, display formats, allowed values, and analytical roles like <em>id</em> / <em>measure</em> / <em>time</em>.</li>
-      <li><strong>Aggregations</strong> (<code>#%</code>) — sum / avg / min / max / counts, pre-computed, so a total is a fact in the file, not something a preview tool guesses.</li>
-      <li><strong>File metadata</strong> (<code>#@</code>) — source, author, license, tags, and <code>#@grain</code> ("one row per order") that says what a single row <em>is</em>.</li>
-      <li><strong>SQL companions</strong> (<code>#$</code>) — DDL to recreate the schema and DQL queries for provenance, tagged by dialect.</li>
-      <li><strong>A checksum</strong> — an integrity fingerprint of the data.</li>
-      <li><strong>CSVW</strong> — W3C tabular metadata carried inline, if you already use it.</li>
-    </ul>
+    <section class="block" id="columns">
+      <h2>Columns — stop guessing</h2>
+      <p>
+        One <code>#column</code> line per column you care about. Annotate three columns and skip the rest — that's fine.
+        No <code>#column</code> lines at all is still a valid file. It's just CSV with a header.
+      </p>
+      <pre><code><span class="hl-meta">#column name=amount type=decimal unit=USD role=measure agg=sum</span>
+<span class="hl-meta">#column name=zip type=string</span></code></pre>
+      <p>
+        That's the answer to "is <code>01720</code> a number" and "is that float money."
+        <code>decimal</code> is exact; <code>float</code> / <code>double</code> are binary floats.
+      </p>
 
-    <hr />
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Type</th><th>Use it for</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>string</code></td><td>Text, ZIP codes, IDs that look numeric</td></tr>
+            <tr><td><code>int</code> / <code>long</code></td><td>Counts, integer keys (32- / 64-bit)</td></tr>
+            <tr><td><code>decimal</code></td><td>Money, anything that must not round</td></tr>
+            <tr><td><code>float</code> / <code>double</code></td><td>Measurements where binary float is fine</td></tr>
+            <tr><td><code>boolean</code></td><td><code>true</code>/<code>false</code> (also <code>1</code>/<code>0</code>)</td></tr>
+            <tr><td><code>date</code> / <code>time</code> / <code>datetime</code></td><td><code>YYYY-MM-DD</code>, <code>HH:MM:SS</code>, ISO 8601</td></tr>
+            <tr><td><code>uuid</code> / <code>binary</code></td><td>UUIDs; base64 bytes</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-    <h2>2. File structure</h2>
-    <p>An ExCSV file reads top to bottom in three parts:</p>
-    <pre><code>┌─────────────────────────┐
-│  Header line            │  ← one line naming the dialect (optional)
-├─────────────────────────┤
-│  Meta lines             │  ← the # description lines (optional)
-├─────────────────────────┤
-│  Data section           │  ← ordinary CSV/TSV rows
-└─────────────────────────┘</code></pre>
-    <p>Everything above the data is optional. Drop the header and it's read as plain comma-separated CSV with a header row — a normal <code>.csv</code>. Add just a <code>#!excsv version=0.3</code> line and you have the smallest possible ExCSV file (a template with no data yet).</p>
-
-    <h3>2.1 The three shapes</h3>
-    <table>
-      <thead><tr><th>Shape</th><th>Data lives…</th><th>Best for</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Inline</strong></td><td>in the same file, below the metadata</td><td>exports you generate, files you share, snippets you paste somewhere</td></tr>
-        <tr><td><strong>Sidecar</strong></td><td>in a separate, untouched <code>.csv</code>/<code>.tsv</code></td><td>data you can't or won't modify — vendor dumps, regulated files, anything with its own checksum</td></tr>
-        <tr><td><strong>Header-only stub</strong></td><td>nowhere yet</td><td>templates and schemas you'll fill in later</td></tr>
-      </tbody>
-    </table>
-    <p>You can also <strong>zip</strong> an inline or sidecar file (<a href="#zip-container"><code>.excsv.zip</code></a>) and its schema is mirrored into the archive comment, so tools preview the metadata without unzipping.</p>
-
-    <h3 id="sidecar">2.2 Sidecar — annotate without touching the data</h3>
-    <p>A <strong>sidecar</strong> is an ExCSV file with header and <code>#</code> lines but <strong>no rows</strong>. It points at a real data file with <code>reference=</code>, and describes it from the outside. The data file stays exactly as it was — same bytes, still opens as plain CSV. See also the <a href="/variants/sidecar/">sidecar storage form</a>.</p>
-    <p>Pair by basename: <code>sales.excsv</code> describes <code>sales.csv</code>; <code>sales.extsv</code> describes <code>sales.tsv</code> (tab-separated). The <code>reference=</code> path is relative to the sidecar.</p>
-    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1 rows=2 reference=sales.csv</span>
-<span class="hl-meta">#@source: sales_db.orders</span>
-<span class="hl-meta">#column name=id type=int</span>
-<span class="hl-meta">#column name=customer type=string</span>
-<span class="hl-meta">#%sum: ,,750.50</span></code></pre>
-    <p>The sibling <code>sales.csv</code> is an ordinary CSV — no ExCSV header, never modified. Row count, checksum, and aggregations in the sidecar describe the <em>referenced</em> file. You can keep several sidecars describing the same data for different audiences.</p>
-    <p>Why bother instead of just editing the CSV? Because a lot of data isn't yours to edit — immutable lakes, files under contract, anything with a hash someone else checks. A sidecar lets you layer types, stats, and SQL onto it without changing a byte.</p>
-
-    <hr />
-
-    <h2>3. Header line</h2>
-    <p>The first line, when present, names the CSV dialect and a few facts about the file. It starts with <code>#!excsv</code> and always carries <code>version</code>:</p>
-    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1</span></code></pre>
-    <p>Everything else is <code>key=value</code>, separated by spaces. Values with spaces go in double quotes (<code>"like this"</code>); a literal double quote inside is written <code>""</code>. Leave out any field you don't need — sensible defaults fill in.</p>
-
-    <h3>3.1 Fields</h3>
-    <table>
-      <thead><tr><th>Field</th><th>Usual?</th><th>What it says</th></tr></thead>
-      <tbody>
-        <tr><td><code>version</code></td><td>always</td><td>Format version (<code>0.3</code>)</td></tr>
-        <tr><td><code>delim</code></td><td>common</td><td>The delimiter. A name (<code>comma</code>, <code>tab</code>, <code>pipe</code>, <code>semicolon</code>) or a literal like <code>::</code>. Default: <code>comma</code></td></tr>
-        <tr><td><code>quote</code></td><td>common</td><td>The quote character. <code>none</code>, <code>double</code>, <code>single</code>, or a literal. Default: <code>none</code></td></tr>
-        <tr><td><code>header</code></td><td>common</td><td><code>1</code> if the first data row is a header row, <code>0</code> if not. Default: <code>1</code></td></tr>
-        <tr><td><code>null</code></td><td>optional</td><td>An extra string that also means null (e.g. <code>null=NA</code>). Empty fields are always null already</td></tr>
-        <tr><td><code>rows</code></td><td>optional</td><td>How many data rows there are (excluding the header)</td></tr>
-        <tr><td><code>checksum</code></td><td>optional</td><td>Integrity fingerprint of the data</td></tr>
-        <tr><td><code>encoding</code></td><td>optional</td><td>Character encoding. Default: <code>UTF-8</code></td></tr>
-        <tr><td><code>sql-dialect</code></td><td>optional</td><td>Default SQL dialect for <code>#$</code> lines that don't name one</td></tr>
-        <tr><td><code>csvw</code></td><td>optional</td><td>How CSVW metadata is embedded, if any</td></tr>
-        <tr><td><code>schema</code></td><td>optional</td><td>Which schema wins if both ExCSV and CSVW are present: <code>excsv</code> (default) or <code>csvw</code></td></tr>
-        <tr><td><code>reference</code></td><td>sidecar only</td><td>Relative path to the data file this sidecar describes (<a href="#sidecar">§2.2</a>)</td></tr>
-        <tr><td><code>original-size</code></td><td>ZIP/pack only</td><td>Uncompressed byte size, used inside archives</td></tr>
-      </tbody>
-    </table>
-
-    <h4>Delimiter and quote values</h4>
-    <p>Use a friendly name, or just the character itself. Names for <code>delim</code>: <code>comma</code> (<code>,</code>), <code>tab</code>, <code>pipe</code> (<code>|</code>), <code>semicolon</code> (<code>;</code>). Anything else is taken literally, so <code>delim=::</code> means a two-character delimiter. Names for <code>quote</code>: <code>none</code> (default), <code>double</code> (<code>"</code>), <code>single</code> (<code>'</code>).</p>
-    <p>You can add your own keys, too — a tool that doesn't recognize them just leaves them alone. Prefix custom keys with <code>x-</code> (e.g. <code>x-team=analytics</code>).</p>
-
-    <hr />
-
-    <h2>4. Meta lines</h2>
-    <p>Between the header and the data sit the <strong>meta lines</strong> — the <code>#</code> lines that describe the table. Each kind is told apart by its prefix, so once you know the prefixes you can read any ExCSV file at a glance.</p>
-    <table>
-      <thead><tr><th>Prefix</th><th>What it is</th><th>Example</th></tr></thead>
-      <tbody>
-        <tr><td><code>#@key: value</code></td><td>File-level metadata — source, author, what a row means</td><td><code>#@source: sales_db.orders</code></td></tr>
-        <tr><td><code>#column ...</code></td><td>One column's schema — type, unit, format, role, allowed values</td><td><code>#column name=id type=int</code></td></tr>
-        <tr><td><code>#$verb: ...</code></td><td>A SQL statement that ships with the data — DDL or a query</td><td><code>#$ddl: CREATE TABLE orders (...)</code></td></tr>
-        <tr><td><code>#%name: ...</code></td><td>A pre-computed aggregate — one value per column</td><td><code>#%sum: ,, 42.5</code></td></tr>
-        <tr><td><code>#csvw: ...</code></td><td>Embedded W3C CSVW metadata</td><td><code>#csvw: {`{"tableSchema": ...}`}</code></td></tr>
-        <tr><td><code>## ...</code></td><td>A plain human comment — free text, ignored by tools</td><td><code>## TODO: drop legacy status values</code></td></tr>
-      </tbody>
-    </table>
-    <p>Order is up to you — a common, readable order is <code>#@</code> first, then <code>#column</code>, <code>#csvw</code>, <code>#$</code>, and <code>#%</code>, but tools accept any order. (The one place order matters is a sequence of <code>#$ddl</code> statements, which run top to bottom.) Unknown <code>#</code> lines are simply skipped, so you can sprinkle in your own without breaking anything.</p>
-    <p class="note">Packs add two manifest-only lines, <code>#table</code> and <code>#fk</code>, that only appear inside <code>.excsv.pack.zip</code>. See <a href="#pack-container">Pack container</a>.</p>
-
-    <hr />
-
-    <h2>5. File metadata (<code>#@</code>)</h2>
-    <p><code>#@</code> lines carry facts about the <em>dataset as a whole</em> — not the columns, the table itself. Everything after the colon is plain text, so write it however reads well.</p>
-    <table>
-      <thead><tr><th>Key</th><th>What it captures</th><th>Example</th></tr></thead>
-      <tbody>
-        <tr><td><code>source</code></td><td>Where the data came from</td><td><code>#@source: sales_db.orders</code></td></tr>
-        <tr><td><code>author</code></td><td>Who made it</td><td><code>#@author: alex@example.com</code></td></tr>
-        <tr><td><code>comment</code></td><td>A free-text description</td><td><code>#@comment: demo dataset</code></td></tr>
-        <tr><td><code>grain</code></td><td>What a single row represents</td><td><code>#@grain: one row per order</code></td></tr>
-        <tr><td><code>created</code></td><td>When it was created (ISO 8601)</td><td><code>#@created: 2026-03-24T12:00:00Z</code></td></tr>
-        <tr><td><code>exported</code></td><td>When it was exported</td><td><code>#@exported: 2026-03-24T14:30:00Z</code></td></tr>
-        <tr><td><code>license</code></td><td>The data's license</td><td><code>#@license: CC-BY-4.0</code></td></tr>
-        <tr><td><code>tool</code></td><td>What generated the file</td><td><code>#@tool: excsv-cli/0.2.0</code></td></tr>
-        <tr><td><code>tags</code></td><td>Comma-separated tags</td><td><code>#@tags: sales,Q1,2026</code></td></tr>
-      </tbody>
-    </table>
-    <p><strong><code>grain</code> is the most useful line you'll write.</strong> It says, in plain words, what one row <em>is</em>: <code>one row per order</code>, <code>one row per customer per day</code>. It sounds trivial, but it's the single fact that stops half of all analysis mistakes — you can't accidentally double-count or misjoin when the file tells you the unit up front. Use any key you like; anything you invent is kept as-is.</p>
-
-    <hr />
-
-    <h2>6. Column schema (<code>#column</code>)</h2>
-    <p>This is where guessing ends. One <code>#column</code> line per column tells anyone — a person or a tool — exactly what it holds: the type, the unit, the display format, the allowed values, what the column is <em>for</em>.</p>
-    <pre><code><span class="hl-meta">#column name=id type=int unique=1</span>
-<span class="hl-meta">#column name=email type=string len_max=254</span>
-<span class="hl-meta">#column name=amount type=decimal format=0.00 unit=USD</span></code></pre>
-    <p>Columns are optional — annotate as few or as many as you like. You identify a column by <code>name</code> (matched to the header row), or by <code>index</code> (zero-based position) when there's no header.</p>
-
-    <h3>6.1 Types and formats</h3>
-    <table>
-      <thead><tr><th>Type</th><th>What it is</th></tr></thead>
-      <tbody>
-        <tr><td><code>string</code></td><td>Text</td></tr>
-        <tr><td><code>int</code></td><td>32-bit integer</td></tr>
-        <tr><td><code>long</code></td><td>64-bit integer</td></tr>
-        <tr><td><code>float</code></td><td>32-bit floating point</td></tr>
-        <tr><td><code>double</code></td><td>64-bit floating point</td></tr>
-        <tr><td><code>decimal</code></td><td>Exact decimal (money — no float rounding)</td></tr>
-        <tr><td><code>boolean</code></td><td><code>true</code>/<code>false</code> (also <code>1</code>/<code>0</code>)</td></tr>
-        <tr><td><code>date</code></td><td><code>YYYY-MM-DD</code></td></tr>
-        <tr><td><code>time</code></td><td><code>HH:MM:SS</code></td></tr>
-        <tr><td><code>datetime</code></td><td>ISO 8601 date-time</td></tr>
-        <tr><td><code>uuid</code></td><td>A UUID</td></tr>
-        <tr><td><code>binary</code></td><td>Base64-encoded bytes</td></tr>
-      </tbody>
-    </table>
-    <p>This is the answer to "is <code>01720</code> a number or a ZIP code" and "is that a float or exact money" — you write it down once and no one guesses again. A <code>format</code> hint (e.g. <code>format=0.00</code>) rides alongside <code>type</code>.</p>
-
-    <h3>6.2 The attributes</h3>
-    <table>
-      <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
-      <tbody>
-        <tr><td><code>name</code> / <code>title</code> / <code>description</code></td><td>Identifier, display name, and a free-text note</td></tr>
-        <tr><td><code>unit</code></td><td>Unit of measurement — <code>USD</code>, <code>kg</code>, <code>ms</code></td></tr>
-        <tr><td><code>role</code></td><td>What the column is <em>for</em>: <code>id</code>, <code>dimension</code>, <code>measure</code>, <code>time</code></td></tr>
-        <tr><td><code>agg</code></td><td>For a measure, how it aggregates: <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>, <code>none</code></td></tr>
-        <tr><td><code>order</code></td><td>Whether the data is sorted: <code>none</code>, <code>asc</code>, <code>desc</code></td></tr>
-        <tr><td><code>separator</code></td><td>If a cell packs several values, the character between them</td></tr>
-        <tr><td><code>enum</code></td><td>A closed set of allowed values, pipe-separated</td></tr>
-        <tr><td><code>pattern</code> / <code>regexp_dialect</code></td><td>A regex the values match, and which flavor</td></tr>
-        <tr><td><code>min</code> / <code>max</code></td><td>Value bounds (numeric or date)</td></tr>
-        <tr><td><code>len_min</code> / <code>len_max</code></td><td>String length bounds</td></tr>
-        <tr><td><code>unique</code></td><td>Values are meant to be unique (a hint)</td></tr>
-        <tr><td><code>required</code></td><td>Whether the column is nullable</td></tr>
-        <tr><td><code>default</code></td><td>The default a <em>database</em> would use on insert — a schema fact, not applied when reading</td></tr>
-      </tbody>
-    </table>
-    <p>A note on <code>default</code>: it describes what a target database fills in for a missing value (it shows up as <code>DEFAULT …</code> in generated DDL). It is <strong>not</strong> applied when you read the file — an empty cell reads as null, always, so your counts and stats reflect the data as it actually is. Describe reality; don't quietly patch it.</p>
-
-    <h3>6.3 Enumerations</h3>
-    <p><code>enum</code> lists the allowed non-null values, separated by <code>|</code>:</p>
-    <pre><code><span class="hl-meta">#column name=status type=string enum=pending|completed|cancelled</span></code></pre>
-    <p>Values are read according to the column's <code>type</code> (so <code>type=int enum=1|2|3</code> means the integers 1, 2, 3). Null is still allowed on top of the list unless the column is <code>required=1</code>. If a value contains a space, quote the whole attribute: <code>enum="pending|in progress|done"</code>.</p>
-
-    <h3>6.4 Analytical role</h3>
-    <p><code>role</code> says what a column <em>means</em> for analysis, separately from its storage <code>type</code>. It's the difference between a number you sum and a number you never sum (an id).</p>
-    <pre><code><span class="hl-meta">#column name=order_id   type=int      role=id</span>
-<span class="hl-meta">#column name=status     type=string   role=dimension</span>
+      <h3>Role — a number you sum vs a number you never sum</h3>
+      <p>
+        <code>type</code> is storage. <code>role</code> is analysis. An <code>int</code> can be an id or a count;
+        only the role tells you which.
+      </p>
+      <pre><code><span class="hl-meta">#column name=order_id   type=int      role=id</span>
+<span class="hl-meta">#column name=status     type=string   role=dimension enum=pending|completed|cancelled</span>
 <span class="hl-meta">#column name=amount     type=decimal  role=measure agg=sum</span>
 <span class="hl-meta">#column name=balance    type=decimal  role=measure agg=avg</span>
 <span class="hl-meta">#column name=created_at type=datetime role=time</span></code></pre>
-    <table>
-      <thead><tr><th><code>role</code></th><th>What it is</th><th>What you do with it</th></tr></thead>
-      <tbody>
-        <tr><td><code>id</code></td><td>Identifies a row/entity</td><td>count, distinct, join — <strong>never</strong> sum</td></tr>
-        <tr><td><code>dimension</code></td><td>A category to group or filter by</td><td>group by, filter, count distinct</td></tr>
-        <tr><td><code>measure</code></td><td>A number to aggregate</td><td>sum, avg, min, max</td></tr>
-        <tr><td><code>time</code></td><td>A time axis</td><td>group by period, trend, range</td></tr>
-      </tbody>
-    </table>
-    <p>For a measure, the <code>agg</code> hint says how it's meant to combine — its <em>additivity</em>. It's the guardrail against the classic mistake of summing something you shouldn't: <code>sum</code> (add it up anywhere), <code>avg</code> (don't sum across time — balances, prices), <code>min</code>/<code>max</code> (combine only by extremum), <code>none</code> (not a number to aggregate — ratios, ratings). A measure with no <code>agg</code> defaults to <code>sum</code>.</p>
 
-    <hr />
+      <div class="cards cards-2">
+        <div class="card">
+          <h3><code>id</code></h3>
+          <p>Identifies a row. Count, distinct, join. Never sum.</p>
+        </div>
+        <div class="card">
+          <h3><code>dimension</code></h3>
+          <p>A category. Group by, filter, count distinct. <code>enum=</code> lists the closed set.</p>
+        </div>
+        <div class="card">
+          <h3><code>measure</code></h3>
+          <p>A number to aggregate. <code>agg=</code> says how: <code>sum</code> (revenue), <code>avg</code> (balance, price — don't add months), <code>min</code>/<code>max</code>, <code>none</code> (a ratio).</p>
+        </div>
+        <div class="card">
+          <h3><code>time</code></h3>
+          <p>The axis. Group by period, trend, range.</p>
+        </div>
+      </div>
 
-    <h2>7. Aggregations (<code>#%</code>)</h2>
-    <p>Here's the quiet superpower. A <code>#%</code> line carries a pre-computed statistic for the whole dataset — one value per column, laid out like a CSV row so it lines up under the columns it describes:</p>
-    <pre><code><span class="hl-meta">#%count_nonnull: ,98,100</span>
+      <p>
+        Also useful when you have them: <code>title</code> (display name), <code>unique</code>,
+        <code>required</code>, <code>min</code>/<code>max</code>, <code>format=0.00</code>,
+        <code>separator=|</code> if a cell packs several values.
+        <code>default=</code> is what a database would fill in on insert — it is <em>not</em> applied when you read the file.
+        An empty cell is null. The file describes reality; it doesn't patch it.
+      </p>
+    </section>
+
+    <section class="block" id="grain">
+      <h2>Grain — what one row is</h2>
+      <p>
+        <code>#@grain</code> is the most useful line you'll write.
+        <code>one row per order</code> vs <code>one row per customer per day</code> is the difference
+        between a correct join and a silent double-count.
+      </p>
+      <pre><code><span class="hl-meta">#@grain: one row per order</span>
+<span class="hl-meta">#@source: sales_db.orders</span>
+<span class="hl-meta">#@exported: 2026-03-24T14:30:00Z</span>
+<span class="hl-meta">#@tags: sales,Q1,2026</span></code></pre>
+      <p>
+        Other <code>#@</code> lines are provenance: <code>source</code>, <code>author</code>, <code>created</code>,
+        <code>exported</code>, <code>license</code>, <code>tool</code>, <code>comment</code>, <code>tags</code>.
+        Invent a key if you need one — it's kept as-is.
+      </p>
+    </section>
+
+    <section class="block" id="aggregations">
+      <h2>Aggregations — the total is a fact</h2>
+      <p>
+        A <code>#%</code> line is a pre-computed statistic for the <em>whole</em> dataset,
+        laid out like a CSV row so it lines up under the columns:
+      </p>
+      <pre><code><span class="hl-meta">#%count_nonnull: ,98,100</span>
 <span class="hl-meta">#%sum: ,,154280.50</span>
 <span class="hl-meta">#%avg: ,,1542.81</span></code></pre>
-    <p>Read that as: column 2 has 98 non-null values, column 3 has 100; column 3 sums to 154,280.50 and averages 1,542.81. Empty slots mean "no aggregate for this column."</p>
-    <p><strong>Why it matters:</strong> the total is now a <em>fact written in the file</em>, not something a tool recomputes from whatever rows it happened to load. Paste the first 50 rows of a million-row table into anything, and <code>#%sum</code> still tells the truth about the full dataset — the visible slice can't lie to you.</p>
-    <table>
-      <thead><tr><th>Kind</th><th>Aggregates</th></tr></thead>
-      <tbody>
-        <tr><td>Any type</td><td><code>count_nonnull</code>, <code>count_null</code>, <code>count_distinct</code></td></tr>
-        <tr><td>Numbers</td><td><code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code></td></tr>
-        <tr><td>Strings</td><td><code>len_min</code>, <code>len_max</code></td></tr>
-      </tbody>
-    </table>
-    <p>Aggregates follow the same rules SQL does: nulls sit out. So the numbers mean what you'd expect from a database — <code>count_distinct</code> counts distinct non-null values, <code>count_null</code> counts only the nulls, and the rest skip nulls.</p>
+      <p>
+        Column 3 sums to 154,280.50. Empty slots mean "not this column."
+        Nulls sit out, same as SQL.
+      </p>
+      <p>
+        Paste the first 50 rows of a million-row table into a notebook or a chat.
+        <code>#%sum</code> still tells the truth about the full file.
+        The visible slice can't lie to you. That's the difference between
+        "the sum of what I can see" and "the sum of the data."
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>On</th><th>You can write</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Anything</td><td><code>count_nonnull</code>, <code>count_null</code>, <code>count_distinct</code></td></tr>
+            <tr><td>Numbers</td><td><code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code></td></tr>
+            <tr><td>Strings</td><td><code>len_min</code>, <code>len_max</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-    <hr />
+    <section class="block" id="sql">
+      <h2>SQL — the recipe travels too</h2>
+      <p>
+        Recreating a table from a CSV usually means retyping the schema.
+        Here the <code>CREATE TABLE</code> (and the <code>SELECT</code> that produced the dump) sit in the file.
+      </p>
+      <pre><code><span class="hl-meta">#!excsv version=0.3 sql-dialect=postgres</span>
+<span class="hl-meta">#$ddl: CREATE TABLE orders (id BIGINT PRIMARY KEY, amount NUMERIC(8,2))</span>
+<span class="hl-meta">#$dql: SELECT id, amount FROM sales.orders WHERE exported_at &gt; '2026-01-01'</span></code></pre>
+      <p>
+        <code>ddl</code> is schema — run it if you want the table back.
+        <code>dql</code> is provenance: how the extract was pulled, not something that runs itself.
+      </p>
+      <p>
+        Several databases, side by side: <code>#$ddl-mysql:</code>, <code>#$ddl-clickhouse:</code>, <code>#$ddl-duckdb:</code>.
+        A consumer picks theirs. Tools only print the SQL — they don't touch your database.
+      </p>
+      <pre><code>excsv sql ddl postgres data.excsv | psql</code></pre>
+    </section>
 
-    <h2>8. SQL companions (<code>#$</code>)</h2>
-    <p>A file can carry the SQL that goes with it: the <code>CREATE TABLE</code> that recreates the schema, and the <code>SELECT</code> that produced the data. Ship the data and the recipe together.</p>
-    <ul>
-      <li><strong><code>ddl</code></strong> — schema statements (<code>CREATE TABLE</code>, <code>CREATE INDEX</code>, <code>ALTER</code>, <code>GRANT</code>). Run in the order they appear.</li>
-      <li><strong><code>dql</code></strong> — queries (<code>SELECT</code>), for provenance and examples. Not something that runs automatically.</li>
-    </ul>
-    <p>Recreating a table from a CSV usually means retyping the schema by hand. Here it's already written down — and you can pipe it straight into your database:</p>
-    <pre><code>excsv sql ddl postgres data.excsv | psql</code></pre>
+    <section class="block" id="open">
+      <h2>Open it</h2>
+      <p>The data section is ordinary CSV. Everything self-describing is a <code>#</code> line above it.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Tool</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>pandas</td><td><code>pd.read_csv("sales.excsv", comment="#")</code></td></tr>
+            <tr><td>polars</td><td><code>pl.read_csv("sales.excsv", comment_prefix="#")</code></td></tr>
+            <tr><td>Excel / Tableau</td><td>Open the data section, or keep a <a href="/variants/#sidecar">sidecar</a> and open the <code>.csv</code></td></tr>
+            <tr><td><code>awk</code> / <code>grep</code></td><td>Meta lines start with <code>#</code> — they skip them for free</td></tr>
+            <tr><td>ZIP</td><td><code>pd.read_csv("sales.excsv.zip", comment="#")</code> — schema also sits in the ZIP comment</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>More patterns on <a href="/examples/">Examples</a>. A CLI that understands the metadata: <a href="/tools/">tools</a>.</p>
+    </section>
 
-    <h3>8.1 Dialects</h3>
-    <p>Tag a line with the database it's written for by adding a suffix — <code>#$ddl-postgres:</code>, <code>#$ddl-mysql:</code>, <code>#$ddl-clickhouse:</code>. Untagged lines use whatever <code>sql-dialect=</code> the header sets, or plain ANSI SQL. You can even ship the same table for several databases side by side and let each consumer pick theirs. Common tokens: <code>ansi</code>, <code>mysql</code>, <code>mariadb</code>, <code>postgres</code>, <code>mssql</code>, <code>sqlite</code>, <code>oracle</code>, <code>db2</code>, <code>clickhouse</code>, <code>snowflake</code>, <code>bigquery</code>, <code>duckdb</code> — any lowercase name works. You can pin a version too (<code>#$ddl-postgres-18:</code>).</p>
+    <section class="block" id="formats">
+      <h2>How it ships</h2>
+      <p>Same language. Four packages — details on <a href="/variants/">Formats</a>.</p>
+      <div class="cards cards-4">
+        <a class="card card-link" href="/variants/#plain">
+          <span class="ext">.excsv</span>
+          <h3>Plain</h3>
+          <p>Schema and rows in one file. The default.</p>
+        </a>
+        <a class="card card-link" href="/variants/#sidecar" id="sidecar">
+          <span class="ext">.excsv + .csv</span>
+          <h3>Sidecar</h3>
+          <p>Annotate a CSV you can't rewrite.</p>
+        </a>
+        <a class="card card-link" href="/variants/#zip" id="zip-container">
+          <span class="ext">.excsv.zip</span>
+          <h3>ZIP</h3>
+          <p>Compressed. Peek schema without unzipping.</p>
+        </a>
+        <a class="card card-link" href="/variants/#pack" id="pack-container">
+          <span class="ext">.excsv.pack.zip</span>
+          <h3>Pack</h3>
+          <p>Columns and several tables in one archive.</p>
+        </a>
+      </div>
+    </section>
 
-    <h3>8.2 Examples</h3>
-    <p><strong>One dialect via the header:</strong></p>
-    <pre><code><span class="hl-meta">#!excsv version=0.3 sql-dialect=mysql</span>
-<span class="hl-meta">#$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(254) NOT NULL) ENGINE=InnoDB</span>
-<span class="hl-meta">#$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)</span>
-<span class="hl-meta">#$dql: SELECT * FROM orders WHERE id &gt; 100</span></code></pre>
-    <p><strong>Several dialects side by side:</strong></p>
-    <pre><code><span class="hl-meta">#!excsv version=0.3</span>
-<span class="hl-meta">#$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(8,2))</span>
-<span class="hl-meta">#$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB</span>
-<span class="hl-meta">#$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))</span>
-<span class="hl-meta">#$ddl-clickhouse: CREATE TABLE orders (id UInt64, amount Decimal(8,2)) ENGINE = MergeTree() ORDER BY id</span></code></pre>
-    <p>Tools only print the SQL — they don't touch your database. Keys are a database concern, so express primary/foreign keys as ordinary <code>ALTER TABLE … ADD CONSTRAINT …</code> DDL after the <code>CREATE TABLE</code>.</p>
-
-    <hr />
-
-    <h2>9. Checksum</h2>
-    <p>A <code>checksum=</code> on the header is an integrity fingerprint of the data — a way to tell whether the rows are still exactly what they were when the file was written.</p>
-    <pre><code>checksum=sha256:e3b0c44298fc1c149afbf4c8996fb924...</code></pre>
-    <p>It's written as <code>&lt;algorithm&gt;:&lt;hex-digest&gt;</code> and covers the whole data section, so it survives being zipped, re-zipped, or moved around — the fingerprint is of the <em>content</em>, not the packaging. It's advisory: a mismatch is a heads-up that the data changed, not a lock. It never stops you from reading the file.</p>
-
-    <hr />
-
-    <h2>10. CSVW</h2>
-    <p>If you already use <a href="https://www.w3.org/TR/tabular-data-primer/" target="_blank" rel="noopener">W3C CSVW</a> metadata, you can carry it inline instead of (or alongside) <code>#column</code> lines. Declare how it's embedded on the header — <code>csvw=inline-json</code> or <code>csvw=base64url</code> — then put the payload on a <code>#csvw:</code> line:</p>
-    <pre><code><span class="hl-meta">#csvw: {`{"tableSchema": {"columns": [...]}}`}</span></code></pre>
-    <p>If both ExCSV <code>#column</code> annotations and CSVW are present, <code>schema=</code> on the header decides who wins — <code>excsv</code> (the default) or <code>csvw</code>. Tools that don't care about CSVW simply skip it.</p>
-
-    <hr />
-
-    <h2 id="zip-container">11. ZIP container</h2>
-    <p>You can ship an ExCSV file inside a normal ZIP with the extension <code>.excsv.zip</code> (or <code>.extsv.zip</code>). It's still the same file — just compressed. Anything that reads ZIP can open it. See the <a href="/variants/zip/">ZIP storage form</a>.</p>
-    <p><strong>Preview without unzipping.</strong> The archive's comment field carries a text summary of what's inside — the header, the columns, the SQL, the aggregations. So a tool can show you the schema and stats of a compressed file <em>without extracting it</em>. Browsing a folder of zipped exports, you see what each one holds at a glance. The summary is a copy for convenience; the file inside is the source of truth.</p>
-    <p><strong>Passwords.</strong> A <code>.excsv.zip</code> can use standard ZIP encryption if the data is sensitive. The password is handled by your tooling at read/write time — it's never written into the ExCSV metadata or the comment.</p>
-
-    <h2 id="pack-container">11.5 Pack container</h2>
-    <p>A <strong>pack</strong> (<code>.excsv.pack.zip</code>) is ExCSV for wide tables and multi-table snapshots. Instead of storing rows, it stores each <strong>column</strong> as its own file inside a ZIP, and can hold <strong>several tables</strong> in one archive with the relationships between them. Human overview: <a href="/variants/pack/">pack variant</a>.</p>
-    <p>Why you'd want it:</p>
-    <ul>
-      <li><strong>Read a few columns out of many</strong> without decompressing the rest — grab <code>amount</code> and <code>date</code> from a 200-column export cheaply.</li>
-      <li><strong>Bundle related tables</strong> (orders + customers + products) in one file, with their foreign keys written down.</li>
-      <li><strong>Better compression</strong> — a column of one type squeezes far better than mixed rows.</li>
-    </ul>
-    <p>Everything else — types, stats, SQL, checksums — still applies, per table. A manifest at the top lists the tables and links (<code>#fk</code>); then one folder per table, one <code>.col</code> file per column:</p>
-    <pre><code>sales.excsv.pack.zip
-├── _manifest.excsv             ← the table of contents
-├── orders/
-│   ├── _header.excsv           ← the table's schema + stats
-│   ├── 00-id.col
-│   ├── 01-customer_id.col
-│   └── 02-amount.col
-└── customers/
-    ├── _header.excsv
-    └── ...</code></pre>
-    <p>Each table's <code>_header.excsv</code> is exactly the ExCSV metadata you already know — <code>#column</code>, <code>#$ddl</code>, <code>#%</code> — plus a <code>rows=</code> count. Because the manifest is mirrored into the ZIP comment, a quick <code>info</code> can read the pack's contents without unpacking it.</p>
-
-    <hr />
-
-    <h2 id="json-profile">12. Also available as JSON</h2>
-    <p>When you're already working in JSON — a web app, an API response, feeding a table to an AI model — the very same content (columns, types, aggregates, SQL, provenance) has a JSON form too. It's an exact mirror of the CSV form, so a file can go CSV → JSON → CSV without losing anything. You don't need it to use ExCSV; it's there for when JSON is simply more convenient.</p>
-    <pre><code>{`{
+    <section class="block" id="json-profile">
+      <h2>Also as JSON</h2>
+      <p>
+        Same content — columns, types, aggregates, SQL — when you're already in JSON:
+        an API, a notebook dict, a prompt. CSV → JSON → CSV doesn't lose anything.
+        Money stays a string so it doesn't become a float.
+      </p>
+      <pre><code>{`{
   "excsv": "0.3",
   "meta": { "grain": "one row per order" },
   "columns": [
-    { "name": "id", "type": "int", "role": "id" },
     { "name": "amount", "type": "decimal", "unit": "USD", "role": "measure", "agg": "sum" }
   ],
-  "aggregates": { "sum": [null, "1050.50"], "count_nonnull": [2, 2] },
-  "data": [ [1, "500.00"], [2, "550.50"] ]
+  "aggregates": { "sum": [null, "1050.50"] },
+  "data": [[1, "500.00"], [2, "550.50"]]
 }`}</code></pre>
-    <p>Note that money and big integers travel as strings so they never lose precision — the column <code>type</code> tells a reader how to interpret them. The JSON Schema and the full CSV↔JSON mapping live in the repo: <a href="https://github.com/boligolov/excsv/blob/main/schema/excsv.schema.json">schema/excsv.schema.json</a> and <a href="https://github.com/boligolov/excsv/blob/main/docs/implementation/json-profile.md">json-profile.md</a>.</p>
+    </section>
 
-    <hr />
+    <section class="block inspired" id="prior-art">
+      <h2>Inspired by</h2>
+      <div class="cards cards-3">
+        <div>
+          <h3><a href="https://docs.astropy.org/en/stable/io/ascii/ecsv.html" target="_blank" rel="noopener">ECSV</a></h3>
+          <p>Astropy showed a CSV can carry schema as <code>#</code> lines. ExCSV keeps the shape, drops the YAML.</p>
+        </div>
+        <div>
+          <h3><a href="https://docs.influxdata.com/influxdb/v2/reference/syntax/annotated-csv/" target="_blank" rel="noopener">Annotated CSV</a></h3>
+          <p>InfluxDB's one-value-per-column annotation rows. That's where <code>#%</code> comes from.</p>
+        </div>
+        <div>
+          <h3><a href="https://github.com/MetaCSV/MetaCSV" target="_blank" rel="noopener">MetaCSV</a></h3>
+          <p>A sibling file beside plain CSV. Same job as <a href="/variants/#sidecar">sidecar</a>, different vocabulary.</p>
+        </div>
+      </div>
+    </section>
 
-    <h2 id="full-example">13. Full example</h2>
-    <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 checksum=sha256:a1b2c3d4e5f6 sql-dialect=mysql</span>
-<span class="hl-meta">#@author: author@example.com</span>
-<span class="hl-meta">#@source: sales_db.orders</span>
-<span class="hl-meta">#@comment: Quarterly sales export with all column features demonstrated</span>
-<span class="hl-meta">#@grain: one row per order</span>
-<span class="hl-meta">#@created: 2026-01-01T00:00:00Z</span>
-<span class="hl-meta">#@license: CC-BY-4.0</span>
-<span class="hl-meta">#@tags: sales,Q1,2026,demo</span>
-<span class="hl-meta">#column name=id type=int unique=1 role=id title="Order ID"</span>
-<span class="hl-meta">#column name=customer type=string required=1 role=dimension len_min=1 len_max=100 title="Customer Name"</span>
-<span class="hl-meta">#column name=email type=string required=1 len_max=254 pattern=^[^@]+@[^@]+$</span>
-<span class="hl-meta">#column name=amount type=decimal format=0.00 unit=USD role=measure agg=sum min=0 max=999999.99 default=0.00 order=desc</span>
-<span class="hl-meta">#column name=status type=string role=dimension enum=pending|completed|cancelled default=pending</span>
-<span class="hl-meta">#column name=tags type=string separator=| title="Order Tags"</span>
-<span class="hl-meta">#column name=created_at type=datetime role=time title="Created At"</span>
-<span class="hl-meta">#column name=note type=string x-ui-widget=textarea</span>
-<span class="hl-meta">#$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL, amount DECIMAL(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMP, note TEXT) ENGINE=InnoDB</span>
-<span class="hl-meta">#$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL UNIQUE, amount NUMERIC(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMPTZ, note TEXT)</span>
-<span class="hl-meta">#$dql: SELECT * FROM orders WHERE quarter = 'Q1'</span>
-<span class="hl-meta">#%count_nonnull: 4,4,4,4,4,3,4,2</span>
-<span class="hl-meta">#%count_null: 0,0,0,0,0,1,0,2</span>
-<span class="hl-meta">#%count_distinct: 4,3,3,4,2,3,4,2</span>
-<span class="hl-meta">#%sum: ,,,1050.50,,,,</span>
-<span class="hl-meta">#%avg: ,,,262.625,,,,</span>
-<span class="hl-meta">#%min: ,,,50.00,,,,</span>
-<span class="hl-meta">#%max: ,,,500.00,,,,</span>
-id,customer,email,amount,status,tags,created_at,note
-1,Acme Corp,acme@example.com,500.00,completed,urgent|wholesale,2026-01-15T09:30:00Z,"Large wholesale order"
-2,Globex Inc,globex@example.com,300.50,completed,retail,2026-02-20T14:00:00Z,"Paid in full, net-30"
-3,Initech,info@initech.io,200.00,pending,urgent|retail,2026-03-01T11:45:00Z,
-4,Acme Corp,acme@example.com,50.00,pending,,2026-03-10T16:20:00Z,</code></pre>
-
-    <hr />
-
-    <h2 id="prior-art">Prior art</h2>
-    <p>ExCSV stands on the shoulders of prior work that proved CSV can carry metadata — inline or in a sibling file — while remaining plain CSV for legacy readers.</p>
-    <h3>ECSV — Enhanced Character-Separated Values (Astropy)</h3>
-    <p><a href="https://docs.astropy.org/en/stable/io/ascii/ecsv.html" target="_blank" rel="noopener">Astropy's ECSV</a> is the closest spiritual ancestor: a versioned signature line, a <code>#</code>-prefixed metadata block any CSV reader ignores, per-column descriptors, and a plain CSV data section. ExCSV adopts the same shape but swaps ECSV's nested YAML header for line-oriented <code>key=value</code> pairs — easier to <code>grep</code>, <code>diff</code>, and hand-write.</p>
-    <h3>InfluxDB Annotated CSV</h3>
-    <p><a href="https://docs.influxdata.com/influxdb/v2/reference/syntax/annotated-csv/" target="_blank" rel="noopener">InfluxDB's Annotated CSV</a> showed the other half: annotation rows that carry one value per data column. ExCSV's <code>#%</code> aggregation rows are direct descendants — one row per metric, one value per column.</p>
-    <h3>MetaCSV — sidecar metadata in CSV form</h3>
-    <p><a href="https://github.com/MetaCSV/MetaCSV" target="_blank" rel="noopener">MetaCSV</a> is the closest analogue to ExCSV's <a href="#sidecar">sidecar</a> profile: a separate <code>.mcsv</code> file beside the data CSV. ExCSV sidecars reuse the same <code>#</code> vocabulary as inline files and bind the data path with <code>reference=</code>.</p>
-    <h3>What ExCSV adds</h3>
-    <ul>
-      <li>An explicit <code>#!excsv</code> header declaring the CSV dialect inside the file.</li>
-      <li><code>#@</code> provenance lines (source, author, license, tool, tags, grain).</li>
-      <li>Pre-computed aggregations as first-class metadata — <code>sum</code>, <code>avg</code>, <code>count_*</code> without scanning the data.</li>
-      <li>SQL companions with dialect tagging — ship the schema and the query alongside the data.</li>
-      <li>ZIP and pack containers with the summary in the archive comment.</li>
-      <li>A lossless JSON profile for JSON-native contexts and AI tooling.</li>
-    </ul>
-
-    <hr />
-
-    <h2>License</h2>
-    <p>This specification is released under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>.</p>
+    <p class="more">
+      Worked files on <a href="/examples/">Examples</a>.
+      Parser rules live in the
+      <a href="https://github.com/boligolov/excsv/tree/main/docs/implementation">implementation docs</a>.
+    </p>
   </article>
 </Base>
 
 <style>
-  .spec h1:first-child {
+  .guide h1 {
     margin-top: 0;
+    letter-spacing: -0.03em;
   }
-  .lead-note {
+  .lede {
+    font-size: 1.1rem;
     color: var(--color-muted);
     line-height: 1.7;
+    max-width: 46rem;
+    margin-bottom: 1.5rem;
   }
-  .note {
+
+  .jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .jump a {
+    font-size: 0.88rem;
+    font-weight: 500;
     color: var(--color-muted);
-    font-size: 0.92rem;
+    text-decoration: none;
+    padding: 0.35em 0.75em;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+  }
+  .jump a:hover {
+    color: var(--color-text);
+    border-color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .block {
+    padding-top: 0.5rem;
+    padding-bottom: 2.25rem;
+    scroll-margin-top: 4.5rem;
+  }
+  .block h2 {
+    border: none;
+    padding: 0;
+    margin-top: 0.2rem;
+  }
+  .kicker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 0.35rem;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .cards {
+    display: grid;
+    gap: 1rem;
+    margin: 1.25rem 0 1.5rem;
+  }
+  .cards-2 { grid-template-columns: 1fr 1fr; }
+  .cards-3 { grid-template-columns: repeat(3, 1fr); }
+  .cards-4 { grid-template-columns: repeat(4, 1fr); }
+  .card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.15rem 1.2rem 1.25rem;
+  }
+  .card h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.02rem;
+  }
+  .card p {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  .card-link:hover {
+    border-color: var(--color-accent);
+    text-decoration: none;
+    color: inherit;
+  }
+  .ext {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: 0.45rem;
+  }
+
+  .inspired {
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .inspired .cards {
+    gap: 1.5rem 1.75rem;
+  }
+  .inspired .cards > div {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .inspired h3 a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .inspired h3 a:hover { color: var(--color-accent); }
+
+  .more {
+    color: var(--color-muted);
+    padding-top: 0.5rem;
+  }
+
+  @media (max-width: 900px) {
+    .cards-4 { grid-template-columns: 1fr 1fr; }
+    .cards-3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .cards-4,
+    .cards-2 { grid-template-columns: 1fr; }
   }
 </style>

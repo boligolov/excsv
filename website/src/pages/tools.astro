@@ -2,10 +2,10 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="ExCSV Tools & Libraries" description="CLI tools and libraries that implement the ExCSV v0.3 specification.">
+<Base title="ExCSV Tools & Libraries" description="CLI tools and libraries that read and write ExCSV v0.3.">
   <h1>Tools &amp; Libraries</h1>
   <p class="intro">
-    Implementations built on the <a href="/spec/">ExCSV v0.3 specification</a>.
+    Implementations of <a href="/spec/">ExCSV v0.3</a>.
     This list is curated — if you ship a library or CLI, open an issue on the
     <a href="https://github.com/boligolov/excsv" target="_blank" rel="noopener">spec repo</a>.
   </p>
@@ -24,7 +24,7 @@ import Base from '../layouts/Base.astro';
         Reference command-line tool and Go library for ExCSV. Supports plain
         (<code>.excsv</code>, <code>.extsv</code>) and row-ZIP
         (<code>.excsv.zip</code>, <code>.extsv.zip</code>) storage forms.
-        <a href="/variants/pack/">Pack</a> (<code>.excsv.pack.zip</code>) is specified in v0.3 but not implemented here yet.
+        <a href="/variants/#pack">Pack</a> (<code>.excsv.pack.zip</code>) is in v0.3; this CLI doesn't open it yet.
       </p>
 
       <ul class="feature-list">
@@ -60,7 +60,7 @@ excsv convert to-csv data.excsv</code></pre>
   <section class="coming-soon">
     <h2>Planned</h2>
     <ul>
-      <li><strong>Pack CLI</strong> — <code>col get</code>, <code>table list</code>, <code>pack create</code> on <code>.excsv.pack.zip</code> (<a href="/variants/pack/">spec §10.5</a>).</li>
+      <li><strong>Pack CLI</strong> — <code>col get</code>, <code>table list</code>, <code>pack create</code> on <code>.excsv.pack.zip</code>.</li>
       <li>Python package (<code>excsv</code>) and additional language bindings — see the
         <a href="https://github.com/boligolov/excsv/blob/master/plan/README.md" target="_blank" rel="noopener">implementation plan</a>.</li>
     </ul>

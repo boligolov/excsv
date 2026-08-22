@@ -11,13 +11,10 @@ export default defineConfig({
     sitemap({
       changefreq: 'monthly',
       lastmod: new Date(),
+      filter: (page) => !/\/variants\/(plain|sidecar|zip|pack)\/?$/.test(page),
       customPages: [
         'https://excsv.org/',
         'https://excsv.org/variants/',
-        'https://excsv.org/variants/plain/',
-        'https://excsv.org/variants/sidecar/',
-        'https://excsv.org/variants/zip/',
-        'https://excsv.org/variants/pack/',
         'https://excsv.org/spec/',
         'https://excsv.org/examples/',
         'https://excsv.org/tools/',
