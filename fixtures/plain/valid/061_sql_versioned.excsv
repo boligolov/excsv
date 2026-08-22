@@ -1,0 +1,6 @@
+#!excsv version=0.3
+#$ddl-postgres: CREATE TABLE t (id SERIAL PRIMARY KEY)
+#$ddl-postgres-17: CREATE TABLE t (id BIGSERIAL PRIMARY KEY)
+#$ddl-postgres-18: CREATE TABLE t (id BIGSERIAL PRIMARY KEY) INCLUDE (id)
+id
+1

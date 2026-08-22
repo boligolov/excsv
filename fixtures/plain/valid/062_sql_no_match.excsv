@@ -1,0 +1,4 @@
+#!excsv version=0.3
+#$ddl-mysql: CREATE TABLE t (id INT PRIMARY KEY AUTO_INCREMENT)
+id
+1

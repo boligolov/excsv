@@ -1,0 +1,4 @@
+#!excsv version=0.3
+#$drop: DROP TABLE t
+id
+1

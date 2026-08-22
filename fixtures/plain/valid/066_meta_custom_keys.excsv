@@ -1,0 +1,6 @@
+#!excsv version=0.3
+#@source: warehouse
+#@pipeline-id: 42
+#@x-internal-run: nightly
+id
+1

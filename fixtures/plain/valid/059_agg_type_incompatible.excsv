@@ -1,0 +1,5 @@
+#!excsv version=0.3
+#column name=name type=string
+#%sum: 10
+name
+Amy

@@ -25,8 +25,8 @@ fixtures/
 │   ├── valid/
 │   └── invalid/
 ├── generate/              ← scripts that build derived fixtures from plain ones
-│   ├── make_zip.sh / .ps1
-│   └── make_pack.sh / .ps1
+│   ├── make_zip_fixtures.py + make_zip.sh / .ps1
+│   └── make_pack_fixtures.py + make_pack.sh / .ps1
 └── fixtures.yaml          ← manifest: per-fixture expected outcome
 ```
 
@@ -221,17 +221,7 @@ Dropped targets: missing `mode=`; two `#table primary=1`; `single-table=` + two 
 
 ## Sequencing
 
-Fixtures land **in lockstep with format readiness** from `plan/README.md`:
-
-| Wave | Fixtures unlocked |
-| --- | --- |
-| 1 (plain) | `plain/valid/` and `plain/invalid/` |
-| 2 (zip)   | `zip/valid/` and `zip/invalid/` |
-| 3 (pack unsectioned, single-table mode) | `pack/valid/` single-table fixtures and `pack/invalid/` for the pack-level invariants that apply |
-| 4 (pack multi-table) | remaining `pack/valid/` multi-table fixtures |
-| 5 (pack sectioned) | sectioning fixtures (valid + invalid) |
-
-For each wave: **fixtures land before code**. The implementation tracks then pull from a fixed, frozen corpus. Fixture authoring is its own deliverable, reviewed before any Go / Python code that consumes it.
+The corpus already covers plain, zip, and pack. Implementations consume it in full — no format gating. **Fixtures land before (or with) the code that claims them.**
 
 ## Rules
 
@@ -245,10 +235,10 @@ For each wave: **fixtures land before code**. The implementation tracks then pul
 ## Open questions
 
 1. **Manifest format.** YAML chosen for readability; JSON or TOML are alternatives. Go and Python both have first-class support for all three. **Lean: YAML** for human edit-ability; CI will validate it against a schema.
-2. **Schema for the manifest itself.** Should there be a `fixtures.schema.json` that validates `fixtures.yaml`? Yes, but defer authoring until the manifest stabilizes around wave 1.
-3. **Per-fixture expected canonical output.** Some fixtures might benefit from a sibling file (`001_minimal.excsv.canonical`) that's the byte-exact output of re-serializing through the canonical writer. Catches writer regressions. Add as wave 1 reveals which fixtures need it.
+2. **Schema for the manifest itself.** Should there be a `fixtures.schema.json` that validates `fixtures.yaml`? Yes, but defer until the remaining spec fixtures (`formula=`, `#index`) land.
+3. **Per-fixture expected canonical output.** Some fixtures might benefit from a sibling file (`001_minimal.excsv.canonical`) that's the byte-exact output of re-serializing through the canonical writer. Catches writer regressions. Add when a writer exists.
 4. **Big-file fixtures.** Do we ship one or two `>10MB` fixtures for streaming/perf tests, or generate them on-demand in CI? **Lean: generate on-demand** to keep the repo small; commit only their generator scripts and the manifest entry.
-5. **Cross-locale fixtures.** Number / date parsing with non-C locales. Defer until locale handling is implemented (probably wave 2 or later).
+5. **Cross-locale fixtures.** Number / date parsing with non-C locales. Defer until locale handling is implemented.
 
 ## Next
 

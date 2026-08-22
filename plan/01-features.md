@@ -8,7 +8,7 @@ Format-agnostic capability map. Independent of Go / Python / CLI surface. Each f
 | --- | --- | --- | --- |
 | **plain** | `.excsv`, `.ecsv` | row-oriented text | Backward-compatible with CSV/TSV. Inline (header+meta+data) or **sidecar** (meta only, `reference=` → sibling `.csv`/`.tsv`; `.extsv` for TSV). |
 | **zip** | `.excsv.zip`, `.ecsv.zip` | row-oriented text, Deflate-wrapped | Container of exactly one plain file. ZIP comment summary. |
-| **pack** | `.excsv.pack.zip`, `.ecsv.pack.zip` | columnar, multi-table (or single-table mode) | ZIP archive of `_manifest.excsv` + per-table directories of `.col` files. Reserved in v0.2; promotes to spec post-v0.3. |
+| **pack** | `.excsv.pack.zip`, `.ecsv.pack.zip` | columnar, multi-table (optional `single-table=`) | ZIP archive of `_manifest.excsv` + per-table directories of `.col` files. In v0.3 spec. |
 
 `plain` and `zip` are the **row family** (RF). `pack` is the **pack family** (PF).
 
@@ -121,6 +121,7 @@ Core lifecycle: open, parse, materialize, serialize, stream.
 | G5 | Random-access cell read | ≈ | ≈ | ✓ | PF sectioned: O(section-size). RF: linear. |
 | G6 | Full table iteration | ✓ | ✓ | ✓ | |
 | G7 | Multi-column projection | ≈ | ≈ | ✓ | PF: reads only N entries. RF: full row decode then drop. |
+| G9 | Sparse byte-offset index (`#index stride=`) | ✓ | ✓ | — | Fenceposts for parallel scan (offsets only, not id lookup). PF: section ZIP entries already are the windows. See `plan/TODO.md` §6. |
 
 ## H. Data transformation
 
@@ -172,13 +173,13 @@ All Mode B. Output is a new document; in-place rewrites are an I/O concern. PF c
 
 | # | Feature | RF plain | RF zip | PF | Notes |
 | --- | --- | --- | --- | --- | --- |
-| K1 | Create empty pack (manifest only) | — | — | ⊕ | Specify `mode=multi-table` (default) or `mode=single-table`. |
+| K1 | Create empty pack (manifest only) | — | — | ⊕ | Optional `single-table=<name>` while one `#table` exists. |
 | K2 | List tables | — | — | ⊕ | From manifest; fallback to alphabetical subdir scan. |
-| K3 | Add table from `.excsv` | — | — | ⊕ | Refuses in single-table mode if a table already exists. |
+| K3 | Add table from `.excsv` | — | — | ⊕ | Adding a second table drops `single-table=` from the manifest (not an error). |
 | K4 | Drop table | — | — | ⊕ | Rewrites manifest. |
 | K5 | Extract table → standalone `.excsv` | — | — | ⊕ | Reverses K3. |
 | K6 | Rename table | — | — | ⊕ | Rewrites manifest + subdir name. |
-| K7 | Convert mode (`multi-table` ↔ `single-table`) | — | — | ⊕ | Validates current table count. |
+| K7 | Set / clear `single-table=` | — | — | ⊕ | Stale `single-table=` with two+ tables: ignore, MAY warn. |
 | K8 | Read pack-level metadata (manifest `#@`) | — | — | ⊕ | |
 | K9 | Add / list foreign-key declarations (`#fk`) | — | — | ⊕ | Informational only. |
 | K10 | Manifest-only peek (no per-table reads) | — | — | ⊕ | Counterpart to J3. |
@@ -284,6 +285,6 @@ Counts of `✓` (native), `≈` (format-specific), `⊕` (pack-only) for quick t
 This catalog feeds downstream work:
 
 - **`02-fixtures.md`** — shared test-fixture corpus: every feature above gets at least one success and (where applicable) one failure fixture. Drives parity between Go and Python.
-- **[excsv-golang](https://github.com/boligolov/excsv-golang)** — map each feature to packages / commands; sequence per the waves in `README.md`; tests walk the fixture corpus.
+- **[excsv-golang](https://github.com/boligolov/excsv-golang)** — map each feature to packages / commands; tests walk the fixture corpus.
 - **Python repo (TBD)** — mirror of the Go plan; parity tests run against the **same** fixture corpus.
 - **Cookbook repo (TBD)** — 30–50 most common user workflows as terminal recipes; each cites the fixture it uses so readers can reproduce locally.

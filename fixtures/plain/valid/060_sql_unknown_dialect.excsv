@@ -1,0 +1,4 @@
+#!excsv version=0.3
+#$ddl-bogus: CREATE TABLE t (id INT)
+id
+1
