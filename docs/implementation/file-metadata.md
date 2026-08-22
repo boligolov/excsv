@@ -15,8 +15,11 @@ The following `#@key: value` keys are conventional. Implementations **MAY** use 
 | `license`  | Data license identifier              | `#@license: CC-BY-4.0`             |
 | `tool`     | Tool/version that generated the file | `#@tool: excsv-cli/0.2.0`          |
 | `tags`     | Comma-separated tags                 | `#@tags: sales,Q1,2026`            |
+| `comment-truncated` | ZIP comment only — peek is incomplete | `#@comment-truncated: 1`     |
 
 SQL companions (`ddl`, `dql`) are encoded as `#$` lines, not `#@`. See [SQL](sql.md).
+
+`#@comment-truncated: 1` is written by the zipper into the **archive comment**, not into the inner file, when the 65535-byte ZIP comment budget ran out and some `#` lines were omitted. Readers **MUST** treat it as “peek is incomplete; the inner file is authoritative.” It **MUST NOT** appear on a plain `.excsv` / `.extsv` (or a pack table header); if it does, ignore it. See [ZIP](zip.md#truncation-marker) and [Pack](pack.md#zip-comment-manifest-summary).
 
 Each `#@` key is unique per file (last-wins on duplicates).
 

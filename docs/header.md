@@ -24,7 +24,7 @@ Everything else is `key=value`, separated by spaces. Values with spaces go in do
 | `csvw` | optional | How CSVW metadata is embedded, if any — see [CSVW](csvw.md) |
 | `schema` | optional | Which schema wins if both ExCSV and CSVW are present: `excsv` (default) or `csvw` |
 | `reference` | sidecar only | Relative path to the data file this sidecar describes — see [File structure](file-structure.md#sidecar--annotate-without-touching-the-data) |
-| `original-size` | ZIP/pack only | Uncompressed byte size, used inside `.excsv.zip` and pack archives — see [ZIP](zip.md) and [Pack](pack.md) |
+| `original-size` | ZIP/pack only | Uncompressed byte size. On a file inside `.excsv.zip`, the size of that inner `.excsv`. On a pack manifest, the sum of the tables' column payloads. See [ZIP](zip.md) and [Pack](pack.md) |
 
 ## Delimiter values
 

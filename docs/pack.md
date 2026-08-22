@@ -97,6 +97,6 @@ excsv sales.excsv.pack.zip table add products --from products.excsv
 excsv sales.excsv.pack.zip table extract customers -o customers.excsv
 ```
 
-Because the manifest is mirrored into the ZIP comment (like a plain `.excsv.zip`), a quick `info` or `table list` can read the pack's contents without unpacking it. Packs can be password-protected the same way, too.
+Because the manifest is mirrored into the ZIP comment (like a plain `.excsv.zip`), a quick `info` or `table list` can read the pack's contents without unpacking it. Same 65535-byte comment limit: if the manifest doesn't fit, the comment ends with `#@comment-truncated: 1`. Packs can be password-protected the same way, too.
 
 > The exact archive rules — entry order, sizes, section boundaries, validation — are in [implementation/pack.md](implementation/pack.md).

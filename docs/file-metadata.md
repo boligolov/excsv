@@ -16,6 +16,8 @@
 
 These keys are conventions — use any key you like; anything you invent is kept as-is. There's one value per key per file.
 
+A ZIP comment may end with `#@comment-truncated: 1` when the archive comment hit its 65535-byte limit and some metadata was left out. That's written by the zipper into the comment, not into the file itself — see [ZIP](zip.md).
+
 ## `grain` — the most useful line you'll write
 
 `#@grain` says, in plain words, what one row *is*: `one row per order`, `one row per customer per day`, `pre-aggregated monthly totals`. It sounds trivial, but it's the single fact that stops half of all analysis mistakes — you can't accidentally double-count or misjoin when the file tells you the unit up front.

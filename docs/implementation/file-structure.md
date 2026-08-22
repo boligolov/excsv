@@ -68,6 +68,13 @@ id,customer,amount
 
 Sidecar pairs are **not** combined into `.excsv.zip` or `.extsv.zip`; materialize inline or ship two plain files.
 
+## ZIP container (row form)
+
+A `.excsv.zip` / `.extsv.zip` wraps one **inline** file. Normative rules are in [ZIP](zip.md). Two fields implementers miss:
+
+- Inner header **MUST** include `original-size=` — uncompressed bytes of the inner file, matching the ZIP central-directory `uncompressed_size`.
+- The ZIP comment is a UTF-8 ExCSV prefix, max **65535** bytes. If any `#` line was omitted to fit, the comment **MUST** end with `#@comment-truncated: 1`. The comment is advisory; the inner file wins.
+
 ## Line Endings and BOM
 
 - Files **MAY** use LF or CRLF line endings. Parsers **MUST** accept both.

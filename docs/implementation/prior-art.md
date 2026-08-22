@@ -50,7 +50,7 @@ MetaCSV targets **interpretation and typing** for SQL/ODS export; it does not de
 - `#@key: value` provenance lines (source, author, license, tool, tags, created/exported timestamps).
 - Pre-computed aggregations as first-class metadata, not just types and defaults — consumers get `sum`, `avg`, `min`, `max`, `count_*` without scanning the data.
 - SQL companions (`#$ddl`, `#$dql`) with dialect tagging — ship the schema and the query that produced the data alongside the data itself, in multiple SQL dialects.
-- ZIP container (`.excsv.zip`) with the metadata summary embedded in the archive's comment field — preview schema without unzipping.
+- ZIP container (`.excsv.zip`) with `original-size=` on the inner header and a metadata summary in the archive comment (truncated at 65535 bytes with `#@comment-truncated: 1`) — preview schema without unzipping.
 - **Sidecar profile** (plain `.excsv` or `.extsv` metadata-only + `reference=`) for legacy CSV/TSV that must stay byte-identical to RFC 4180.
 
 If you already have ECSV files, the metadata translates 1:1 to ExCSV (`datatype` → `#column type=`, `unit` → `#column unit=`, `description` → `#column description=`, the `meta:` block → individual `#@` keys). If you already have Annotated CSV, the `#datatype` row maps to per-column `#column type=` lines and the `#default` row maps to `#column default=`. For MetaCSV sidecars, map `csv,*` and `file,*` rows to `#!excsv` fields, `data,col/n/type` to `#column index=n type=…` (add `name=` when the data file has a header row), and keep the data file unchanged.

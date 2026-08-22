@@ -36,3 +36,5 @@ On `_manifest.excsv` inside `.excsv.pack.zip` / `.extsv.pack.zip` only:
 | `#fk ...` | Informational foreign key | `#fk from=orders.customer_id to=customers.id` |
 
 These **MUST NOT** appear in plain or row-ZIP files or table `_header.excsv`. See [Pack container](pack.md).
+
+A ZIP archive comment **MAY** end with `#@comment-truncated: 1` when the 65535-byte comment budget ran out. That key is comment-only — see [File metadata](file-metadata.md) and [ZIP](zip.md#truncation-marker).

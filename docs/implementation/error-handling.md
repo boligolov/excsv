@@ -100,14 +100,16 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | Code | Severity | Verify | Meaning |
 | --- | --- | --- | --- |
 | `zip_primary_not_first` | FAIL | — | First central-directory entry is not a valid primary (wrong name or not `.excsv`/`.extsv`). Readers **MUST NOT** scan forward. |
-| `zip_primary_missing` | FAIL | — | No `.excsv`/`.extsv` entry in the archive. |
+| `zip_primary_bad_name` | FAIL | — | A candidate primary exists but its name is neither the archive basename minus `.zip` nor `data.excsv` / `data.extsv`. |
 | `zip_missing_original_size` | FAIL | — | Inner header lacks `original-size=`. |
 | `zip_original_size_mismatch` | FAIL | — | Inner uncompressed size ≠ header `original-size=`. |
 | `zip_unsupported_compression` | FAIL | — | Primary entry uses a rejected compression method. |
 | `zip_encrypted` | FAIL | — | Archive is encrypted; password required before read (operational, not a data defect). |
 | `zip_comment_not_excsv_prefix` | WARN | — | ZIP comment does not begin with `#!excsv`. |
 | `zip_comment_not_utf8` | WARN | — | ZIP comment is not valid UTF-8. |
-| `zip_comment_header_disagree` | WARN | — | ZIP comment disagrees with the inner `#!excsv` header (other than the truncation marker). |
+| `zip_comment_header_disagree` | WARN | — | ZIP comment disagrees with the inner `#!excsv` header (other than `#@comment-truncated: 1`). |
+
+`#@comment-truncated: 1` on a ZIP comment is **valid** — not an error. It means the 65535-byte comment was filled and some inner `#` lines were left out. Peek is incomplete; parse the inner file. See [ZIP](zip.md#truncation-marker).
 | `row_parser_got_pack` | FAIL | — | A pack container was routed to the row/plain parser. |
 | `pack_key_on_plain` | WARN | — | Pack-only key (`layout=`, `section-size=`, `table-count=`, `single-table=`, `#table`, `#fk`) on a plain / row-ZIP file; ignored. |
 | `original_size_on_plain` | WARN | — | `original-size=` on a plain (non-ZIP, non-pack) file; ignored. |
