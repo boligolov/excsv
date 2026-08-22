@@ -1,3 +1,0 @@
-﻿#!excsv version=0.3 delim=comma header=1 reference=029_sidecar_delim_ext_mismatch.tsv
-#column name=a type=string
-#column name=b type=int

@@ -1,5 +1,0 @@
-﻿#!excsv version=0.3 header=1
-#column name=id type=int
-#column name=email type=string
-id,mail
-1,a@example.com

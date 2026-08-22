@@ -18,6 +18,9 @@ FIXED_DT = (2026, 1, 1, 0, 0, 0)
 def ensure_dirs() -> None:
     ZIP_VALID.mkdir(parents=True, exist_ok=True)
     ZIP_INVALID.mkdir(parents=True, exist_ok=True)
+    for folder in (ZIP_VALID, ZIP_INVALID):
+        for stale in folder.glob("*.zip"):
+            stale.unlink()
 
 
 def load_plain(relative: str) -> list[str]:
@@ -205,6 +208,24 @@ def make_valid() -> None:
             out.write(canonical.encode("utf-8"))
         zf.comment = comment_full
 
+    # Comment defects are advisory: inner file still parses (C3-style).
+    write_zip(
+        ZIP_VALID / "011_comment_not_excsv_prefix.excsv.zip",
+        [("011_comment_not_excsv_prefix.excsv", canonical.encode("utf-8"), zipfile.ZIP_DEFLATED)],
+        b"not-an-excsv-comment",
+    )
+    write_zip(
+        ZIP_VALID / "012_comment_not_utf8.excsv.zip",
+        [("012_comment_not_utf8.excsv", canonical.encode("utf-8"), zipfile.ZIP_DEFLATED)],
+        b"\xff\xfe\xfd",
+    )
+    disagree = to_comment_full(canonical).replace("version=0.3", "version=0.2", 1)
+    write_zip(
+        ZIP_VALID / "013_comment_header_disagree.excsv.zip",
+        [("013_comment_header_disagree.excsv", canonical.encode("utf-8"), zipfile.ZIP_DEFLATED)],
+        disagree.encode("utf-8"),
+    )
+
 
 def make_invalid() -> None:
     base_lines = load_plain("plain/valid/020_canonical_full_small.excsv")
@@ -253,18 +274,6 @@ def make_invalid() -> None:
         ZIP_INVALID / "004_primary_bad_name.excsv.zip",
         [("wrong_name.excsv", valid_inner.encode("utf-8"), zipfile.ZIP_DEFLATED)],
         to_comment_full(valid_inner).encode("utf-8"),
-    )
-
-    write_zip(
-        ZIP_INVALID / "005_comment_not_excsv_prefix.excsv.zip",
-        [("005_comment_not_excsv_prefix.excsv", valid_inner.encode("utf-8"), zipfile.ZIP_DEFLATED)],
-        b"not-an-excsv-comment",
-    )
-
-    write_zip(
-        ZIP_INVALID / "006_comment_not_utf8.excsv.zip",
-        [("006_comment_not_utf8.excsv", valid_inner.encode("utf-8"), zipfile.ZIP_DEFLATED)],
-        b"\xff\xfe\xfd",
     )
 
     p = ZIP_INVALID / "007_unsupported_compression_method.excsv.zip"

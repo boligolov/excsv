@@ -1,41 +1,70 @@
-﻿error_kinds:
+﻿# Shared fixture corpus. error_kinds MUST match docs/implementation/error-handling.md.
+error_kinds:
+  # Header
+  - header_malformed_magic
   - header_missing_version
   - header_malformed_kv
-  - header_malformed_magic
   - header_unclosed_quote
   - header_invalid_value
+  - unknown_version
+  # Columns
   - column_missing_name
   - column_missing_index
-  - column_title_header_mismatch
-  - column_name_header_mismatch
   - column_malformed_attribute
-  - agg_arity_mismatch
-  - sql_missing_colon
-  - sql_unknown_verb
-  - sql_embedded_newline
+  - column_unknown_attribute
+  - column_name_header_mismatch
+  - column_title_header_mismatch
+  - duplicate_column
+  - column_count_mismatch
+  - default_with_nulls
+  # Data section
   - data_row_arity_mismatch
   - quote_none_delimiter_in_value
   - first_field_hash_unquoted
   - quoted_value_raw_newline
-  - checksum_mismatch
-  - checksum_malformed
+  # Aggregations
+  - agg_arity_mismatch
+  - agg_type_incompatible
+  # SQL
+  - sql_missing_colon
+  - sql_embedded_newline
+  - sql_unknown_verb
+  - sql_unknown_dialect
+  - sql_dialect_family
+  - sql_version_mismatch
+  - sql_no_match
+  # Encoding
   - invalid_utf8
   - encoding_mismatch
-  - zip_missing_original_size
-  - zip_original_size_mismatch
-  - zip_primary_not_first
-  - zip_primary_bad_name
-  - zip_primary_missing
-  - zip_comment_not_excsv_prefix
-  - zip_comment_not_utf8
-  - zip_unsupported_compression
-  - zip_encrypted
+  - encoding_not_ascii_compatible
+  - encoding_unsupported
+  # Checksum (all advisory)
+  - checksum_mismatch
+  - sidecar_checksum_mismatch
+  - checksum_unknown_algorithm
+  - checksum_malformed
+  # Sidecar
   - sidecar_has_data_section
+  - reference_on_inline
+  - sidecar_reference_escapes_dir
   - sidecar_missing_reference
   - sidecar_reference_not_found
-  - sidecar_delim_ext_mismatch
-  - sidecar_checksum_mismatch
-  - reference_on_inline
+  - extsv_delim_mismatch
+  # ZIP
+  - zip_primary_not_first
+  - zip_primary_bad_name
+  - zip_missing_original_size
+  - zip_original_size_mismatch
+  - zip_unsupported_compression
+  - zip_encrypted
+  - zip_comment_not_excsv_prefix
+  - zip_comment_not_utf8
+  - zip_comment_header_disagree
+  - row_parser_got_pack
+  - pack_key_on_plain
+  - original_size_on_plain
+  - rows_mismatch
+  # Pack
   - pack_manifest_missing_layout
   - pack_table_dir_missing
   - pack_table_header_missing
@@ -43,6 +72,10 @@
   - pack_col_line_count_mismatch
   - pack_section_partition_error
   - pack_section_boundary_mismatch
+
+# ---------------------------------------------------------------------------
+# plain / valid
+# ---------------------------------------------------------------------------
 
 - id: plain/valid/001_minimal_header_only.excsv
   exercises: [A4, A6, B1, B6]
@@ -142,7 +175,7 @@
     parse: ok
     warnings: []
     header:
-      sql-dialect: postgres-15
+      sql-dialect: postgres-17
 
 - id: plain/valid/014_csvw_inline_json.excsv
   exercises: [A4]
@@ -349,6 +382,189 @@
       checksum: sha256:0b3f39155f0904ac1a986803018c602ca7202e944afd7431ba601276f7b6344b
     rows: 2
 
+- id: plain/valid/040_checksum_mismatch.excsv
+  exercises: [M2, M3]
+  expect:
+    parse: ok
+    warnings: [checksum_mismatch]
+
+- id: plain/valid/041_agg_arity_too_few.excsv
+  exercises: [E1, E3]
+  expect:
+    parse: ok
+    warnings: []
+
+- id: plain/valid/042_agg_arity_too_many.excsv
+  exercises: [E1, E3]
+  expect:
+    parse: ok
+    warnings: [agg_arity_mismatch]
+
+- id: plain/valid/043_column_title_header_mismatch.excsv
+  exercises: [D6]
+  expect:
+    parse: ok
+    warnings: [column_title_header_mismatch]
+
+- id: plain/valid/044_column_name_header_mismatch.excsv
+  exercises: [D6]
+  expect:
+    parse: ok
+    warnings: [column_name_header_mismatch]
+
+- id: plain/valid/045_sql_unknown_verb.excsv
+  exercises: [F1, F8]
+  expect:
+    parse: ok
+    warnings: [sql_unknown_verb]
+
+- id: plain/valid/046_encoding_mismatch.excsv
+  exercises: [P5]
+  expect:
+    parse: ok
+    warnings: [encoding_mismatch]
+
+- id: plain/valid/047_rows_mismatch.excsv
+  exercises: [B5, M4]
+  expect:
+    parse: ok
+    warnings: [rows_mismatch]
+    verify: fail
+
+- id: plain/valid/048_extsv_delim_mismatch.extsv
+  exercises: [B7]
+  data_sibling: plain/valid/048_extsv_delim_mismatch.tsv
+  expect:
+    parse: ok
+    warnings: [extsv_delim_mismatch]
+    profile: sidecar
+
+- id: plain/valid/049_sidecar_reference_not_found.excsv
+  exercises: [A11, B7]
+  expect:
+    parse: ok
+    warnings: [sidecar_reference_not_found]
+    profile: sidecar
+
+- id: plain/valid/050_sidecar_checksum_mismatch.excsv
+  exercises: [A11, M3]
+  data_sibling: plain/valid/050_sidecar_checksum_mismatch.csv
+  expect:
+    parse: ok
+    warnings: [sidecar_checksum_mismatch]
+    profile: sidecar
+
+- id: plain/valid/051_checksum_malformed.excsv
+  exercises: [M2, M3]
+  expect:
+    parse: ok
+    warnings: [checksum_malformed]
+
+- id: plain/valid/052_checksum_unknown_algorithm.excsv
+  exercises: [M2, M3]
+  expect:
+    parse: ok
+    warnings: [checksum_unknown_algorithm]
+
+- id: plain/valid/053_pack_key_on_plain.excsv
+  exercises: [P8]
+  expect:
+    parse: ok
+    warnings: [pack_key_on_plain]
+
+- id: plain/valid/054_default_with_nulls.excsv
+  exercises: [D1]
+  expect:
+    parse: ok
+    warnings: [default_with_nulls]
+
+- id: plain/valid/055_column_count_mismatch.excsv
+  exercises: [D1, D6]
+  expect:
+    parse: ok
+    warnings: [column_count_mismatch]
+
+- id: plain/valid/056_unknown_version.excsv
+  exercises: [B5, P7]
+  expect:
+    parse: ok
+    warnings: [unknown_version]
+
+- id: plain/valid/057_column_unknown_attribute.excsv
+  exercises: [D1, P7]
+  expect:
+    parse: ok
+    warnings: [column_unknown_attribute]
+
+- id: plain/valid/058_duplicate_column.excsv
+  exercises: [D1, O3]
+  expect:
+    parse: ok
+    warnings: [duplicate_column]
+
+- id: plain/valid/059_agg_type_incompatible.excsv
+  exercises: [E1, E4]
+  expect:
+    parse: ok
+    warnings: [agg_type_incompatible]
+
+- id: plain/valid/060_sql_unknown_dialect.excsv
+  exercises: [F8]
+  expect:
+    parse: ok
+    warnings: [sql_unknown_dialect]
+
+- id: plain/valid/061_sql_versioned.excsv
+  exercises: [F3, F6, F8]
+  expect:
+    parse: ok
+    warnings: []
+    sql:
+      ddl_count: 3
+      apply_target: postgres-18
+      apply_warnings: [sql_dialect_family, sql_version_mismatch]
+
+- id: plain/valid/062_sql_no_match.excsv
+  exercises: [F3, F8]
+  expect:
+    parse: ok
+    warnings: []
+    sql:
+      apply_target: postgres
+      apply_warnings: [sql_no_match]
+
+- id: plain/valid/063_original_size_on_plain.excsv
+  exercises: [B1, P8]
+  expect:
+    parse: ok
+    warnings: [original_size_on_plain]
+
+- id: plain/valid/064_encoding_unsupported.excsv
+  exercises: [P5]
+  expect:
+    parse: ok
+    warnings: [encoding_unsupported]
+
+- id: plain/valid/065_encoding_not_ascii_compatible.excsv
+  exercises: [P5]
+  expect:
+    parse: ok
+    warnings: [encoding_not_ascii_compatible]
+
+- id: plain/valid/066_meta_custom_keys.excsv
+  exercises: [C1, P7]
+  expect:
+    parse: ok
+    warnings: []
+    meta:
+      source: warehouse
+      pipeline-id: "42"
+      x-internal-run: nightly
+
+# ---------------------------------------------------------------------------
+# plain / invalid  (FAIL only. Retired NNN: 007, 009, 010, 017, 022, 025, 026, 029, 031, 032)
+# ---------------------------------------------------------------------------
+
 - id: plain/invalid/001_header_missing_version.excsv
   exercises: [B1, B5]
   expect:
@@ -385,29 +601,11 @@
     parse: fail
     error_kind: column_missing_index
 
-- id: plain/invalid/007_column_title_header_mismatch.excsv
-  exercises: [D6]
-  expect:
-    parse: fail
-    error_kind: column_title_header_mismatch
-
 - id: plain/invalid/008_column_unparseable_attribute.excsv
   exercises: [D1]
   expect:
     parse: fail
     error_kind: column_malformed_attribute
-
-- id: plain/invalid/009_agg_arity_too_few.excsv
-  exercises: [E1, E3]
-  expect:
-    parse: fail
-    error_kind: agg_arity_mismatch
-
-- id: plain/invalid/010_agg_arity_too_many.excsv
-  exercises: [E1, E3]
-  expect:
-    parse: fail
-    error_kind: agg_arity_mismatch
 
 - id: plain/invalid/011_sql_missing_colon.excsv
   exercises: [F1]
@@ -445,14 +643,6 @@
     parse: fail
     error_kind: first_field_hash_unquoted
 
-- id: plain/invalid/017_checksum_mismatch.excsv
-  exercises: [M2, M3]
-  # C3: checksum mismatch is warn-only, never fatal (even under `excsv verify`).
-  # Outcome is now VALID-with-warning; relocate to plain/valid/ in the fixtures pass.
-  expect:
-    parse: ok
-    warnings: [checksum_mismatch]
-
 - id: plain/invalid/018_header_value_invalid.excsv
   exercises: [B5]
   expect:
@@ -477,12 +667,6 @@
     parse: fail
     error_kind: header_malformed_magic
 
-- id: plain/invalid/022_sql_unknown_verb.excsv
-  exercises: [F1, F8]
-  expect:
-    parse: ok
-    warnings: [sql_unknown_verb]
-
 - id: plain/invalid/023_quoted_value_raw_newline.excsv
   exercises: [G6]
   expect:
@@ -494,18 +678,6 @@
   expect:
     parse: fail
     error_kind: invalid_utf8
-
-- id: plain/invalid/025_encoding_mismatch.excsv
-  exercises: [P5]
-  expect:
-    parse: fail
-    error_kind: encoding_mismatch
-
-- id: plain/invalid/026_column_name_header_mismatch.excsv
-  exercises: [D6]
-  expect:
-    parse: fail
-    error_kind: column_name_header_mismatch
 
 - id: plain/invalid/027_sidecar_has_data_section.excsv
   exercises: [A11, B7]
@@ -519,14 +691,6 @@
     parse: fail
     error_kind: reference_on_inline
 
-- id: plain/invalid/029_sidecar_delim_ext_mismatch.extsv
-  exercises: [B7]
-  data_sibling: plain/invalid/029_sidecar_delim_ext_mismatch.tsv
-  expect:
-    parse: ok
-    warnings: [sidecar_delim_ext_mismatch]
-    profile: sidecar
-
 - id: plain/invalid/030_sidecar_missing_reference.excsv
   exercises: [B7]
   expect:
@@ -534,20 +698,17 @@
     profile: sidecar
     error_kind: sidecar_missing_reference
 
-- id: plain/invalid/031_sidecar_reference_not_found.excsv
-  exercises: [A11, B7]
+- id: plain/invalid/033_sidecar_reference_escapes_dir.excsv
+  exercises: [B7]
   expect:
     parse: fail
-    profile: sidecar_strict
-    error_kind: sidecar_reference_not_found
-
-- id: plain/invalid/032_sidecar_checksum_mismatch.excsv
-  exercises: [A11, M3]
-  data_sibling: plain/invalid/032_sidecar_checksum_mismatch.csv
-  expect:
-    parse: ok
-    warnings: [sidecar_checksum_mismatch]
     profile: sidecar
+    error_kind: sidecar_reference_escapes_dir
+
+# ---------------------------------------------------------------------------
+# zip — generated by fixtures/generate/make_zip_fixtures.py
+# Retired invalid NNN: 005, 006 (comment defects → valid/011, 012)
+# ---------------------------------------------------------------------------
 
 - id: zip/valid/001_simple_primary_match.excsv.zip
   exercises: [A1, J1, J5]
@@ -625,6 +786,27 @@
     parse: ok
     warnings: []
 
+- id: zip/valid/011_comment_not_excsv_prefix.excsv.zip
+  exercises: [J3]
+  derived_from: plain/valid/020_canonical_full_small.excsv
+  expect:
+    parse: ok
+    warnings: [zip_comment_not_excsv_prefix]
+
+- id: zip/valid/012_comment_not_utf8.excsv.zip
+  exercises: [J3]
+  derived_from: plain/valid/020_canonical_full_small.excsv
+  expect:
+    parse: ok
+    warnings: [zip_comment_not_utf8]
+
+- id: zip/valid/013_comment_header_disagree.excsv.zip
+  exercises: [J3]
+  derived_from: plain/valid/020_canonical_full_small.excsv
+  expect:
+    parse: ok
+    warnings: [zip_comment_header_disagree]
+
 - id: zip/invalid/001_missing_original_size.excsv.zip
   exercises: [J5]
   expect:
@@ -649,18 +831,6 @@
     parse: fail
     error_kind: zip_primary_bad_name
 
-- id: zip/invalid/005_comment_not_excsv_prefix.excsv.zip
-  exercises: [J3]
-  expect:
-    parse: ok
-    warnings: [zip_comment_not_excsv_prefix]
-
-- id: zip/invalid/006_comment_not_utf8.excsv.zip
-  exercises: [J3]
-  expect:
-    parse: ok
-    warnings: [zip_comment_not_utf8]
-
 - id: zip/invalid/007_unsupported_compression_method.excsv.zip
   exercises: [J1]
   expect:
@@ -671,13 +841,17 @@
   exercises: [J1]
   expect:
     parse: fail
-    error_kind: zip_primary_missing
+    error_kind: zip_primary_not_first
 
 - id: zip/invalid/009_encrypted.excsv.zip
   exercises: [J1]
   expect:
     parse: fail
     error_kind: zip_encrypted
+
+# ---------------------------------------------------------------------------
+# pack — generated by fixtures/generate/make_pack_fixtures.py
+# ---------------------------------------------------------------------------
 
 - id: pack/valid/001_single_table_unsectioned.excsv.pack.zip
   exercises: [K1, K2, K7, L1, M4]
@@ -742,7 +916,7 @@
     warnings: []
     tables: 2
     sql:
-      dialects: [mysql, postgres-15]
+      dialects: [mysql, postgres-17]
 
 - id: pack/valid/007_sectioned_table.excsv.pack.zip
   exercises: [L4, M4]
@@ -768,14 +942,23 @@
   exercises: [K11]
   expect:
     parse: ok
-    warnings: [pack_manifest_empty_table_registry]
+    warnings: []
     tables: 2
 
 - id: pack/valid/010_auto_discovery_no_manifest.excsv.pack.zip
   exercises: [K11]
   expect:
     parse: ok
-    warnings: [pack_manifest_missing]
+    warnings: []
+    tables: 2
+
+- id: pack/valid/011_single_table_stale.excsv.pack.zip
+  exercises: [K2, K7]
+  expect:
+    parse: ok
+    warnings: []
+    header:
+      single-table: customers
     tables: 2
 
 - id: pack/invalid/001_manifest_missing_layout.excsv.pack.zip

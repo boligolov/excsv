@@ -47,11 +47,15 @@ class PackBuild:
     fks: list[str] = field(default_factory=list)
     include_manifest: bool = True
     manifest_table_lines: list[str] | None = None
+    stale_single_table: bool = False
 
 
 def ensure_dirs() -> None:
     PACK_VALID.mkdir(parents=True, exist_ok=True)
     PACK_INVALID.mkdir(parents=True, exist_ok=True)
+    for folder in (PACK_VALID, PACK_INVALID):
+        for stale in folder.glob("*.zip"):
+            stale.unlink()
 
 
 def parse_header_kv(line: str) -> dict[str, str]:
@@ -303,7 +307,7 @@ def manifest_text(spec: PackBuild, table_payload_sizes: list[int]) -> str:
         f"table-count={table_count}",
         f"original-size={original_size}",
     ]
-    if spec.single_table and table_count == 1:
+    if spec.single_table and (table_count == 1 or spec.stale_single_table):
         parts.insert(2, f"single-table={spec.single_table}")
     header = " ".join(parts)
     lines = [header, *spec.pack_meta]
@@ -460,12 +464,12 @@ def make_valid() -> None:
         "orders_pg",
         [
             "#@source: analytics.orders",
-            "#$ddl-postgres-15: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))",
+            "#$ddl-postgres-17: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))",
             "#column name=id type=int",
             "#column name=amount type=decimal",
         ],
         [("id", ["1", "2"]), ("amount", ["10.00", "20.50"])],
-        sql_dialect="postgres-15",
+        sql_dialect="postgres-17",
     )
     build_pack(
         PACK_VALID / "006_tables_different_sql_dialects.excsv.pack.zip",
@@ -537,6 +541,17 @@ def make_valid() -> None:
         PACK_VALID / "010_auto_discovery_no_manifest.excsv.pack.zip",
         entries,
         b"",
+    )
+
+    # single-table= left on a multi-table pack: ignore, not fatal (pack.md).
+    build_pack(
+        PACK_VALID / "011_single_table_stale.excsv.pack.zip",
+        PackBuild(
+            tables=[customers, orders],
+            single_table="customers",
+            stale_single_table=True,
+            pack_meta=["#@pack-name: stale-single-table"],
+        ),
     )
 
 

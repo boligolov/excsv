@@ -1,6 +1,0 @@
-﻿#!excsv version=0.3
-#column name=id type=int
-#column name=amount type=decimal
-#%sum: 10.00
-id,amount
-1,10.00

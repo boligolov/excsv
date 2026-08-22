@@ -1,4 +1,0 @@
-﻿#!excsv version=0.3 header=1
-#column name=id title="Identifier" type=int
-id
-1
