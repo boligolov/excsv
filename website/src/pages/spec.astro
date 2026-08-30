@@ -39,7 +39,7 @@ import CodeBlock from '../components/CodeBlock.astro';
       </p>
 
       <CodeBlock title="sales.excsv" description="Types, grain, a total, and the rows — one artifact.">
-{`#!excsv version=0.3 delim=comma header=1
+{`#!excsv version=0.4 delim=comma header=1
 #@source: sales_db.orders
 #@grain: one row per order
 #column name=order_id type=int role=id
@@ -66,7 +66,7 @@ order_id,status,amount,created_at
         <code>#!excsv</code> names the dialect so nobody has to sniff it.
         Leave out what you don't need — defaults fill in (comma, UTF-8, first row is a header).
       </p>
-      <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1 rows=18432 null=NA</span></code></pre>
+      <pre><code><span class="hl-meta">#!excsv version=0.4 delim=comma header=1 rows=18432 null=NA</span></code></pre>
 
       <div class="table-wrap">
         <table>
@@ -216,7 +216,7 @@ order_id,status,amount,created_at
         Recreating a table from a CSV usually means retyping the schema.
         Here the <code>CREATE TABLE</code> (and the <code>SELECT</code> that produced the dump) sit in the file.
       </p>
-      <pre><code><span class="hl-meta">#!excsv version=0.3 sql-dialect=postgres</span>
+      <pre><code><span class="hl-meta">#!excsv version=0.4 sql-dialect=postgres</span>
 <span class="hl-meta">#$ddl: CREATE TABLE orders (id BIGINT PRIMARY KEY, amount NUMERIC(8,2))</span>
 <span class="hl-meta">#$dql: SELECT id, amount FROM sales.orders WHERE exported_at &gt; '2026-01-01'</span></code></pre>
       <p>
@@ -252,8 +252,8 @@ order_id,status,amount,created_at
 
     <section class="block" id="formats">
       <h2>How it ships</h2>
-      <p>Same language. Four packages — details on <a href="/variants/">Formats</a>.</p>
-      <div class="cards cards-4">
+      <p>Same language. Five formats — details on <a href="/variants/">Formats</a>.</p>
+      <div class="cards cards-5">
         <a class="card card-link" href="/variants/#plain">
           <span class="ext">.excsv</span>
           <h3>Plain</h3>
@@ -274,25 +274,33 @@ order_id,status,amount,created_at
           <h3>Pack</h3>
           <p>Columns and several tables in one archive.</p>
         </a>
+        <a class="card card-link" href="/variants/#json" id="json-form">
+          <span class="ext">.excsv.json</span>
+          <h3>JSON</h3>
+          <p>The same document as JSON. APIs, config, AI output.</p>
+        </a>
       </div>
     </section>
 
     <section class="block" id="json-profile">
-      <h2>Also as JSON</h2>
+      <h2>The JSON form</h2>
       <p>
-        Same content — columns, types, aggregates, SQL — when you're already in JSON:
-        an API, a notebook dict, a prompt. CSV → JSON → CSV doesn't lose anything.
+        Same content — columns, types, aggregates, SQL — in a file of its own,
+        <code>sales.excsv.json</code>, for when you're already in JSON: an API, a config, a prompt.
+        There's a <a href="/schema/excsv-0.4.schema.json">JSON Schema</a> to validate against,
+        or to constrain a model's output to. CSV → JSON → CSV doesn't lose anything.
         Money stays a string so it doesn't become a float.
       </p>
       <pre><code>{`{
-  "excsv": "0.3",
+  "excsv": "0.4",
   "meta": { "grain": "one row per order" },
   "columns": [
-    { "name": "amount", "type": "decimal", "unit": "USD", "role": "measure", "agg": "sum" }
+    { "index": 0, "name": "amount", "type": "decimal", "unit": "USD", "role": "measure", "agg": "sum" }
   ],
-  "aggregates": { "sum": [null, "1050.50"] },
+  "aggregates": { "sum": ["1050.50"] },
   "data": [[1, "500.00"], [2, "550.50"]]
 }`}</code></pre>
+      <p>More on <a href="/variants/#json">Formats</a> · <a href="/convert/">Converter</a>.</p>
     </section>
 
     <section class="block inspired" id="prior-art">
@@ -386,6 +394,7 @@ order_id,status,amount,created_at
   .cards-2 { grid-template-columns: 1fr 1fr; }
   .cards-3 { grid-template-columns: repeat(3, 1fr); }
   .cards-4 { grid-template-columns: repeat(4, 1fr); }
+  .cards-5 { grid-template-columns: repeat(5, 1fr); }
   .card {
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
@@ -444,12 +453,17 @@ order_id,status,amount,created_at
     padding-top: 0.5rem;
   }
 
+  @media (max-width: 1100px) {
+    .cards-5 { grid-template-columns: repeat(3, 1fr); }
+  }
   @media (max-width: 900px) {
-    .cards-4 { grid-template-columns: 1fr 1fr; }
+    .cards-4,
+    .cards-5 { grid-template-columns: 1fr 1fr; }
     .cards-3 { grid-template-columns: 1fr; }
   }
   @media (max-width: 560px) {
     .cards-4,
+    .cards-5,
     .cards-2 { grid-template-columns: 1fr; }
   }
 </style>

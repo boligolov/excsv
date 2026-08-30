@@ -8,7 +8,7 @@ Replaces the old `golang/features.md`, which is implemented but **obsolete**: it
 
 | Path | Purpose |
 | --- | --- |
-| `README.md`, `docs/` | Normative spec (v0.3) |
+| `README.md`, `docs/` | Normative spec (v0.4) |
 | `plan/01-features.md` | Abstract feature catalog — **source of truth for capabilities** |
 | `plan/02-fixtures.md` | Fixture naming, manifest rules, generation |
 | `fixtures/` | Shared test corpus (`fixtures.yaml` + `plain/`, `zip/`, `pack/`) |

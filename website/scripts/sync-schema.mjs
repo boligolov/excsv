@@ -1,6 +1,6 @@
 // Copies the canonical ExCSV JSON Schema (repo-root schema/) into the website's
 // public/ tree so it is served at the URL declared in the schema's $id:
-//   https://excsv.org/schema/excsv-0.3.schema.json
+//   https://excsv.org/schema/excsv-0.4.schema.json
 // Runs automatically via the `prebuild` / `predev` npm hooks. Keep the repo-root
 // file as the single source of truth; do not edit the generated public copy.
 import { mkdirSync, copyFileSync } from 'node:fs';
@@ -12,7 +12,7 @@ const repoRoot = resolve(here, '..', '..');
 const outDir = resolve(here, '..', 'public', 'schema');
 
 const files = [
-  ['schema/excsv.schema.json', 'excsv-0.3.schema.json'],
+  ['schema/excsv.schema.json', 'excsv-0.4.schema.json'],
   ['schema/example.excsv.json', 'example.excsv.json'],
 ];
 

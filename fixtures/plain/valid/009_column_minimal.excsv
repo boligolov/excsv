@@ -1,4 +1,4 @@
-﻿#!excsv version=0.3
+﻿#!excsv version=0.4
 #column name=id
 #column name=email
 id,email

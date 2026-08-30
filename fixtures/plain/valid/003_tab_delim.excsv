@@ -1,4 +1,4 @@
-﻿#!excsv version=0.3 delim=tab
+﻿#!excsv version=0.4 delim=tab
 id	name
 1	Alice
 2	Bob

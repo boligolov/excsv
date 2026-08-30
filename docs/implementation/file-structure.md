@@ -14,7 +14,7 @@ An ExCSV file **MUST** consist of, in order:
 
 An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=double`, `header=1`, `encoding=UTF-8`).
 
-The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.3` (a **header-only stub** with no data and no `reference=`).
+The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.4` (a **header-only stub** with no data and no `reference=`).
 
 ## Document profiles (plain)
 
@@ -23,6 +23,8 @@ The smallest valid ExCSV file is an empty file, or a single header line: `#!excs
 | **Inline** (default) | present | **MUST NOT** be set |
 | **Sidecar** | absent | **REQUIRED** — see [Sidecar](#sidecar-detached-metadata) |
 | **Header-only stub** | absent | absent (templates, exports) |
+
+All three profiles have an equivalent JSON serialization — see [JSON form](json.md) for `.excsv.json`.
 
 See also the [storage forms overview](https://excsv.org/variants/) on the project website.
 
@@ -51,7 +53,7 @@ Plain `.excsv` and `.extsv` files **MAY** be **inline** (header + meta + data) o
 **Example** — `sales.excsv`:
 
 ```
-#!excsv version=0.3 delim=comma quote=double header=1 rows=2 reference=sales.csv
+#!excsv version=0.4 delim=comma quote=double header=1 rows=2 reference=sales.csv
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string

@@ -1,4 +1,4 @@
-﻿#!excsv version=0.3 rows=2 schema=excsv sql-dialect=mysql
+﻿#!excsv version=0.4 rows=2 schema=excsv sql-dialect=mysql
 #@author: author@example.com
 #@source: sales_db.orders
 #@created: 2026-01-01T00:00:00Z

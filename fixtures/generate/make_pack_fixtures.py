@@ -15,7 +15,7 @@ PACK_VALID = FIXTURES / "pack" / "valid"
 PACK_INVALID = FIXTURES / "pack" / "invalid"
 
 FIXED_DT = (2026, 1, 1, 0, 0, 0)
-META_PREFIXES = ("#!", "#@", "#column", "#%", "#$", "#csvw", "##")
+META_PREFIXES = ("#!", "#@", "#column", "#%", "#$", "##")
 
 
 @dataclass
@@ -241,7 +241,7 @@ def col_payload(values: list[str]) -> bytes:
 
 def table_header_text(table: TableBuild) -> str:
     rows = len(table.columns[0]) if table.columns else 0
-    parts = ["#!excsv version=0.3 layout=columnar", f"rows={rows}"]
+    parts = ["#!excsv version=0.4 layout=columnar", f"rows={rows}"]
     if table.section_size:
         parts.append(f"section-size={table.section_size}")
     for key, value in table.header_kv_extra.items():
@@ -303,7 +303,7 @@ def manifest_text(spec: PackBuild, table_payload_sizes: list[int]) -> str:
     table_count = len(spec.tables)
     original_size = sum(table_payload_sizes)
     parts = [
-        "#!excsv version=0.3 layout=pack",
+        "#!excsv version=0.4 layout=pack",
         f"table-count={table_count}",
         f"original-size={original_size}",
     ]

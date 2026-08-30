@@ -1,4 +1,4 @@
-#!excsv version=0.3 layout=pack section-size=10 table-count=1 single-table=t
+#!excsv version=0.4 layout=pack section-size=10 table-count=1 single-table=t
 #table name=t dir=t/ columns=1 original-size=0
 #fk from=t.id to=t.id
 #column name=id type=int

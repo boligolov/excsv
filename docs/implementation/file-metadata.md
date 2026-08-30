@@ -30,7 +30,7 @@ Each `#@` key is unique per file (last-wins on duplicates).
 Example:
 
 ```
-#!excsv version=0.3 delim=comma header=1
+#!excsv version=0.4 delim=comma header=1
 #@author: alex@example.com
 #@comment: demo dataset for onboarding docs
 #@source: analytics_db.page_views

@@ -20,21 +20,21 @@ Every piece is optional. Add a header, then types, then stats, then SQL — each
 - **File metadata** (`#@`) — source, author, license, tags, and `#@grain` ("one row per order") that says what a single row *is*.
 - **SQL companions** (`#$`) — DDL to recreate the schema and DQL queries for provenance, tagged by dialect (MySQL / Postgres / ClickHouse / …).
 - **A checksum** — an integrity fingerprint of the data.
-- **CSVW** — W3C tabular metadata carried inline, if you already use it.
 
-## Three shapes, one vocabulary
+## Four shapes, one vocabulary
 
-The same header and `#column` / `#%` / `#$` / `#@` vocabulary works everywhere; the shapes differ only in **how the data is packaged**. See [file structure](file-structure.md) and [pack](pack.md).
+The same header and `#column` / `#%` / `#$` / `#@` vocabulary works everywhere; the shapes differ only in **how the data is packaged**. See [file structure](file-structure.md), [pack](pack.md), and [JSON](json.md).
 
 - **Inline** — metadata at the top, rows below, one file that's still valid CSV.
 - **Sidecar** — a metadata-only `.excsv`/`.extsv` next to an untouched `data.csv`, bound with `reference=`. Nothing is copied; the original never changes. This is how you annotate data you're not allowed to touch.
 - **Pack** — `.excsv.pack.zip`: a columnar, multi-table archive — read a few columns out of many without unpacking the rest.
+- **JSON** — `.excsv.json`: the same document as a JSON object, for when JSON is the natural envelope.
 
 You can also **zip** an inline or sidecar file (`.excsv.zip`) and its schema is mirrored into the archive comment, so tools preview the metadata without unzipping.
 
-## Also available as JSON
+## The JSON form
 
-When you're already working in JSON — a web app, an API response, feeding a table to an AI model — the very same content (columns, types, aggregates, SQL, provenance) has a JSON form too. It's an exact mirror of the CSV form, so a file can go CSV → JSON → CSV without losing anything. You don't need it to use ExCSV; it's there for when JSON is simply more convenient. Details (and the schema) live in [implementation/json-profile.md](implementation/json-profile.md).
+When you're already working in JSON — a web app, an API response, feeding a table to an AI model — the very same content (columns, types, aggregates, SQL, provenance) has a JSON file format of its own: `.excsv.json`. It's an exact mirror of the CSV form, so a file can go CSV → JSON → CSV without losing anything, and there's a JSON Schema you can validate against or point a model at. You don't need it to use ExCSV; it's there for when JSON is simply more convenient. See [JSON form](json.md).
 
 ---
 

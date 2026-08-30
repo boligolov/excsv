@@ -5,7 +5,7 @@
 If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, and **MUST** contain at least the `version` field.
 
 ```
-#!excsv version=0.3 delim=comma header=1
+#!excsv version=0.4 delim=comma header=1
 ```
 
 ## Key-Value Pairs
@@ -26,16 +26,14 @@ If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, a
 
 | Field           | Requirement                | Description                                                                                                                          |
 | --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `version`       | **MUST**                   | Format version (`0.3`)                                                                                                               |
+| `version`       | **MUST**                   | Format version (`0.4`)                                                                                                               |
 | `delim`         | SHOULD                     | Delimiter — a known name **or** a literal character/sequence (see below). Default: `comma`                                            |
 | `quote`         | SHOULD                     | Quote — a known name **or** a literal character (see below). Default: `none`                                                          |
 | `header`        | SHOULD                     | `1` if the first data row is a header row, `0` otherwise. Default: `1`                                                                |
 | `null`          | MAY                        | Additional non-empty string representing null. Empty fields are **always** null by default. Use only when a non-empty value also means null (e.g. `null=NA`, `null=\N`). `null=""` is redundant. |
 | `rows`          | MAY                        | Total number of data rows (excluding header)                                                                                         |
 | `checksum`      | MAY                        | Checksum of the data section (see [Checksum](checksum.md))                                                                          |
-| `csvw`          | MAY                        | CSVW embedding mode (see [CSVW](csvw.md))                                                                         |
 | `encoding`      | MAY                        | Character encoding (default `UTF-8`)                                                                                                 |
-| `schema`        | MAY                        | Schema precedence: `excsv` (default) or `csvw`                                                                                       |
 | `sql-dialect`   | MAY                        | Default SQL dialect for unqualified `#$` lines (see [SQL](sql.md))                                                  |
 | `original-size` | **MUST** in row-ZIP and pack manifest | Meaning depends on container: row-ZIP inner file = uncompressed bytes of the entire inner `.excsv`/`.extsv`; pack `_manifest.excsv` = sum of `#table original-size=` (column payload only). Omit on plain files. See [ZIP](zip.md) and [Pack](pack.md). |
 | `reference`     | **MUST** if sidecar        | Relative path to the CSV/TSV data file. See [File structure](file-structure.md#sidecar-detached-metadata). **MUST NOT** be set on inline documents. |

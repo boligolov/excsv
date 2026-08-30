@@ -1,4 +1,4 @@
-#!excsv version=0.3 header=1
+#!excsv version=0.4 header=1
 #column name=id type=int
 #column name=email type=string
 id,mail

@@ -219,7 +219,7 @@ def make_valid() -> None:
         [("012_comment_not_utf8.excsv", canonical.encode("utf-8"), zipfile.ZIP_DEFLATED)],
         b"\xff\xfe\xfd",
     )
-    disagree = to_comment_full(canonical).replace("version=0.3", "version=0.2", 1)
+    disagree = to_comment_full(canonical).replace("version=0.4", "version=0.2", 1)
     write_zip(
         ZIP_VALID / "013_comment_header_disagree.excsv.zip",
         [("013_comment_header_disagree.excsv", canonical.encode("utf-8"), zipfile.ZIP_DEFLATED)],

@@ -1,4 +1,4 @@
-﻿#!excsv version=0.3 delim=semicolon
+﻿#!excsv version=0.4 delim=semicolon
 id;name
 1;Alice
 2;Bob

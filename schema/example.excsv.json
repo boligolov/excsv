@@ -1,5 +1,5 @@
 {
-  "excsv": "0.3",
+  "excsv": "0.4",
   "csv": { "delim": "comma", "quote": "double", "header": true, "encoding": "UTF-8" },
   "meta": {
     "author": "author@example.com",
@@ -13,14 +13,14 @@
     "tags": ["sales", "Q1", "2026", "demo"]
   },
   "columns": [
-    { "name": "id", "type": "int", "unique": true, "role": "id", "title": "Order ID", "description": "Auto-incremented order identifier" },
-    { "name": "customer", "type": "string", "required": true, "role": "dimension", "len_min": 1, "len_max": 100, "title": "Customer Name" },
-    { "name": "email", "type": "string", "required": true, "len_max": 254, "pattern": "^[^@]+@[^@]+$" },
-    { "name": "amount", "type": "decimal", "format": "0.00", "unit": "USD", "role": "measure", "agg": "sum", "min": "0", "max": "999999.99", "default": "0.00", "order": "desc" },
-    { "name": "status", "type": "string", "role": "dimension", "enum": ["pending", "completed", "cancelled"], "default": "pending" },
-    { "name": "tags", "type": "string", "separator": "|", "title": "Order Tags" },
-    { "name": "created_at", "type": "datetime", "role": "time", "title": "Created At" },
-    { "name": "note", "type": "string", "x-ui-widget": "textarea" }
+    { "index": 0, "name": "id", "type": "int", "unique": true, "role": "id", "title": "Order ID", "description": "Auto-incremented order identifier" },
+    { "index": 1, "name": "customer", "type": "string", "required": true, "role": "dimension", "len_min": 1, "len_max": 100, "title": "Customer Name" },
+    { "index": 2, "name": "email", "type": "string", "required": true, "len_max": 254, "pattern": "^[^@]+@[^@]+$" },
+    { "index": 3, "name": "amount", "type": "decimal", "format": "0.00", "unit": "USD", "role": "measure", "agg": "sum", "min": "0", "max": "999999.99", "default": "0.00", "order": "desc" },
+    { "index": 4, "name": "status", "type": "string", "role": "dimension", "enum": ["pending", "completed", "cancelled"], "default": "pending" },
+    { "index": 5, "name": "tags", "type": "string", "separator": "|", "title": "Order Tags" },
+    { "index": 6, "name": "created_at", "type": "datetime", "role": "time", "title": "Created At" },
+    { "index": 7, "name": "note", "type": "string", "x-ui-widget": "textarea" }
   ],
   "sql": {
     "ddl": [

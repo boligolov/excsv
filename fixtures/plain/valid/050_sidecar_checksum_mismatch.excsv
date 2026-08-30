@@ -1,2 +1,2 @@
-#!excsv version=0.3 delim=comma header=1 rows=2 reference=050_sidecar_checksum_mismatch.csv checksum=sha256:0000000000000000000000000000000000000000000000000000000000000000
+#!excsv version=0.4 delim=comma header=1 rows=2 reference=050_sidecar_checksum_mismatch.csv checksum=sha256:0000000000000000000000000000000000000000000000000000000000000000
 #column name=id type=int

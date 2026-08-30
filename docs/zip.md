@@ -12,7 +12,7 @@ sales.excsv.zip
 The inner file's `#!excsv` header carries `original-size=` — the uncompressed byte size of that whole file. It matches the size the ZIP directory records for the entry, so you know how big the extract is before you unzip.
 
 ```
-#!excsv version=0.3 delim=comma header=1 rows=10000 original-size=204800
+#!excsv version=0.4 delim=comma header=1 rows=10000 original-size=204800
 ```
 
 A mismatch means the archive and the header disagree — the file was rewritten or the archive was rebuilt without updating the header.

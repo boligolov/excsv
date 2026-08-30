@@ -1,2 +1,2 @@
-#!excsv version=0.3 delim=comma header=1 reference=../outside.csv
+#!excsv version=0.4 delim=comma header=1 reference=../outside.csv
 #column name=id type=int

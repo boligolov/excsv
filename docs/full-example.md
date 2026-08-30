@@ -1,7 +1,7 @@
 ﻿# Full Example
 
 ```
-#!excsv version=0.3 delim=comma quote=double header=1 encoding=UTF-8 rows=4 checksum=sha256:a1b2c3d4e5f6 sql-dialect=mysql
+#!excsv version=0.4 delim=comma quote=double header=1 encoding=UTF-8 rows=4 checksum=sha256:a1b2c3d4e5f6 sql-dialect=mysql
 #@author: author@example.com
 #@source: sales_db.orders
 #@comment: Quarterly sales export with all column features demonstrated

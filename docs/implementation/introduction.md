@@ -19,18 +19,19 @@ It extends CSV with:
 - Optional aggregation metadata (`#%` — sum/avg/count/… as a trust anchor)
 - Optional file metadata and provenance (`#@` — including `#@grain`, `#@source`)
 - Optional SQL companions (`#$` — DDL/DQL with dialect tagging)
-- Optional embedded [CSVW](https://www.w3.org/TR/tabular-data-primer/) compatibility
 - Optional integrity checksum (`checksum=`, advisory)
 - Optional ZIP container with the summary carried in the archive comment
 - Optional **pack** container: multi-table columnar `.excsv.pack.zip` — see [pack.md](pack.md)
+- An equivalent **JSON form**: `.excsv.json` — see [json.md](json.md)
 
-## Three shapes, one format
+## Four shapes, one format
 
-The same header and `#column` / `#%` / `#$` / `#@` vocabulary applies to every form; the shapes differ only in **how the data is packaged**. See [file structure](file-structure.md) and [pack](pack.md) for the normative details.
+The same header and `#column` / `#%` / `#$` / `#@` vocabulary applies to every form; the shapes differ only in **how the data is packaged**. See [file structure](file-structure.md), [pack](pack.md), and [JSON form](json.md) for the normative details.
 
 - **Inline** — metadata at the top of the file, above the rows; one artifact that is still a valid CSV.
 - **Sidecar** — a header-and-meta-only `.excsv`/`.extsv` next to an untouched `data.csv`/`.tsv`, bound with `reference=`; no data rows are copied.
 - **Pack** — `.excsv.pack.zip`: a manifest plus one directory per table, each column stored as its own `.col` entry. Columnar and multi-table.
+- **JSON** — `.excsv.json` (`application/excsv+json`): the same document serialized as a JSON object against [`schema/excsv.schema.json`](../../schema/excsv.schema.json). The text form remains canonical; the two are a bijection.
 
 The **ZIP container** (`.excsv.zip`, `.extsv.zip`) Deflate-wraps a single **inline** file. The inner `#!excsv` header **MUST** carry `original-size=` (uncompressed bytes of that file). The schema and stats are mirrored into the ZIP comment (max 65535 bytes); if the comment does not fit, it **MUST** end with `#@comment-truncated: 1`. Sidecar pairs are **not** zipped as a unit. Pack is a separate columnar ZIP. See [zip.md](zip.md).
 

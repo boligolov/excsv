@@ -84,7 +84,7 @@ error_kinds:
     warnings: []
     profile: stub
     header:
-      version: "0.3"
+      version: "0.4"
     rows: 0
 
 - id: plain/valid/002_no_header_defaults.excsv
@@ -176,22 +176,6 @@ error_kinds:
     warnings: []
     header:
       sql-dialect: postgres-17
-
-- id: plain/valid/014_csvw_inline_json.excsv
-  exercises: [A4]
-  expect:
-    parse: ok
-    warnings: []
-    header:
-      csvw: inline-json
-
-- id: plain/valid/015_csvw_base64url.excsv
-  exercises: [A4]
-  expect:
-    parse: ok
-    warnings: []
-    header:
-      csvw: base64url
 
 - id: plain/valid/016_unicode_data.excsv
   exercises: [A4, G6]
@@ -313,15 +297,6 @@ error_kinds:
       ddl_count: 6
       dql_count: 1
 
-- id: plain/valid/033_csvw_schema_precedence.excsv
-  exercises: [A4, D1]
-  expect:
-    parse: ok
-    warnings: []
-    header:
-      schema: excsv
-    columns: 2
-
 - id: plain/valid/034_first_field_hash_quoted.excsv
   exercises: [G6]
   expect:
@@ -352,7 +327,7 @@ error_kinds:
     warnings: []
     profile: sidecar
     header:
-      version: "0.3"
+      version: "0.4"
       reference: 037_sidecar_csv_sibling.csv
     rows: 2
     columns: 3
@@ -738,7 +713,7 @@ error_kinds:
     parse: ok
     warnings: []
     comment:
-      starts_with: "#!excsv version=0.3"
+      starts_with: "#!excsv version=0.4"
 
 - id: zip/valid/005_comment_truncated.excsv.zip
   exercises: [J3, J5]
@@ -861,7 +836,7 @@ error_kinds:
     warnings: []
     header:
       layout: pack
-      version: "0.3"
+      version: "0.4"
       single-table: contacts
     tables: 1
     table:
@@ -877,7 +852,7 @@ error_kinds:
     warnings: []
     header:
       layout: pack
-      version: "0.3"
+      version: "0.4"
     tables: 0
 
 - id: pack/valid/003_two_tables_no_fk.excsv.pack.zip
@@ -887,7 +862,7 @@ error_kinds:
     warnings: []
     header:
       layout: pack
-      version: "0.3"
+      version: "0.4"
       table-count: 2
     tables: 2
 

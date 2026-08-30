@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://excsv.org/schema/excsv-0.3.schema.json",
-  "title": "ExCSV JSON profile",
-  "description": "A JSON serialization of an ExCSV document. Carries the same vocabulary as the text form (#!excsv header, #@ metadata, #column schema, #% aggregates, #$ SQL) so the two round-trip losslessly. The CSV text form stays canonical; this profile is for JSON-native contexts (APIs, config, LLM structured output).",
+  "$id": "https://excsv.org/schema/excsv-0.4.schema.json",
+  "title": "ExCSV JSON form (.excsv.json)",
+  "description": "The JSON form of an ExCSV document, carried in a .excsv.json file (media type application/excsv+json). Carries the same vocabulary as the text form (#!excsv header, #@ metadata, #column schema, #% aggregates, #$ SQL) so the two round-trip losslessly. The CSV text form stays canonical; the JSON form is for JSON-native contexts (APIs, config, LLM structured output).",
   "type": "object",
   "required": ["excsv"],
   "additionalProperties": false,
@@ -10,7 +10,7 @@
     "excsv": {
       "description": "Format version. Mirrors #!excsv version=.",
       "type": "string",
-      "examples": ["0.3"]
+      "examples": ["0.4"]
     },
     "layout": {
       "description": "Document shape. inline/sidecar are single-table (use root-level columns/data/reference); pack is multi-table (use tables[]).",
@@ -55,7 +55,7 @@
       "additionalProperties": true
     },
     "columns": {
-      "description": "Column schema (#column lines). Array order is the physical column order; a column's position is its index unless `index` is given explicitly.",
+      "description": "Column schema (#column lines). Each entry MUST include `index`: the zero-based position of that column's value in every `data` row array (`data[row][index]`). The array SHOULD be sorted by `index`; each entry's array position SHOULD equal its `index`.",
       "type": "array",
       "items": { "$ref": "#/$defs/column" }
     },
@@ -90,16 +90,6 @@
         }
       }
     },
-    "csvw": {
-      "description": "Optional embedded W3C CSVW metadata (arbitrary JSON object).",
-      "type": "object"
-    },
-    "schema": {
-      "description": "Which schema wins when both `columns` and `csvw` are present.",
-      "type": "string",
-      "enum": ["excsv", "csvw"],
-      "default": "excsv"
-    },
     "checksum": {
       "description": "Integrity fingerprint of the data, '<algorithm>:<hex-digest>'. Advisory.",
       "type": "string",
@@ -115,7 +105,7 @@
       "type": "string"
     },
     "data": {
-      "description": "Data rows as an array of arrays (one inner array per row, one cell per column, in `columns` order). No header row is embedded — names live in `columns`. Absent in sidecar or header-only stubs.",
+      "description": "Data rows as an array of arrays (one inner array per row). No header row is embedded — names live in `columns`. Each row's cell at position `i` is the value for the column with `index` = `i`. Absent in sidecar or header-only stubs.",
       "type": "array",
       "items": {
         "type": "array",
@@ -163,11 +153,12 @@
     },
     "column": {
       "type": "object",
+      "required": ["index"],
       "properties": {
         "name": { "type": "string", "description": "Column identifier. No spaces." },
         "title": { "type": "string", "description": "Human-readable display name." },
         "description": { "type": "string" },
-        "index": { "type": "integer", "minimum": 0, "description": "Zero-based position. Defaults to the array index." },
+        "index": { "type": "integer", "minimum": 0, "description": "Zero-based position of this column's value in each `data` row array (`data[row][index]`)." },
         "type": {
           "type": "string",
           "enum": ["string", "int", "long", "float", "double", "decimal", "boolean", "date", "time", "datetime", "uuid", "binary"]

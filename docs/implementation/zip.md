@@ -55,7 +55,6 @@ Writers **MUST** include lines in this priority order, stopping when the next li
 6. `#@comment`, `#@tags`.
 7. Remaining `#@` entries.
 8. All `#$dql` and `#$dql-<dialect>` lines.
-9. `#csvw` payload.
 
 ### Truncation Marker
 

@@ -57,7 +57,7 @@ The manifest is the source of truth. Test runners walk it, not the directory.
     parse: ok
     warnings: []
     header:
-      version: "0.3"
+      version: "0.4"
     rows: 0
     columns: 0
 
@@ -82,7 +82,7 @@ The manifest is the source of truth. Test runners walk it, not the directory.
   expect:
     parse: ok
     comment:
-      starts_with: "#!excsv version=0.3"
+      starts_with: "#!excsv version=0.4"
       ends_with: "#@comment-truncated: 1"
 ```
 
@@ -115,7 +115,7 @@ What each category needs, organized by feature domain from `01-features.md`. Cou
 
 ### Plain — valid (001–066)
 
-001–039: dialect/header/meta/column/agg/sql/csvw/checksum/sidecar happy path.
+001–039: dialect/header/meta/column/agg/sql/checksum/sidecar happy path. Slots 014, 015, and 033 held CSVW cases and were retired in v0.4; the numbers are not reused.
 
 Warn-only cases live here (not under `invalid/`):
 

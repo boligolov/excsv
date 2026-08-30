@@ -8,7 +8,7 @@ Still-live reference docs in `plan/` (not backlog):
 
 When an item lands, tick it here and update the spec/fixtures/reference docs.
 
-Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ deferred (post-v0.3)
+Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ deferred (post-v0.4)
 
 **Working rule:** land decisions in the **spec** (`docs/implementation/`) + this file. Fixture corpus is in `fixtures/` and tracks the implementation spec. Further fixture edits only when the spec changes.
 
@@ -18,7 +18,7 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ defe
 
 | Area | State |
 | --- | --- |
-| Spec (`docs/implementation/`) | v0.3; remaining: C10, L1, computed columns (§5), `#index` (§6) |
+| Spec (`docs/implementation/`) | v0.4; remaining: C10, L1, computed columns (§5), `#index` (§6) |
 | Website | live |
 | Feature catalog | draft; version-gating unfinished |
 | Fixtures | plain valid 001–066 / invalid FAIL-only; zip/pack via generators |
@@ -53,11 +53,11 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ defe
 
 ## 4. Implementation
 
-Go and Python implement the **whole v0.3 spec** in one shot: plain (inline + sidecar), row-ZIP, pack (unsectioned, multi-table, sectioned). No format waves.
+Go and Python implement the **whole v0.4 spec** in one shot: plain (inline + sidecar), row-ZIP, pack (unsectioned, multi-table, sectioned). No format waves.
 
 Cookbook follows the CLIs. Parity is the shared `fixtures/` tree.
 
-`01-features.md` version-gating (`[v0.3]`/`[later]`) finishes once the command tree is drafted.
+`01-features.md` version-gating (`[v0.4]`/`[later]`) finishes once the command tree is drafted.
 
 ---
 
@@ -76,7 +76,7 @@ Not yet in `docs/implementation/` (`formula=` missing from `columns.md` / `error
 #column name=total     type=decimal formula="price * quantity" materialized=1    # values ALSO cached in the data
 ```
 
-> **DECISION D-1 (owner, resolved):** `formula=` on `#column` marks a computed column; no separate `#compute` kind. Fold into v0.3.
+> **DECISION D-1 (owner, resolved):** `formula=` on `#column` marks a computed column; no separate `#compute` kind. Fold into v0.4.
 
 `formula=` is the definition and is never dropped. `formula-dialect=` is optional. A computed column MUST NOT carry `index=`.
 

@@ -1,0 +1,654 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="ExCSV Converter"
+  description="Convert between ExCSV formats — plain, sidecar, ZIP, pack, and JSON — entirely in your browser."
+  wide
+>
+  <article class="converter">
+    <header class="converter-head">
+      <h1>Converter</h1>
+      <p class="lede">
+        Convert plain CSV/TSV or any ExCSV shape — plain, sidecar, ZIP, pack, JSON.
+        Everything runs in your browser; nothing is uploaded.
+      </p>
+    </header>
+
+    <div class="format-row">
+      <div class="format-field">
+        <label for="input-format">Input</label>
+        <select id="input-format">
+          <option value="auto">Auto-detect</option>
+          <option value="csv">CSV/TSV</option>
+          <option value="plain">Plain (.excsv)</option>
+          <option value="sidecar">Sidecar (.excsv + .csv)</option>
+          <option value="zip">ZIP (.excsv.zip)</option>
+          <option value="pack">Pack (.excsv.pack.zip)</option>
+          <option value="json">JSON (.excsv.json)</option>
+        </select>
+      </div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="format-field">
+        <label for="output-format">Output</label>
+        <select id="output-format">
+          <option value="plain">Plain (.excsv)</option>
+          <option value="json" selected>JSON (.excsv.json)</option>
+          <option value="sidecar">Sidecar (.excsv + .csv)</option>
+          <option value="zip">ZIP (.excsv.zip)</option>
+          <option value="pack">Pack (.excsv.pack.zip)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-actions">
+        <button type="button" class="btn-secondary" id="btn-sample-csv">CSV sample</button>
+        <button type="button" class="btn-secondary" id="btn-sample-text">ExCSV sample</button>
+        <button type="button" class="btn-secondary" id="btn-sample-json">JSON sample</button>
+        <label class="file-btn">
+          Open file(s)
+          <input
+            type="file"
+            id="file-in"
+            multiple
+            accept=".excsv,.extsv,.csv,.tsv,.json,.zip,.excsv.json,application/json,application/zip"
+          />
+        </label>
+        <button type="button" class="btn-primary" id="btn-convert">Convert</button>
+      </div>
+    </div>
+
+    <div class="panes">
+      <section class="pane">
+        <div class="pane-head">
+          <label for="input">Input</label>
+          <button type="button" class="linkish" id="btn-clear-in">Clear</button>
+        </div>
+        <div class="dropzone" id="drop-in">
+          <textarea
+            id="input"
+            spellcheck="false"
+            placeholder="#!excsv version=0.4&#10;… or paste CSV/TSV/JSON. For ZIP/pack, use Open file."
+          ></textarea>
+        </div>
+        <p class="pane-hint" id="input-hint">Paste CSV/TSV, ExCSV text, or JSON — or open a file. Sidecar: select the .excsv and .csv together.</p>
+        <p class="file-loaded" id="file-loaded" hidden></p>
+      </section>
+
+      <section class="pane">
+        <div class="pane-head">
+          <label for="output">Output</label>
+          <div class="pane-actions">
+            <button type="button" class="linkish" id="btn-copy" disabled>Copy</button>
+          </div>
+        </div>
+        <textarea id="output" readonly spellcheck="false" placeholder="Converted output…"></textarea>
+        <div class="output-download" id="output-download" hidden>
+          <button type="button" class="btn-primary" id="btn-download">Download</button>
+          <span class="download-name" id="download-name"></span>
+          <div class="sidecar-files" id="sidecar-files" hidden></div>
+        </div>
+        <p class="pane-hint" id="output-hint">Preview appears above. Download the file when conversion finishes.</p>
+      </section>
+    </div>
+
+    <div class="status" id="status" aria-live="polite"></div>
+
+    <section class="notes">
+      <h2>Formats</h2>
+      <ul>
+        <li><strong>CSV/TSV</strong> — plain spreadsheet; header row becomes <code>#column</code> schema, any ExCSV output format.</li>
+        <li><strong>Plain</strong> — inline <code>.excsv</code> with metadata and rows.</li>
+        <li><strong>Sidecar</strong> — metadata-only <code>.excsv</code> + sibling <code>.csv</code> (downloaded as a ZIP pair).</li>
+        <li><strong>ZIP</strong> — Deflate-wrapped plain file with schema in the archive comment.</li>
+        <li><strong>Pack</strong> — columnar multi-table <code>.excsv.pack.zip</code> (single-table supported).</li>
+        <li><strong>JSON</strong> — <code>.excsv.json</code> logical view; pack includes full <code>tables[]</code> data.</li>
+      </ul>
+    </section>
+  </article>
+</Base>
+
+<script>
+  import {
+    convertFormat,
+    detectFormatAsync,
+    formatLabel,
+    SAMPLE_JSON,
+    SAMPLE_CSV,
+    SAMPLE_TEXT,
+    type ExcsvFormat,
+    type ExcsvInputFormat,
+    type ConvertInput,
+    type ConvertOutput,
+  } from '../lib/excsv';
+
+  const inputEl = document.getElementById('input') as HTMLTextAreaElement;
+  const outputEl = document.getElementById('output') as HTMLTextAreaElement;
+  const statusEl = document.getElementById('status') as HTMLDivElement;
+  const fileLoadedEl = document.getElementById('file-loaded') as HTMLParagraphElement;
+  const inputFormatEl = document.getElementById('input-format') as HTMLSelectElement;
+  const outputFormatEl = document.getElementById('output-format') as HTMLSelectElement;
+  const fileIn = document.getElementById('file-in') as HTMLInputElement;
+  const outputDownloadEl = document.getElementById('output-download') as HTMLDivElement;
+  const downloadNameEl = document.getElementById('download-name') as HTMLSpanElement;
+  const sidecarFilesEl = document.getElementById('sidecar-files') as HTMLDivElement;
+  const btnDownload = document.getElementById('btn-download') as HTMLButtonElement;
+
+  let loadedBytes: Uint8Array | undefined;
+  let loadedFilename: string | undefined;
+  let sidecarCsv: string | undefined;
+  let lastOutput: ConvertOutput | undefined;
+
+  function showStatus(kind: 'ok' | 'err' | 'warn', message: string) {
+    statusEl.className = `status ${kind}`;
+    statusEl.textContent = message;
+  }
+
+  function hideDownload() {
+    outputDownloadEl.hidden = true;
+    sidecarFilesEl.hidden = true;
+    sidecarFilesEl.innerHTML = '';
+    btnDownload.disabled = true;
+    downloadNameEl.textContent = '';
+  }
+
+  function downloadBlob(blob: Blob, name: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadOutput(singleName?: string) {
+    if (!lastOutput) return;
+    const name = singleName ?? lastOutput.downloadName ?? 'converted';
+
+    if (lastOutput.bytes && !singleName) {
+      downloadBlob(new Blob([lastOutput.bytes], { type: 'application/zip' }), name);
+      return;
+    }
+
+    if (lastOutput.text) {
+      const mime = lastOutput.format === 'json' ? 'application/json' : 'text/plain';
+      downloadBlob(new Blob([lastOutput.text], { type: `${mime};charset=utf-8` }), name);
+    }
+  }
+
+  function updateDownloadUi() {
+    if (!lastOutput?.downloadName) {
+      hideDownload();
+      return;
+    }
+
+    outputDownloadEl.hidden = false;
+    btnDownload.disabled = false;
+    downloadNameEl.textContent = lastOutput.downloadName;
+    btnDownload.textContent =
+      lastOutput.format === 'sidecar' ? `Download ${lastOutput.downloadName}` : `Download ${lastOutput.downloadName}`;
+
+    sidecarFilesEl.innerHTML = '';
+    if (lastOutput.format === 'sidecar' && lastOutput.files?.length) {
+      sidecarFilesEl.hidden = false;
+      for (const file of lastOutput.files) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'linkish sidecar-dl';
+        btn.textContent = file.name;
+        btn.addEventListener('click', () => {
+          const content = typeof file.content === 'string' ? file.content : new TextDecoder().decode(file.content);
+          const ext = file.name.endsWith('.csv') ? 'text/csv' : 'text/plain';
+          downloadBlob(new Blob([content], { type: `${ext};charset=utf-8` }), file.name);
+        });
+        sidecarFilesEl.appendChild(btn);
+      }
+    } else {
+      sidecarFilesEl.hidden = true;
+    }
+  }
+
+  function clearBinaryState() {
+    loadedBytes = undefined;
+    loadedFilename = undefined;
+    sidecarCsv = undefined;
+    fileLoadedEl.hidden = true;
+    fileLoadedEl.textContent = '';
+  }
+
+  function buildInput(): ConvertInput {
+    const inputFormat = inputFormatEl.value;
+    const payload: ConvertInput = {
+      format: inputFormat === 'auto' ? 'auto' : (inputFormat as ExcsvInputFormat),
+      filename: loadedFilename,
+    };
+    if (loadedBytes) payload.bytes = loadedBytes;
+    else payload.text = inputEl.value;
+    if (sidecarCsv) payload.sidecarData = sidecarCsv;
+    return payload;
+  }
+
+  async function runConvert() {
+    const target = outputFormatEl.value as ExcsvFormat;
+    const hasText = inputEl.value.trim().length > 0;
+    const hasBinary = loadedBytes !== undefined;
+
+    if (!hasText && !hasBinary) {
+      showStatus('err', 'Paste content or open a file.');
+      return;
+    }
+
+    try {
+      const input = buildInput();
+      const result = await convertFormat(input, target);
+      lastOutput = result;
+
+      const isTextOut = result.format === 'plain' || result.format === 'json';
+      outputEl.value = isTextOut ? (result.text ?? '') : '';
+      outputEl.placeholder = isTextOut
+        ? 'Converted output…'
+        : `Binary output (${formatLabel(result.format)}). Use Download.`;
+
+      document.getElementById('btn-copy')!.toggleAttribute('disabled', !isTextOut || !result.text);
+      updateDownloadUi();
+
+      const detected = await detectFormatAsync(input);
+      let msg = `${formatLabel(detected)} → ${formatLabel(result.format)}`;
+      if (result.warnings.length) {
+        msg += ` · ${result.warnings.map((w) => w.message).join('; ')}`;
+        showStatus('warn', msg);
+      } else {
+        showStatus('ok', msg);
+      }
+    } catch (err) {
+      lastOutput = undefined;
+      outputEl.value = '';
+      hideDownload();
+      document.getElementById('btn-copy')!.toggleAttribute('disabled', true);
+      showStatus('err', err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function loadFiles(files: FileList | File[]) {
+    const list = [...files];
+    if (!list.length) return;
+
+    clearBinaryState();
+    inputEl.value = '';
+
+    const excsvFile = list.find((f) => /\.(excsv|extsv)$/i.test(f.name));
+    const jsonFile = list.find((f) => f.name.endsWith('.json') || f.name.endsWith('.excsv.json'));
+    const zipFile = list.find((f) => /\.zip$/i.test(f.name));
+    const csvFile = list.find((f) => /\.(csv|tsv)$/i.test(f.name) && f !== excsvFile);
+
+    const primary = zipFile ?? jsonFile ?? excsvFile ?? csvFile ?? list[0];
+    loadedFilename = primary.name;
+
+    if (/\.zip$/i.test(primary.name)) {
+      loadedBytes = new Uint8Array(await primary.arrayBuffer());
+      fileLoadedEl.hidden = false;
+      fileLoadedEl.textContent = `Loaded: ${primary.name} (${loadedBytes.length.toLocaleString()} bytes)`;
+    } else if (primary.name.endsWith('.json') || primary.name.endsWith('.excsv.json')) {
+      inputEl.value = await primary.text();
+      fileLoadedEl.hidden = false;
+      fileLoadedEl.textContent = `Loaded: ${primary.name}`;
+    } else {
+      inputEl.value = await primary.text();
+      fileLoadedEl.hidden = false;
+      fileLoadedEl.textContent = `Loaded: ${primary.name}`;
+      if (/\.(csv|tsv)$/i.test(primary.name) && !excsvFile) {
+        inputFormatEl.value = 'csv';
+      }
+    }
+
+    if (excsvFile && csvFile) {
+      sidecarCsv = await csvFile.text();
+      fileLoadedEl.textContent += ` + ${csvFile.name} (data)`;
+    } else if (excsvFile && !csvFile) {
+      const { parseExcsvText } = await import('../lib/excsv/parse');
+      const { doc } = parseExcsvText(inputEl.value);
+      if (doc.reference) {
+        const refName = doc.reference.split(/[/\\]/).pop() ?? '';
+        const match = list.find((f) => f.name === refName || f.name === doc.reference);
+        if (match) {
+          sidecarCsv = await match.text();
+          fileLoadedEl.textContent += ` + ${match.name} (data)`;
+        }
+      }
+    }
+
+    await runConvert();
+  }
+
+  document.getElementById('btn-convert')!.addEventListener('click', () => void runConvert());
+  inputFormatEl.addEventListener('change', () => void runConvert());
+  outputFormatEl.addEventListener('change', () => void runConvert());
+
+  inputEl.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      clearBinaryState();
+      void runConvert();
+    }
+  });
+
+  inputEl.addEventListener('input', () => {
+    if (loadedBytes) clearBinaryState();
+  });
+
+  document.getElementById('btn-clear-in')!.addEventListener('click', () => {
+    inputEl.value = '';
+    outputEl.value = '';
+    clearBinaryState();
+    lastOutput = undefined;
+    hideDownload();
+    showStatus('ok', '');
+  });
+
+  document.getElementById('btn-sample-csv')!.addEventListener('click', () => {
+    clearBinaryState();
+    inputEl.value = SAMPLE_CSV;
+    inputFormatEl.value = 'csv';
+    outputFormatEl.value = 'plain';
+    void runConvert();
+  });
+
+  document.getElementById('btn-sample-text')!.addEventListener('click', () => {
+    clearBinaryState();
+    inputEl.value = SAMPLE_TEXT;
+    inputFormatEl.value = 'auto';
+    outputFormatEl.value = 'json';
+    void runConvert();
+  });
+
+  document.getElementById('btn-sample-json')!.addEventListener('click', () => {
+    clearBinaryState();
+    inputEl.value = SAMPLE_JSON;
+    inputFormatEl.value = 'auto';
+    outputFormatEl.value = 'plain';
+    void runConvert();
+  });
+
+  document.getElementById('btn-copy')!.addEventListener('click', async () => {
+    if (!outputEl.value) return;
+    try {
+      await navigator.clipboard.writeText(outputEl.value);
+      showStatus('ok', 'Copied to clipboard.');
+    } catch {
+      showStatus('err', 'Clipboard access denied.');
+    }
+  });
+
+  btnDownload.addEventListener('click', () => downloadOutput());
+
+  fileIn.addEventListener('change', () => {
+    if (fileIn.files?.length) void loadFiles(fileIn.files);
+    fileIn.value = '';
+  });
+
+  const dropIn = document.getElementById('drop-in')!;
+  dropIn.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropIn.classList.add('dragover');
+  });
+  dropIn.addEventListener('dragleave', () => dropIn.classList.remove('dragover'));
+  dropIn.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropIn.classList.remove('dragover');
+    const files = e.dataTransfer?.files;
+    if (files?.length) void loadFiles(files);
+  });
+</script>
+
+<style>
+  .converter h1 {
+    margin-top: 0;
+    letter-spacing: -0.03em;
+  }
+
+  .lede {
+    color: var(--color-muted);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    max-width: 46rem;
+  }
+
+  .format-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1rem;
+    margin: 1.5rem 0 1rem;
+  }
+
+  .format-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .format-field label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+  }
+
+  .format-field select {
+    font: inherit;
+    font-size: 0.92rem;
+    padding: 0.45em 0.75em;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    min-width: 12rem;
+  }
+
+  .arrow {
+    font-size: 1.25rem;
+    color: var(--color-muted);
+    padding-bottom: 0.45rem;
+  }
+
+  .toolbar {
+    margin-bottom: 1rem;
+  }
+
+  .toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.45em 0.95em;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-primary {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+  }
+
+  :global(html[data-theme='dark']) .btn-primary {
+    color: #111;
+  }
+
+  .btn-secondary {
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  .file-btn {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    cursor: pointer;
+    padding: 0.45em 0.95em;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+  }
+
+  .file-btn input {
+    display: none;
+  }
+
+  .panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .pane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.45rem;
+  }
+
+  .pane-head > label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+  }
+
+  .pane-actions {
+    display: flex;
+    gap: 0.65rem;
+  }
+
+  .linkish {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--color-accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .linkish:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 20rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-code-bg);
+    color: var(--color-text);
+    resize: vertical;
+  }
+
+  textarea:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+
+  .dropzone.dragover textarea {
+    border-color: var(--color-accent);
+  }
+
+  .pane-hint,
+  .file-loaded {
+    margin: 0.45rem 0 0;
+    font-size: 0.82rem;
+    color: var(--color-muted);
+  }
+
+  .file-loaded {
+    color: var(--color-accent);
+  }
+
+  .output-download {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem 1rem;
+    margin-top: 0.75rem;
+  }
+
+  .download-name {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--color-muted);
+  }
+
+  .sidecar-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.85rem;
+    width: 100%;
+  }
+
+  .sidecar-files::before {
+    content: 'Or separately:';
+    font-size: 0.82rem;
+    color: var(--color-muted);
+  }
+
+  .sidecar-dl {
+    font-family: var(--font-mono);
+  }
+
+  .status {
+    min-height: 1.5rem;
+    margin-top: 0.85rem;
+    font-size: 0.9rem;
+  }
+
+  .status.ok { color: var(--color-muted); }
+  .status.warn { color: #b45309; }
+  :global(html[data-theme='dark']) .status.warn { color: #fbbf24; }
+  .status.err { color: #dc2626; }
+  :global(html[data-theme='dark']) .status.err { color: #f87171; }
+
+  .notes {
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--color-border);
+    max-width: 46rem;
+  }
+
+  .notes h2 {
+    font-size: 1.05rem;
+    margin-top: 0;
+    border: none;
+    padding: 0;
+  }
+
+  .notes ul {
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    line-height: 1.65;
+    padding-left: 1.2rem;
+  }
+
+  @media (max-width: 900px) {
+    .panes { grid-template-columns: 1fr; }
+    textarea { min-height: 14rem; }
+  }
+</style>

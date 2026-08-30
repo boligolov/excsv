@@ -35,7 +35,7 @@ sales.excsv.pack.zip
 The **manifest** lists the tables and the links between them:
 
 ```
-#!excsv version=0.3 layout=pack table-count=3 original-size=3123200
+#!excsv version=0.4 layout=pack table-count=3 original-size=3123200
 #@pack-name: sales-q1-2026
 #@author: ops@example.com
 #@created: 2026-04-01T00:00:00Z
@@ -54,7 +54,7 @@ The **manifest** lists the tables and the links between them:
 Each table's **`_header.excsv`** is exactly the ExCSV metadata you already know — `#column`, `#$ddl`, `#%` — plus a `rows=` count. Different tables can have different schemas.
 
 ```
-#!excsv version=0.3 layout=columnar rows=237000 sql-dialect=postgres
+#!excsv version=0.4 layout=columnar rows=237000 sql-dialect=postgres
 #@source: sales_db.orders
 #column name=id type=int unique=1
 #column name=customer_id type=int

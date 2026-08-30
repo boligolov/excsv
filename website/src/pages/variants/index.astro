@@ -5,16 +5,17 @@ import CodeBlock from '../../components/CodeBlock.astro';
 
 <Base
   title="ExCSV formats"
-  description="Four ways to ship the same ExCSV: a single file, a sidecar next to plain CSV, a peekable ZIP, or a columnar multi-table pack."
+  description="Five ways to ship the same ExCSV: a single file, a sidecar next to plain CSV, a peekable ZIP, a columnar multi-table pack, or JSON."
   wide
 >
   <article class="formats">
     <h1>Formats</h1>
     <p class="lede">
       ExCSV is one language — types, units, stats, SQL — sitting on top of CSV.
-      The variants are just packaging: how that language travels with the rows.
-      Pick the one that matches whether you can touch the CSV, how big the file is,
-      and whether you're shipping one table or a snapshot of several.
+      Four of the variants are just packaging: how that language travels with the rows.
+      The fifth, JSON, is the same document in a different serialization.
+      Pick by whether you can touch the CSV, how big the file is, whether you're shipping
+      one table or a snapshot of several — and whether the consumer speaks CSV or JSON.
     </p>
 
     <nav class="jump" aria-label="Formats">
@@ -22,6 +23,7 @@ import CodeBlock from '../../components/CodeBlock.astro';
       <a href="#sidecar">Sidecar</a>
       <a href="#zip">ZIP</a>
       <a href="#pack">Pack</a>
+      <a href="#json">JSON</a>
     </nav>
 
     <div class="pick-grid">
@@ -44,6 +46,11 @@ import CodeBlock from '../../components/CodeBlock.astro';
         <span class="pick-ext">.excsv.pack.zip</span>
         <h2>Pack</h2>
         <p>Wide tables and multi-table snapshots, column by column.</p>
+      </a>
+      <a class="pick" href="#json">
+        <span class="pick-ext">.excsv.json</span>
+        <h2>JSON</h2>
+        <p>The same document as JSON, for APIs and AI output.</p>
       </a>
     </div>
 
@@ -78,6 +85,11 @@ import CodeBlock from '../../components/CodeBlock.astro';
             <td><a href="#pack">Pack</a></td>
             <td>Read <code>amount</code> without loading <code>note</code>. Ship orders + customers as one file.</td>
           </tr>
+          <tr>
+            <td>An API, a config file, or an LLM writing the table</td>
+            <td><a href="#json">JSON</a></td>
+            <td>Real types, one JSON Schema to validate against. Round-trips back to CSV.</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -107,7 +119,7 @@ import CodeBlock from '../../components/CodeBlock.astro';
       </div>
 
       <CodeBlock title="sales.excsv" description="Schema and rows in one place.">
-{`#!excsv version=0.3 delim=comma header=1
+{`#!excsv version=0.4 delim=comma header=1
 #@grain: one row per order
 #column name=id type=int role=id
 #column name=customer type=string
@@ -147,7 +159,7 @@ id,customer,amount
 
       <div class="pair">
         <CodeBlock title="sales.excsv" description="Metadata only — no data rows.">
-{`#!excsv version=0.3 delim=comma header=1 rows=2 reference=sales.csv
+{`#!excsv version=0.4 delim=comma header=1 rows=2 reference=sales.csv
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string
@@ -237,8 +249,60 @@ id,customer,amount
         is a short scan, not a full-column read. Small lookup tables stay as one file per column.
       </p>
       <p class="skip">
-        Stay on plain or ZIP if you want to stream rows. Pack is in v0.3;
+        Stay on plain or ZIP if you want to stream rows. Pack is in v0.4;
         the <a href="/tools/">Go CLI</a> doesn't open it yet.
+      </p>
+    </section>
+
+    <section class="form" id="json">
+      <p class="kicker">JSON-native</p>
+      <h2>JSON — the same document, without the CSV</h2>
+      <p>
+        <code>sales.excsv.json</code> is not an export or a summary — it's the same ExCSV document
+        with the <code>#</code> stripped off. Every meta line becomes a key: the header is
+        <code>csv</code>, <code>#@</code> is <code>meta</code>, <code>#column</code> is
+        <code>columns</code>, <code>#%</code> is <code>aggregates</code>, <code>#$</code> is <code>sql</code>.
+      </p>
+      <p>
+        Use it where JSON is already the envelope: a REST payload, a config file, a TypeScript frontend —
+        or an LLM that you'd rather constrain to a
+        <a href="/schema/excsv-0.4.schema.json">JSON Schema</a> than trust to hand-write a
+        <code>#!excsv</code> header. Serve it as <code>application/excsv+json</code>.
+      </p>
+
+      <div class="pros">
+        <h3>Why</h3>
+        <ul>
+          <li><strong>Real types.</strong> <code>required=1</code> is <code>true</code>, <code>enum=a|b|c</code> is an array, an empty cell is <code>null</code>.</li>
+          <li><strong>Validation for free.</strong> One JSON Schema (draft 2020-12) checks the whole vocabulary — in your editor, in CI, or as an LLM response format.</li>
+          <li><strong>Money survives.</strong> <code>decimal</code> and <code>long</code> cells are written as strings, so <code>500.00</code> never becomes a float.</li>
+          <li><strong>Lossless both ways.</strong> CSV → JSON → CSV gives you the same file back. The text form stays canonical; only free-text <code>##</code> comments drop.</li>
+        </ul>
+      </div>
+
+      <CodeBlock title="sales.excsv.json" description="The plain example above, as JSON.">
+{`{
+  "excsv": "0.4",
+  "csv": { "delim": "comma", "header": true },
+  "meta": { "grain": "one row per order" },
+  "columns": [
+    { "index": 0, "name": "id", "type": "int", "role": "id" },
+    { "index": 1, "name": "customer", "type": "string" },
+    { "index": 2, "name": "amount", "type": "decimal", "unit": "USD", "role": "measure" }
+  ],
+  "aggregates": { "sum": [null, null, "750.50"] },
+  "rows": 2,
+  "data": [
+    [1, "Acme Corp", "500.00"],
+    [2, "Globex Inc", "250.50"]
+  ]
+}`}
+      </CodeBlock>
+
+      <p class="skip">
+        It's JSON, not CSV — no <code>#</code> comment trick, no <code>awk</code> on the rows, no ZIP-comment preview.
+        Stay on plain when plain-CSV compatibility is the point.
+        <a href="/convert/">Try the browser converter</a>.
       </p>
     </section>
 
@@ -286,7 +350,7 @@ id,customer,amount
 
   .pick-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 1rem;
     margin-bottom: 2.5rem;
   }
@@ -384,6 +448,12 @@ id,customer,amount
     padding-top: 1.5rem;
     border-top: 1px solid var(--color-border);
     color: var(--color-muted);
+  }
+
+  @media (max-width: 1100px) {
+    .pick-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 
   @media (max-width: 900px) {

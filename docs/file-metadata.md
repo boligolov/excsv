@@ -23,7 +23,7 @@ A ZIP comment may end with `#@comment-truncated: 1` when the archive comment hit
 `#@grain` says, in plain words, what one row *is*: `one row per order`, `one row per customer per day`, `pre-aggregated monthly totals`. It sounds trivial, but it's the single fact that stops half of all analysis mistakes — you can't accidentally double-count or misjoin when the file tells you the unit up front.
 
 ```
-#!excsv version=0.3 delim=comma header=1
+#!excsv version=0.4 delim=comma header=1
 #@author: alex@example.com
 #@comment: demo dataset for onboarding docs
 #@source: analytics_db.page_views

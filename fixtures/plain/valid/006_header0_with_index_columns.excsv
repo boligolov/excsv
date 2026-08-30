@@ -1,4 +1,4 @@
-﻿#!excsv version=0.3 header=0
+﻿#!excsv version=0.4 header=0
 #column index=0 name=id type=int
 #column index=1 name=amount type=decimal
 1,10.50

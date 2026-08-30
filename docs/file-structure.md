@@ -12,7 +12,7 @@ An ExCSV file reads top to bottom in three parts:
 └─────────────────────────┘
 ```
 
-Everything above the data is optional. Drop the header and it's read as plain comma-separated CSV with a header row — i.e. a normal `.csv`. Add just a `#!excsv version=0.3` line and you have the smallest possible ExCSV file (a template with no data yet).
+Everything above the data is optional. Drop the header and it's read as plain comma-separated CSV with a header row — i.e. a normal `.csv`. Add just a `#!excsv version=0.4` line and you have the smallest possible ExCSV file (a template with no data yet).
 
 ## The three shapes
 
@@ -21,6 +21,8 @@ Everything above the data is optional. Drop the header and it's read as plain co
 | **Inline** | in the same file, below the metadata | exports you generate, files you share, snippets you paste somewhere |
 | **Sidecar** | in a separate, untouched `.csv`/`.tsv` | data you can't or won't modify — vendor dumps, regulated files, anything with its own checksum |
 | **Header-only stub** | nowhere yet | templates and schemas you'll fill in later |
+
+(Packaged forms — `.excsv.zip`, `.excsv.pack.zip` — are on their own pages. If you want the whole document as JSON instead of CSV, that's [`.excsv.json`](json.md).)
 
 ## Sidecar — annotate without touching the data
 
@@ -31,7 +33,7 @@ Pair by basename: `sales.excsv` describes `sales.csv`; `sales.extsv` describes `
 `sales.excsv`:
 
 ```
-#!excsv version=0.3 delim=comma quote=double header=1 rows=2 reference=sales.csv
+#!excsv version=0.4 delim=comma quote=double header=1 rows=2 reference=sales.csv
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string

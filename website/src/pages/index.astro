@@ -18,10 +18,10 @@ import Base from '../layouts/Base.astro';
         <a href="/examples/" class="btn btn-primary">See examples</a>
         <a href="/variants/" class="btn btn-secondary">Formats</a>
       </div>
-      <p class="version-tag">v0.3 — Draft</p>
+      <p class="version-tag">v0.4 — Draft</p>
     </div>
     <div class="hero-code">
-      <pre><code><span class="hl-meta">#!excsv version=0.3 delim=comma header=1 sql-dialect=postgres</span>
+      <pre><code><span class="hl-meta">#!excsv version=0.4 delim=comma header=1 sql-dialect=postgres</span>
 <span class="hl-meta">#@source: analytics_db.events</span>
 <span class="hl-meta">#column name=date type=date</span>
 <span class="hl-meta">#column name=event type=string</span>
@@ -72,9 +72,9 @@ date,event,count
   </section>
 
   <section class="block">
-    <h2>Four ways to ship it</h2>
-    <p class="lead">Same language. Different packaging — whether you can touch the CSV, how big it is, one table or several.</p>
-    <div class="cards cards-4">
+    <h2>Five ways to ship it</h2>
+    <p class="lead">Same language. Different packaging — whether you can touch the CSV, how big it is, one table or several — plus a JSON serialization for when the consumer doesn't speak CSV.</p>
+    <div class="cards cards-5">
       <a class="card card-link" href="/variants/#plain">
         <span class="ext">.excsv</span>
         <h3>Plain</h3>
@@ -94,6 +94,11 @@ date,event,count
         <span class="ext">.excsv.pack.zip</span>
         <h3>Pack</h3>
         <p>Wide tables and multi-table snapshots, column by column.</p>
+      </a>
+      <a class="card card-link" href="/variants/#json">
+        <span class="ext">.excsv.json</span>
+        <h3>JSON</h3>
+        <p>The same document as JSON, for APIs and AI output.</p>
       </a>
     </div>
   </section>
@@ -250,6 +255,7 @@ date,event,count
   .cards-2 { grid-template-columns: 1fr 1fr; }
   .cards-3 { grid-template-columns: repeat(3, 1fr); }
   .cards-4 { grid-template-columns: repeat(4, 1fr); }
+  .cards-5 { grid-template-columns: repeat(5, 1fr); }
 
   .card {
     background: var(--color-card-bg);
@@ -324,13 +330,18 @@ date,event,count
     color: var(--color-muted);
   }
 
+  @media (max-width: 1100px) {
+    .cards-5 { grid-template-columns: repeat(3, 1fr); }
+  }
+
   @media (max-width: 960px) {
     .hero {
       grid-template-columns: 1fr;
       gap: 2rem;
       padding: 1.5rem 0 2.5rem;
     }
-    .cards-4 { grid-template-columns: 1fr 1fr; }
+    .cards-4,
+    .cards-5 { grid-template-columns: 1fr 1fr; }
   }
 
   @media (max-width: 768px) {
@@ -340,7 +351,8 @@ date,event,count
   }
 
   @media (max-width: 560px) {
-    .cards-4 { grid-template-columns: 1fr; }
+    .cards-4,
+    .cards-5 { grid-template-columns: 1fr; }
     .cta-row {
       flex-direction: column;
       align-items: stretch;

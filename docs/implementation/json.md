@@ -1,9 +1,19 @@
-# JSON profile
+# JSON Form (`.excsv.json`)
 
-ExCSV has a secondary, **JSON serialization** for contexts that are already JSON-native — REST payloads, config, JS/TS frontends, and LLM structured output (a model can be constrained to the JSON Schema instead of hand-writing `#!excsv` text). The CSV text form stays **canonical**; the JSON profile is a lossless mirror of the same vocabulary.
+ExCSV defines a second serialization of the same document, for contexts that are already JSON-native — REST payloads, config, JS/TS frontends, and LLM structured output (a model can be constrained to the JSON Schema instead of hand-writing `#!excsv` text). The CSV text form stays **canonical**; the JSON form is a lossless mirror of the same vocabulary.
 
-- JSON Schema (draft 2020-12): [`schema/excsv.schema.json`](../../schema/excsv.schema.json)
-- Example: [`schema/example.excsv.json`](../../schema/example.excsv.json)
+| | |
+| --- | --- |
+| **File extension** | `.excsv.json` |
+| **Media type** | `application/excsv+json` |
+| **Schema** | [`schema/excsv.schema.json`](../../schema/excsv.schema.json) — JSON Schema draft 2020-12, `$id` `https://excsv.org/schema/excsv-0.4.schema.json` |
+| **Example** | [`schema/example.excsv.json`](../../schema/example.excsv.json) |
+
+- A JSON-form document **MUST** be a single JSON object conforming to the schema above, encoded in UTF-8.
+- The `excsv` member **MUST** be present and carries the format version — it is the JSON counterpart of `#!excsv version=`.
+- Readers **MUST** dispatch on content, not extension alone: a document whose root is a JSON object with an `excsv` member is the JSON form; a byte stream beginning with `#!excsv` (or bare CSV) is the text form.
+- The `.excsv.json` extension **SHOULD** be used; `sales.excsv.json` and `sales.excsv` are two encodings of one document, not a sidecar pair. `reference=` (JSON: `reference`) is the only sidecar binding.
+- A `.excsv.json` file is **not** a CSV. It has no data section, so `#`-comment tricks, `grep`/`awk` row access, and the ZIP-comment preview do not apply. Use the text form when plain-CSV compatibility matters.
 
 The two forms are a **bijection**: any conforming ExCSV text document maps to exactly one JSON document and back, with no loss. Tools SHOULD round-trip text → JSON → text and reproduce the original semantics (byte-identical CSV data section, same metadata).
 
@@ -15,11 +25,9 @@ The two forms are a **bijection**: any conforming ExCSV text document maps to ex
 | `layout` | document shape | `inline` / `sidecar` / `pack`. Optional; inferable from `data` vs `reference` vs `tables`. |
 | `csv` | `#!excsv` dialect fields | Round-trip hint: `delim`, `quote`, `header`, `encoding`, `null`. See [Dialect round-trip](#dialect-round-trip). |
 | `meta` | `#@key: value` | Object; known keys + any custom. |
-| `columns` | `#column` lines | Array; position = physical order. |
+| `columns` | `#column` lines | Array; each entry **MUST** include `index` (position in `data[row]`). |
 | `aggregates` | `#%name:` lines | Object: name → per-column array. |
 | `sql` | `#$ddl` / `#$dql` | `{ ddl: [...], dql: [...] }`. |
-| `csvw` | `#csvw:` payload | Decoded JSON object (never the base64 form). |
-| `schema` | `schema=` | `excsv` (default) or `csvw`. |
 | `checksum` | `checksum=` | `"<algo>:<hex>"`. |
 | `rows` | `rows=` | For inline data SHOULD equal `data.length`. |
 | `reference` | `reference=` | Sidecar only; mutually exclusive with `data`. |
@@ -38,7 +46,7 @@ The text form is line-oriented and stringly-typed; JSON has real types and struc
 | **Null** | empty field, or a `null=` marker | JSON `null` | An empty/`null`-marked cell ↔ JSON `null`. Extra text markers are listed in `csv.null` so text output can be reproduced. |
 | **Numbers / decimal / long** | bare text (`500.00`, `9007199254740993`) | **string** in `data` | Encode numeric cells whose `type` is `decimal`, `long`, or any value that would lose precision as JSON **strings**. `int`/`float`/`double` MAY be JSON numbers when they fit IEEE-754 exactly. The column `type` is authoritative; the JSON scalar kind is not. |
 | **Booleans** | `true`/`false`/`1`/`0` per `type=boolean` | JSON `true`/`false` | Canonicalize to JSON booleans; original lexical form is not preserved (it is not semantically meaningful). |
-| **Column order** | `#column` order / `index=` | array index | Array position is the physical order. `index` MAY be set explicitly and MUST agree with position. |
+| **Column order** | `#column` order / `index=` | `index` on each column | **`index` is REQUIRED** on every column object — zero-based position in `data[row][index]`. The `columns` array SHOULD be sorted by `index`; each entry's array position SHOULD equal its `index`. In the text form, `index=` is required only when `header=0`; when converting text → JSON, assign `index` from `#column` order or explicit `index=`. |
 | **`enum`** | pipe-joined string `a\|b\|c` | array `["a","b","c"]`, typed per `type` | Split/join on `\|`. Values keep the column's type in JSON. |
 | **`unique` / `required`** | `1` / `0` | JSON `true` / `false` | `1` ↔ `true`, `0` ↔ `false`. |
 | **`#%` arity** | one value per physical column | array of same length | `null` entry ↔ empty CSV field ("not applicable"). Array length SHOULD equal the physical column count. |
@@ -46,7 +54,7 @@ The text form is line-oriented and stringly-typed; JSON has real types and struc
 | **DDL order** | file order | `sql.ddl[]` order | Preserve array order; it is executable order. |
 | **`#@` values** | raw text to end of line | string (or typed where obvious) | `tags` MAY be an array; timestamps stay ISO-8601 strings. Unknown `#@` keys pass through. |
 | **`##` comments** | human comments | *(dropped)* | Free-text `##` lines carry no structured meaning and are **not** represented in JSON. This is the one intentional non-round-trip. |
-| **CSVW** | `#csvw:` (inline or base64url) | decoded JSON in `csvw` | Always store decoded JSON; on text output, re-encode per `csv`/header `csvw=` mode. |
+| **Unknown keys** | unrecognized `#!excsv` key or `#` line | *(dropped)* | The schema is closed at the root, so unknown header keys and unrecognized `#` lines have no JSON slot. `meta` and `column` are open: custom `#@` keys and `x-`-prefixed column attributes do round-trip. |
 
 ### Dialect round-trip
 
@@ -60,7 +68,7 @@ A pack maps to `layout: "pack"` with a `tables` array; root-level `columns`/`dat
 
 ```json
 {
-  "excsv": "0.3",
+  "excsv": "0.4",
   "layout": "pack",
   "meta": { "source": "warehouse-snapshot" },
   "tables": [
@@ -71,7 +79,7 @@ A pack maps to `layout: "pack"` with a `tables` array; root-level `columns`/`dat
 }
 ```
 
-Columnar layout, sectioning, and ZIP packaging are text/binary-container concerns; the JSON profile is the logical view (rows), not the on-disk columnar encoding. A pack ⇄ JSON round-trip preserves table names, schemas, FKs, and row values, not the physical `.col`/section split.
+Columnar layout, sectioning, and ZIP packaging are text/binary-container concerns; the JSON form is the logical view (rows), not the on-disk columnar encoding. A pack ⇄ JSON round-trip preserves table names, schemas, FKs, and row values, not the physical `.col`/section split.
 
 ## Validation
 
@@ -79,7 +87,8 @@ Columnar layout, sectioning, and ZIP packaging are text/binary-container concern
 npx ajv-cli@5 validate -s schema/excsv.schema.json -d your.excsv.json --spec=draft2020 --strict=false
 ```
 
-Two things the JSON Schema **cannot** check (leave to tooling):
+Three things the JSON Schema **cannot** check (leave to tooling):
 
-1. `aggregates[*]` and `#%` array lengths equal the physical column count.
+1. `aggregates[*]` and `#%` array lengths equal the physical column count (highest `index` + 1).
 2. Numeric precision — that a `decimal`/`long` cell was actually encoded as a string.
+3. Each column's `index` is unique and contiguous from `0` through `columns.length - 1`, and matches its position in the `columns` array.
