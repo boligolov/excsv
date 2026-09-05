@@ -9,9 +9,28 @@ The archive **MUST** contain at least one entry whose name ends in `.excsv` or `
 - The **first** entry in the central directory, AND
 - Named either the archive's base name with `.zip` stripped (`sales.excsv.zip` → `sales.excsv`, `sales.extsv.zip` → `sales.extsv`), OR named `data.excsv` / `data.extsv` if no such match.
 
-Additional entries (auxiliary data, attachments) **MAY** follow.
+Additional entries (a sidecar's referenced CSV/TSV, auxiliary data, attachments) **MAY** follow.
 
 Readers **MUST NOT** scan past the first entry to find a matching name. If the first central-directory entry is not a valid primary (wrong name, or not `.excsv`/`.extsv`), the archive **MUST** fail with `zip_primary_not_first`, even if a later entry would satisfy the name rule.
+
+## Sidecar inside a ZIP archive
+
+The primary entry MAY be a **sidecar** (header + meta only, `reference=` set, no data rows) instead of an inline file. A sidecar primary follows the same naming and position rules as [Archive Layout](#archive-layout) above.
+
+- **Sidecar alone.** The archive MAY contain only the sidecar entry, with no referenced file bundled. `original-size=` still refers to the sidecar entry itself (the metadata-only `.excsv`/`.extsv`), not to the data it describes. The ZIP comment mirrors the sidecar's meta lines exactly as it would for an inline primary.
+- **Sidecar + referenced file, bundled.** The archive MAY additionally contain the file named by `reference=` as a second entry, so the pair travels as one artifact. `reference=` resolves **within the archive**: the path is relative to the sidecar entry's directory inside the ZIP, and the same constraints as the filesystem case apply — it **MUST NOT** be absolute and **MUST NOT** escape the archive (`sidecar_reference_escapes_dir`).
+- **Resolution order.** When an entry matching `reference=` is present in the archive, readers **MUST** resolve against it and **MUST NOT** fall back to a filesystem file of the same name. If no matching entry exists in the archive, readers **MAY** fall back to a filesystem lookup next to the extracted/opened archive; if that also fails, treat it as `sidecar_reference_not_found` — parsing the sidecar still succeeds, and the handle degrades to read-only/metadata-only (see [File structure § Sidecar](file-structure.md#sidecar-detached-metadata)).
+- **Discovery.** Given any archive entry whose name ends in `.csv`/`.tsv`, implementations MAY look for a same-basename `.excsv`/`.extsv` entry elsewhere in the same archive and load it as that entry's sidecar — the in-archive analogue of the filesystem discovery rule in [File structure](file-structure.md#sidecar-detached-metadata).
+
+Example — `sales.excsv.zip` carrying both halves of the pair:
+
+```
+sales.excsv.zip
+├── sales.excsv          ← primary entry: sidecar (header + meta, reference=sales.csv)
+└── sales.csv            ← referenced data, byte-identical to the unzipped original
+```
+
+Primary-entry naming and position, `original-size=`, ZIP comment priority and truncation, compression, and password protection are otherwise unchanged from the inline case.
 
 ## Compression
 

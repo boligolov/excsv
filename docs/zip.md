@@ -33,6 +33,10 @@ A ZIP comment is limited to **65535 bytes**. Wide tables with many `#column` lin
 
 That line means the peek is incomplete — unzip (or read the inner file) for the rest. Without it, the comment is the full metadata prefix.
 
+## Zipping a sidecar
+
+A sidecar zips the same way as an inline file. `sales.excsv.zip` can hold just the sidecar (header + meta, `reference=sales.csv`), or the sidecar together with `sales.csv` as a second entry in the same archive — so the pair travels as one file, still without touching the original bytes. Point `reference=` at the in-archive entry the same way you'd point it at a sibling file on disk. A tool opening a `.csv` entry inside a zip can look for a same-named `.excsv` entry next to it, the same way it would on a filesystem.
+
 ## Passwords
 
 A `.excsv.zip` can use standard ZIP encryption if the data is sensitive. The password is handled by your tooling at read/write time — it's never written into the ExCSV metadata or the comment. (With encryption on, the preview-from-comment trick waits until the archive is unlocked.) Inner `original-size=` and `checksum=` refer to the decrypted file.

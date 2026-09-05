@@ -30,7 +30,7 @@ The same header and `#column` / `#%` / `#$` / `#@` vocabulary works everywhere; 
 - **Pack** — `.excsv.pack.zip`: a columnar, multi-table archive — read a few columns out of many without unpacking the rest.
 - **JSON** — `.excsv.json`: the same document as a JSON object, for when JSON is the natural envelope.
 
-You can also **zip** an inline or sidecar file (`.excsv.zip`) and its schema is mirrored into the archive comment, so tools preview the metadata without unzipping.
+You can also **zip** an inline or sidecar file (`.excsv.zip`) — a sidecar can travel alone or bundled with the CSV/TSV it describes as a second entry in the same archive — and its schema is mirrored into the archive comment, so tools preview the metadata without unzipping.
 
 ## The JSON form
 

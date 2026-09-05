@@ -46,7 +46,7 @@ Core lifecycle: open, parse, materialize, serialize, stream.
 | A8 | Streaming row reader | ✓ | ✓ | ≈ | PF: streams rows by reading one section across all `.col` files; degrades to per-row file seeks if unsectioned. |
 | A9 | Streaming row writer | ✓ | ✓ | ⊕ | PF: collect rows until section boundary, flush section to all `.col` entries simultaneously. |
 | A10 | Stream-passthrough mode (data bytes preserved verbatim) | ✓ | ≈ | — | RF: untouched bytes for Mode A commands. PF has no equivalent — any write touches multiple files. |
-| A11 | Open sidecar pair (resolve `reference=`, merge meta + external data) | ✓ | — | — | Discovery: opening `foo.csv` MAY load `foo.excsv`. ZIP inner file is always inline. |
+| A11 | Open sidecar pair (resolve `reference=`, merge meta + external data) | ✓ | ✓ | — | Discovery: opening `foo.csv` MAY load `foo.excsv`. ZIP primary MAY be a sidecar; `reference=` then resolves to another entry in the same archive first, filesystem as fallback. |
 | A12 | Materialize sidecar → inline / split inline → sidecar + CSV | ✓ | — | — | Writer concern; not required for read-only parsers. |
 
 ## B. Header line (`#!excsv`)

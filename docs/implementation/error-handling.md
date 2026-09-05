@@ -90,7 +90,7 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | --- | --- | --- | --- |
 | `sidecar_has_data_section` | FAIL | — | `reference=` set but the file has data rows. |
 | `reference_on_inline` | FAIL | — | `reference=` set on a file that carries data rows. |
-| `sidecar_reference_escapes_dir` | FAIL | — | `reference=` is absolute, contains `..`, or resolves outside the sidecar's directory. |
+| `sidecar_reference_escapes_dir` | FAIL | — | `reference=` is absolute, contains `..`, or resolves outside the sidecar's directory (or, for a sidecar packaged in a ZIP, outside the archive). |
 | `sidecar_missing_reference` | FAIL | — | A meta-only file expected as a sidecar has no `reference=`. |
 | `sidecar_reference_not_found` | WARN | never | Referenced file missing on open/load; parse succeeds, handle degrades to read-only/metadata-only. |
 | `extsv_delim_mismatch` | WARN | — | `.extsv` file (inline or sidecar) declares `delim` other than `tab`. |

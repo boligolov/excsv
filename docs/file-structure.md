@@ -52,6 +52,8 @@ Row count, checksum, and aggregations in the sidecar describe the *referenced* f
 
 Why bother instead of just editing the CSV? Because a lot of data isn't yours to edit — immutable lakes, files under contract, anything with a hash someone else checks. A sidecar lets you layer types, stats, and SQL onto it without changing a byte.
 
+A sidecar zips the same way an inline file does. `sales.excsv.zip` can hold just the sidecar, or the sidecar together with `sales.csv` as a second entry in the same archive — see [ZIP § Sidecar inside a ZIP archive](implementation/zip.md#sidecar-inside-a-zip-archive).
+
 ## Line endings and encoding
 
 LF and CRLF both work. A UTF-8 byte-order mark at the start of the file is fine. Encoding defaults to UTF-8; set `encoding=` on the header if it's something else.

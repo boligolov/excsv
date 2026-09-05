@@ -12,7 +12,7 @@ An ExCSV file **MUST** consist of, in order:
 └─────────────────────────┘
 ```
 
-An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=double`, `header=1`, `encoding=UTF-8`).
+An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=none`, `header=1`, `encoding=UTF-8`) — the same defaults as an explicit `#!excsv version=0.4` with no other fields. See [Header § Quote Values](header.md#quote-values).
 
 The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.4` (a **header-only stub** with no data and no `reference=`).
 
@@ -68,7 +68,7 @@ id,customer,amount
 2,Globex Inc,250.50
 ```
 
-Sidecar pairs are **not** combined into `.excsv.zip` or `.extsv.zip`; materialize inline or ship two plain files.
+A sidecar MAY be shipped inside a `.excsv.zip` / `.extsv.zip` — either alone, or bundled with the CSV/TSV it references as a second archive entry. See [ZIP § Sidecar inside a ZIP archive](zip.md#sidecar-inside-a-zip-archive) for entry naming, `reference=` resolution, and discovery rules.
 
 ## ZIP container (row form)
 

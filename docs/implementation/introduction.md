@@ -33,7 +33,7 @@ The same header and `#column` / `#%` / `#$` / `#@` vocabulary applies to every f
 - **Pack** — `.excsv.pack.zip`: a manifest plus one directory per table, each column stored as its own `.col` entry. Columnar and multi-table.
 - **JSON** — `.excsv.json` (`application/excsv+json`): the same document serialized as a JSON object against [`schema/excsv.schema.json`](../../schema/excsv.schema.json). The text form remains canonical; the two are a bijection.
 
-The **ZIP container** (`.excsv.zip`, `.extsv.zip`) Deflate-wraps a single **inline** file. The inner `#!excsv` header **MUST** carry `original-size=` (uncompressed bytes of that file). The schema and stats are mirrored into the ZIP comment (max 65535 bytes); if the comment does not fit, it **MUST** end with `#@comment-truncated: 1`. Sidecar pairs are **not** zipped as a unit. Pack is a separate columnar ZIP. See [zip.md](zip.md).
+The **ZIP container** (`.excsv.zip`, `.extsv.zip`) Deflate-wraps a single primary ExCSV entry — **inline** or **sidecar**. The inner `#!excsv` header **MUST** carry `original-size=` (uncompressed bytes of that file). The schema and stats are mirrored into the ZIP comment (max 65535 bytes); if the comment does not fit, it **MUST** end with `#@comment-truncated: 1`. A sidecar primary MAY ship its referenced CSV/TSV alongside it as a second entry in the same archive — see [ZIP § Sidecar inside a ZIP archive](zip.md#sidecar-inside-a-zip-archive). Pack is a separate columnar ZIP. See [zip.md](zip.md).
 
 ## Terminology
 
