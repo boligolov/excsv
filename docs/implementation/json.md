@@ -6,7 +6,7 @@ ExCSV defines a second serialization of the same document, for contexts that are
 | --- | --- |
 | **File extension** | `.excsv.json` |
 | **Media type** | `application/excsv+json` |
-| **Schema** | [`schema/excsv.schema.json`](../../schema/excsv.schema.json) — JSON Schema draft 2020-12, `$id` `https://excsv.org/schema/excsv-0.4.schema.json` |
+| **Schema** | [`schema/excsv.schema.json`](../../schema/excsv.schema.json) — JSON Schema draft 2020-12, `$id` `https://excsv.org/schema/excsv-0.5.schema.json` |
 | **Example** | [`schema/example.excsv.json`](../../schema/example.excsv.json) |
 
 - A JSON-form document **MUST** be a single JSON object conforming to the schema above, encoded in UTF-8.
@@ -29,7 +29,8 @@ The two forms are a **bijection**: any conforming ExCSV text document maps to ex
 | `aggregates` | `#%name:` lines | Object: name → per-column array. |
 | `sql` | `#$ddl` / `#$dql` | `{ ddl: [...], dql: [...] }`. |
 | `checksum` | `checksum=` | `"<algo>:<hex>"`. |
-| `rows` | `rows=` | For inline data SHOULD equal `data.length`. |
+| `rows` | `rows=` | Required except in a pack (`tables[]` carries `rows` per table instead). For inline data SHOULD equal `data.length`. |
+| `column_count` | `columns=` | Optional physical column count — stored plus `materialized: true` computed columns. Named distinctly from `columns` (the `#column` schema array) to avoid collision; the text form has no such clash since `#column` and `columns=` are lexically distinct. |
 | `reference` | `reference=` | Sidecar only; mutually exclusive with `data`. |
 | `data` | data section | Array of row-arrays; **no header row** (names live in `columns`). |
 | `tables` | pack tables | Multi-table only; see [Pack](#pack-multi-table). |
@@ -46,7 +47,8 @@ The text form is line-oriented and stringly-typed; JSON has real types and struc
 | **Null** | empty field, or a `null=` marker | JSON `null` | An empty/`null`-marked cell ↔ JSON `null`. Extra text markers are listed in `csv.null` so text output can be reproduced. |
 | **Numbers / decimal / long** | bare text (`500.00`, `9007199254740993`) | **string** in `data` | Encode numeric cells whose `type` is `decimal`, `long`, or any value that would lose precision as JSON **strings**. `int`/`float`/`double` MAY be JSON numbers when they fit IEEE-754 exactly. The column `type` is authoritative; the JSON scalar kind is not. |
 | **Booleans** | `true`/`false`/`1`/`0` per `type=boolean` | JSON `true`/`false` | Canonicalize to JSON booleans; original lexical form is not preserved (it is not semantically meaningful). |
-| **Column order** | `#column` order / `index=` | `index` on each column | **`index` is REQUIRED** on every column object — zero-based position in `data[row][index]`. The `columns` array SHOULD be sorted by `index`; each entry's array position SHOULD equal its `index`. In the text form, `index=` is required only when `header=0`; when converting text → JSON, assign `index` from `#column` order or explicit `index=`. |
+| **Column order** | `#column` order / `index=` | `index` on each column | **`index` is REQUIRED** on every *physical* column object (stored, or computed with `materialized: true`) — zero-based position in `data[row][index]`. It **MUST NOT** appear on a virtual computed column ([Columns § Computed columns](columns.md#computed-columns-formula)), which has no `data` cell to index. The `columns` array SHOULD be sorted by physical columns' `index`; each such entry's array position SHOULD equal its `index`. In the text form, `index=` is required only when `header=0`; when converting text → JSON, assign `index` from `#column` order or explicit `index=`. |
+| **Computed columns** | `formula=`, `materialized=` | `formula`, `materialized` | `1`/`0` ↔ `true`/`false` for `materialized`, same as `unique`/`required`. A virtual entry (`materialized` absent/`false`) has no `index` and contributes no slot to `data[row]` or to `#%`/`aggregates` arity; a materialized entry (`materialized: true`) has `index` and a real slot, like any stored column. |
 | **`enum`** | pipe-joined string `a\|b\|c` | array `["a","b","c"]`, typed per `type` | Split/join on `\|`. Values keep the column's type in JSON. |
 | **`unique` / `required`** | `1` / `0` | JSON `true` / `false` | `1` ↔ `true`, `0` ↔ `false`. |
 | **`#%` arity** | one value per physical column | array of same length | `null` entry ↔ empty CSV field ("not applicable"). Array length SHOULD equal the physical column count. |
@@ -68,7 +70,7 @@ A pack maps to `layout: "pack"` with a `tables` array; root-level `columns`/`dat
 
 ```json
 {
-  "excsv": "0.4",
+  "excsv": "0.5",
   "layout": "pack",
   "meta": { "source": "warehouse-snapshot" },
   "tables": [

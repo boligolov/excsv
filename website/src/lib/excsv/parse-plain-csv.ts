@@ -169,7 +169,7 @@ export function parsePlainCsv(
   else if (quote === "'") csv.quote = 'single';
 
   const doc: ExcsvDocument = {
-    excsv: '0.4',
+    excsv: '0.5',
     layout: 'inline',
     csv,
     columns,

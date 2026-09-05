@@ -119,7 +119,7 @@ import CodeBlock from '../../components/CodeBlock.astro';
       </div>
 
       <CodeBlock title="sales.excsv" description="Schema and rows in one place.">
-{`#!excsv version=0.4 delim=comma header=1
+{`#!excsv version=0.5 delim=comma header=1 rows=2
 #@grain: one row per order
 #column name=id type=int role=id
 #column name=customer type=string
@@ -159,7 +159,7 @@ id,customer,amount
 
       <div class="pair">
         <CodeBlock title="sales.excsv" description="Metadata only — no data rows.">
-{`#!excsv version=0.4 delim=comma header=1 rows=2 reference=sales.csv
+{`#!excsv version=0.5 delim=comma header=1 rows=2 reference=sales.csv
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string
@@ -249,7 +249,7 @@ id,customer,amount
         is a short scan, not a full-column read. Small lookup tables stay as one file per column.
       </p>
       <p class="skip">
-        Stay on plain or ZIP if you want to stream rows. Pack is in v0.4;
+        Stay on plain or ZIP if you want to stream rows. Pack is in v0.5;
         the <a href="/tools/">Go CLI</a> doesn't open it yet.
       </p>
     </section>
@@ -266,7 +266,7 @@ id,customer,amount
       <p>
         Use it where JSON is already the envelope: a REST payload, a config file, a TypeScript frontend —
         or an LLM that you'd rather constrain to a
-        <a href="/schema/excsv-0.4.schema.json">JSON Schema</a> than trust to hand-write a
+        <a href="/schema/excsv-0.5.schema.json">JSON Schema</a> than trust to hand-write a
         <code>#!excsv</code> header. Serve it as <code>application/excsv+json</code>.
       </p>
 
@@ -282,7 +282,7 @@ id,customer,amount
 
       <CodeBlock title="sales.excsv.json" description="The plain example above, as JSON.">
 {`{
-  "excsv": "0.4",
+  "excsv": "0.5",
   "csv": { "delim": "comma", "header": true },
   "meta": { "grain": "one row per order" },
   "columns": [

@@ -19,6 +19,7 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | --- | --- | --- | --- |
 | `header_malformed_magic` | FAIL | — | `#!excsv` line present but malformed. |
 | `header_missing_version` | FAIL | — | Header present without `version=`. |
+| `header_missing_rows` | FAIL | — | Header present without `rows=` (not applicable to a pack manifest — `layout=pack` has no single row count). |
 | `header_malformed_kv` | FAIL | — | Malformed `key=value` token in the header. |
 | `header_unclosed_quote` | FAIL | — | Unterminated quoted value in the header. |
 | `header_invalid_value` | FAIL | — | Value invalid for its field (e.g. `header=2`). |
@@ -37,6 +38,19 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | `duplicate_column` | WARN | — | Two `#column` for the same column; last-wins. |
 | `column_count_mismatch` | WARN | never | Schema contradicts data by count/position: `index=` ≥ physical width, or more positioned stored/materialized columns than physical width. Read proceeds; **structural mutations MUST refuse** until reconciled. |
 | `default_with_nulls` | WARN | never | Column has `default=` but its data contains nulls; the DDL default would eliminate them (describe/schema drift until rewritten). |
+
+## Computed columns
+
+| Code | Severity | Verify | Meaning |
+| --- | --- | --- | --- |
+| `formula_references_computed` | FAIL | — | A `formula=` references another computed column; chaining is not supported. |
+| `formula_unknown_reference` | FAIL | — | A `formula=` references a name that is not a stored column in the same table. |
+| `formula_parse_error` | FAIL | — | A `formula=` does not parse under the grammar. |
+| `formula_index_forbidden` | FAIL | — | `index=` present on a `formula=` column. |
+| `formula_requires_header` | FAIL | — | A `formula=` column is present while `header=0`. |
+| `computed_materialized_mismatch` | FAIL | — | `materialized=1` without the matching physical data, or physical data present while `materialized` is absent/`0`. |
+| `computed_default_ignored` | WARN | — | `default=` or `required=` set on a `formula=` column; ignored either way. |
+| `computed_stale` | WARN | never | A materialized value may not reflect the current formula output (e.g. its stored inputs changed after caching). |
 
 ## Data section
 
@@ -65,6 +79,7 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | `sql_dialect_family` | WARN | — | MatchKind `family` (generic ↔ versioned dialect). |
 | `sql_version_mismatch` | WARN | — | MatchKind `version-mismatch`; `--strict` skips the line instead. |
 | `sql_no_match` | WARN | — | No `#$` line matches the consumer's target dialect. |
+| `ddl_column_mismatch` | WARN | never | `#$ddl`'s column list appears to disagree with the current physical `#column` set (e.g. after materializing/dematerializing a computed column, or any manual column-schema edit). Detection requires parsing the DDL text; a conforming parser is not required to detect this — best-effort only. |
 
 ## Encoding
 
@@ -113,7 +128,10 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | `row_parser_got_pack` | FAIL | — | A pack container was routed to the row/plain parser. |
 | `pack_key_on_plain` | WARN | — | Pack-only key (`layout=`, `section-size=`, `table-count=`, `single-table=`, `#table`, `#fk`) on a plain / row-ZIP file; ignored. |
 | `original_size_on_plain` | WARN | — | `original-size=` on a plain (non-ZIP, non-pack) file; ignored. |
-| `rows_mismatch` | WARN | →FAIL | `rows=` disagrees with the actual data-row count. The one WARN that `excsv verify` escalates. |
+| `rows_mismatch` | WARN | →FAIL | `rows=` disagrees with the actual data-row count. |
+| `columns_mismatch` | WARN | →FAIL | `columns=` disagrees with the actual physical column count (stored + `materialized=1` columns; from the data header row or, absent data, the `#column` count). |
+
+`rows_mismatch` and `columns_mismatch` are the two WARNs `excsv verify` escalates — together they assert the file's declared physical shape (rows × physical columns).
 
 ## Pack container
 

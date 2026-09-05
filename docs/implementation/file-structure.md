@@ -12,9 +12,9 @@ An ExCSV file **MUST** consist of, in order:
 └─────────────────────────┘
 ```
 
-An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=none`, `header=1`, `encoding=UTF-8`) — the same defaults as an explicit `#!excsv version=0.4` with no other fields. See [Header § Quote Values](header.md#quote-values).
+An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=none`, `header=1`, `encoding=UTF-8`) — the same defaults as an explicit `#!excsv version=0.5` with no other fields. See [Header § Quote Values](header.md#quote-values).
 
-The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.4` (a **header-only stub** with no data and no `reference=`).
+The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.5 rows=0` (a **header-only stub** with no data and no `reference=`). `rows=` is **MUST** whenever a header line is present — see [Header](header.md#header-fields).
 
 ## Document profiles (plain)
 
@@ -43,8 +43,9 @@ Plain `.excsv` and `.extsv` files **MAY** be **inline** (header + meta + data) o
 - After meta lines, the file **MUST** end. Any data row while `reference=` is set **MUST** fail validation.
 - Inline files (with data rows) **MUST NOT** set `reference=`.
 - `#@source` is provenance, not a filesystem path — do not use it instead of `reference=`.
+- The referenced file **MUST NOT** be rewritten by any column operation. Materializing a [computed column](columns.md#computed-columns-formula) on a sidecar handle **MUST** produce a new **inline** file instead of writing into `reference=` — see [Columns § Materialize / dematerialize by container](columns.md#materialize--dematerialize-by-container). (This is a different operation from *materializing the sidecar itself* — copying the referenced rows inline, a separate tooling operation which also never touches the referenced file.)
 
-**Derived fields:** `rows=`, `checksum=`, and `#%` lines describe the **referenced** data file. Checksum verification requires opening both files.
+**Derived fields:** `rows=` (**MUST**), `columns=` (MAY), `checksum=`, and `#%` lines describe the **referenced** data file. Checksum verification requires opening both files.
 
 **Discovery:** when opening `sales.csv`, implementations **MAY** load `sales.excsv` from the same directory; when opening `sales.tsv`, implementations **MAY** load `sales.extsv`.
 
@@ -53,7 +54,7 @@ Plain `.excsv` and `.extsv` files **MAY** be **inline** (header + meta + data) o
 **Example** — `sales.excsv`:
 
 ```
-#!excsv version=0.4 delim=comma quote=double header=1 rows=2 reference=sales.csv
+#!excsv version=0.5 delim=comma quote=double header=1 rows=2 reference=sales.csv
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string

@@ -8,7 +8,7 @@ Still-live reference docs in `plan/` (not backlog):
 
 When an item lands, tick it here and update the spec/fixtures/reference docs.
 
-Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ deferred (post-v0.4)
+Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ deferred (post-v0.5)
 
 **Working rule:** land decisions in the **spec** (`docs/implementation/`) + this file. Fixture corpus is in `fixtures/` and tracks the implementation spec. Further fixture edits only when the spec changes.
 
@@ -18,7 +18,7 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ defe
 
 | Area | State |
 | --- | --- |
-| Spec (`docs/implementation/`) | v0.4; remaining: C10, L1, computed columns (§5), `#index` (§6) |
+| Spec (`docs/implementation/`) | v0.5; remaining: C10, L1, computed-column fixtures (§5), `#index` (§6) |
 | Website | live |
 | Feature catalog | draft; version-gating unfinished |
 | Fixtures | plain valid 001–066 / invalid FAIL-only; zip/pack via generators |
@@ -42,7 +42,7 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ defe
 
 ## 3. Fixtures — remaining
 
-- 🟡 Computed-column fixtures (§5.8) once `formula=` lands in implementation docs.
+- 🟡 Computed-column fixtures (§5) — not yet created.
 - 🟡 `#index` fixtures (§6.5) once the meta line lands in the spec.
 - 🟡 CI: regenerate zip/pack via `fixtures/generate/make_*.py` and assert byte-identical to committed.
 - 🟢 `plain/valid/NNN_big_100k_rows.excsv` — streaming/perf; **generate on-demand in CI, do not commit**.
@@ -53,79 +53,22 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ defe
 
 ## 4. Implementation
 
-Go and Python implement the **whole v0.4 spec** in one shot: plain (inline + sidecar), row-ZIP, pack (unsectioned, multi-table, sectioned). No format waves.
+Go and Python implement the **whole v0.5 spec** in one shot: plain (inline + sidecar), row-ZIP, pack (unsectioned, multi-table, sectioned). No format waves.
 
 Cookbook follows the CLIs. Parity is the shared `fixtures/` tree.
 
-`01-features.md` version-gating (`[v0.4]`/`[later]`) finishes once the command tree is drafted.
+`01-features.md` version-gating (`[v0.5]`/`[later]`) finishes once the command tree is drafted.
 
 ---
 
-## 5. NEW FEATURE — Computed (virtual) columns
+## 5. Computed (virtual) columns
 
-**Goal:** a column that stores a *formula*, not data. Values are derived from other columns on read. Zero stored bytes. Payoff is largest in **pack**: pure metadata, no `.col`.
+Spec is the source of truth: `docs/implementation/columns.md` (`formula=`, `materialized=`, materialize/dematerialize per container, the `#$ddl`-not-touched boundary), `sql.md` (DDL generation), `error-handling.md` (codes), `json.md` + `schema/excsv.schema.json` (JSON mapping), guide `docs/columns.md`, website `/spec#computed`.
 
-Not yet in `docs/implementation/` (`formula=` missing from `columns.md` / `error-handling.md`). Spec + fixtures land before parsers.
+Remaining:
 
-### 5.1 Syntax — `#column formula=` (DECIDED)
-
-```
-#column name=total     type=decimal formula="price * quantity"                  # virtual (no stored data)
-#column name=margin     type=decimal formula="(price - cost) / price"
-#column name=full_name  type=string  formula="concat(first_name, ' ', last_name)"
-#column name=total     type=decimal formula="price * quantity" materialized=1    # values ALSO cached in the data
-```
-
-> **DECISION D-1 (owner, resolved):** `formula=` on `#column` marks a computed column; no separate `#compute` kind. Fold into v0.4.
-
-`formula=` is the definition and is never dropped. `formula-dialect=` is optional. A computed column MUST NOT carry `index=`.
-
-`formula=` **(definition) vs** `materialized=` **(cache):**
-
-| | `materialized` absent / `0` (**virtual**) | `materialized=1` |
-| --- | --- | --- |
-| Values in the data | none | present (header cell + fields / `.col`) |
-| Storage cost | zero | full column |
-| `formula=` kept | yes | **yes** |
-| DDL emitted | `GENERATED … VIRTUAL` (ClickHouse `ALIAS`) | `GENERATED … STORED` (ClickHouse `MATERIALIZED`) |
-
-Materialization is a reversible cache toggle. A materialized computed column still cannot be referenced by other formulas (§5.4).
-
-### 5.2 Placement & arity
-
-- **Virtual** — no header cell, no data field, no pack `.col`. Excluded from data-row / `#%` arity and pack `columns=`.
-- **Materialized** — physical slot like any stored column. `materialized=1` without the physical column (or virtual with data present) → MUST-fail `computed_materialized_mismatch`.
-- Display order = declaration order; reference by `name`, never `index`.
-
-### 5.3 Formula language — `formula-dialect=core` (default)
-
-Bare stored-column names; number / `'string'` / `true` `false` `null`; `+ - * / %`, unary `-`, `= <> < <= > >=`, `and or not`, `( )`. **No** `||` (use `concat`). Whitelist: `abs round floor ceil coalesce nullif least greatest length lower upper trim substr concat` and `case when … then … [else …] end`. `formula-dialect=sql` is an escape hatch (portability warn `formula_dialect_nonportable`).
-
-### 5.4 Deps — stored columns only (no chaining)
-
-- Other computed → `formula_references_computed`. Unknown name → `formula_unknown_reference`. Parse error → `formula_parse_error`. `index=` on virtual → `formula_index_forbidden`. `default`/`required` on computed → ignore, MAY `computed_default_ignored`.
-
-### 5.5 Interactions
-
-- DDL: PG≥18 / MySQL `GENERATED ALWAYS AS … VIRTUAL|STORED`; PG<18 → `STORED` or comment; ClickHouse `ALIAS` / `MATERIALIZED`.
-- `#%` arity excludes virtual; materialized MAY have a slot.
-- `excsv column materialize|dematerialize`; unzip MAY `--materialize`. Stale cache → warn `computed_stale` (never fatal).
-
-### 5.6 Catalog (`01-features.md`)
-
-D7 declare; G8 evaluate; H14 materialize/dematerialize; L7 pack zero-byte; F5b DDL `GENERATED`.
-
-### 5.7 Codes
-
-MUST-fail: `formula_references_computed`, `formula_unknown_reference`, `formula_parse_error`, `formula_index_forbidden`, `computed_materialized_mismatch`. SHOULD-warn: `computed_default_ignored`, `formula_dialect_nonportable`, `computed_stale`.
-
-### 5.8 Fixtures (after spec)
-
-`plain/valid/NNN_compute_{basic,materialized,case_coalesce}.excsv`; `plain/invalid/NNN_compute_{references_computed,unknown_ref,index_forbidden,materialized_mismatch}.excsv`; `pack/valid/NNN_compute_no_col.excsv.pack.zip`.
-
-### 5.9 Docs
-
-`columns.md`, `data-section.md`, `pack.md`, `sql.md`, `aggregations.md`, `error-handling.md`.
+- 🟡 Fixtures — `plain/valid/NNN_compute_{basic,materialized,case_coalesce}.excsv`; `plain/invalid/NNN_compute_{references_computed,unknown_ref,index_forbidden,materialized_mismatch,requires_header}.excsv`; `pack/valid/NNN_compute_no_col.excsv.pack.zip`. Not yet created.
+- 🟡 Go/Python parser implementation. Not yet done.
 
 ---
 

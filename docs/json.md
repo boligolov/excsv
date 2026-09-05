@@ -6,7 +6,7 @@ It's not a summary or an export — it's the same vocabulary with the `#` stripp
 
 ```json
 {
-  "excsv": "0.4",
+  "excsv": "0.5",
   "csv": { "delim": "comma", "quote": "double", "header": true },
   "meta": { "source": "sales_db.orders", "grain": "one row per order" },
   "columns": [
@@ -23,7 +23,7 @@ It's not a summary or an export — it's the same vocabulary with the `#` stripp
 The same file as text:
 
 ```
-#!excsv version=0.4 delim=comma quote=double header=1 rows=2
+#!excsv version=0.5 delim=comma quote=double header=1 rows=2
 #@source: sales_db.orders
 #@grain: one row per order
 #column name=id type=int role=id

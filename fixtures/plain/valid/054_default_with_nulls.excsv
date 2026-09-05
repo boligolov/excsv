@@ -1,4 +1,4 @@
-#!excsv version=0.4 null=NA
+#!excsv version=0.5 null=NA rows=1
 #column name=code type=string default=AAA
 code
 NA

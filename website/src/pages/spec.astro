@@ -19,6 +19,7 @@ import CodeBlock from '../components/CodeBlock.astro';
       <a href="#glance">A file</a>
       <a href="#header">Header</a>
       <a href="#columns">Columns</a>
+      <a href="#computed">Computed</a>
       <a href="#grain">Grain</a>
       <a href="#aggregations">Aggregations</a>
       <a href="#sql">SQL</a>
@@ -39,7 +40,7 @@ import CodeBlock from '../components/CodeBlock.astro';
       </p>
 
       <CodeBlock title="sales.excsv" description="Types, grain, a total, and the rows — one artifact.">
-{`#!excsv version=0.4 delim=comma header=1
+{`#!excsv version=0.5 delim=comma header=1 rows=3
 #@source: sales_db.orders
 #@grain: one row per order
 #column name=order_id type=int role=id
@@ -66,7 +67,7 @@ order_id,status,amount,created_at
         <code>#!excsv</code> names the dialect so nobody has to sniff it.
         Leave out what you don't need — defaults fill in (comma, UTF-8, first row is a header).
       </p>
-      <pre><code><span class="hl-meta">#!excsv version=0.4 delim=comma header=1 rows=18432 null=NA</span></code></pre>
+      <pre><code><span class="hl-meta">#!excsv version=0.5 delim=comma header=1 rows=18432 null=NA</span></code></pre>
 
       <div class="table-wrap">
         <table>
@@ -159,6 +160,52 @@ order_id,status,amount,created_at
       </p>
     </section>
 
+    <section class="block" id="computed">
+      <h2>Computed columns — derive, don't duplicate</h2>
+      <p>
+        A column's value doesn't have to be stored. <code>formula=</code> derives it from other columns —
+        the same idea as a spreadsheet formula or a database's <code>GENERATED</code> column, written down as metadata.
+      </p>
+      <pre><code><span class="hl-meta">#column name=price    type=decimal unit=USD</span>
+<span class="hl-meta">#column name=quantity type=int</span>
+<span class="hl-meta">#column name=total    type=decimal unit=USD formula="price * quantity"</span></code></pre>
+      <p>
+        <code>total</code> never appears in the data section and costs zero bytes — a reader computes it on demand
+        from <code>price</code> and <code>quantity</code>. That's a <strong>virtual</strong> column: metadata only,
+        no header cell, no field in any row.
+      </p>
+
+      <div class="cards cards-2">
+        <div class="card">
+          <h3>Virtual</h3>
+          <p><code>materialized</code> absent or <code>0</code> — no data, no storage cost, no header cell. Pure definition.</p>
+        </div>
+        <div class="card">
+          <h3>Materialized</h3>
+          <p><code>materialized=1</code> — the value is cached as an ordinary column. <code>formula=</code> stays either way.</p>
+        </div>
+      </div>
+
+      <p>
+        Materialize it when a downstream tool can't evaluate <code>formula=</code> itself and just needs the number
+        sitting in the row. Dematerialize it later to cut the cached values back out and shrink the file — the
+        definition survives:
+      </p>
+      <pre><code>excsv column materialize total data.excsv
+excsv column dematerialize total data.excsv</code></pre>
+      <p>
+        A virtual column has no position — only a name — so it never takes <code>index=</code>; that also means
+        <code>formula=</code> requires <code>header=1</code>. This is where <a href="/variants/#pack">pack</a> pays
+        off most: a virtual column in a <code>.excsv.pack.zip</code> costs zero <code>.col</code> files.
+      </p>
+      <p>
+        Formulas use a small, portable expression language — arithmetic, comparisons, <code>case when</code>, a
+        handful of functions (<code>concat</code>, <code>coalesce</code>, <code>round</code>, …) — not raw SQL, so the
+        same <code>formula=</code> means the same thing regardless of which database eventually reads the generated
+        DDL (<code>GENERATED … VIRTUAL</code> / <code>STORED</code>; ClickHouse <code>ALIAS</code> / <code>MATERIALIZED</code>).
+      </p>
+    </section>
+
     <section class="block" id="grain">
       <h2>Grain — what one row is</h2>
       <p>
@@ -216,7 +263,7 @@ order_id,status,amount,created_at
         Recreating a table from a CSV usually means retyping the schema.
         Here the <code>CREATE TABLE</code> (and the <code>SELECT</code> that produced the dump) sit in the file.
       </p>
-      <pre><code><span class="hl-meta">#!excsv version=0.4 sql-dialect=postgres</span>
+      <pre><code><span class="hl-meta">#!excsv version=0.5 sql-dialect=postgres</span>
 <span class="hl-meta">#$ddl: CREATE TABLE orders (id BIGINT PRIMARY KEY, amount NUMERIC(8,2))</span>
 <span class="hl-meta">#$dql: SELECT id, amount FROM sales.orders WHERE exported_at &gt; '2026-01-01'</span></code></pre>
       <p>
@@ -287,12 +334,12 @@ order_id,status,amount,created_at
       <p>
         Same content — columns, types, aggregates, SQL — in a file of its own,
         <code>sales.excsv.json</code>, for when you're already in JSON: an API, a config, a prompt.
-        There's a <a href="/schema/excsv-0.4.schema.json">JSON Schema</a> to validate against,
+        There's a <a href="/schema/excsv-0.5.schema.json">JSON Schema</a> to validate against,
         or to constrain a model's output to. CSV → JSON → CSV doesn't lose anything.
         Money stays a string so it doesn't become a float.
       </p>
       <pre><code>{`{
-  "excsv": "0.4",
+  "excsv": "0.5",
   "meta": { "grain": "one row per order" },
   "columns": [
     { "index": 0, "name": "amount", "type": "decimal", "unit": "USD", "role": "measure", "agg": "sum" }

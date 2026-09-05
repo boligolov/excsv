@@ -51,7 +51,7 @@ export const SAMPLE_CSV = `id,customer,amount
 3,Initech,200.00
 `;
 
-export const SAMPLE_TEXT = `#!excsv version=0.4 delim=comma header=1
+export const SAMPLE_TEXT = `#!excsv version=0.5 delim=comma header=1 rows=3
 #@source: sales_db.orders
 #@grain: one row per order
 #column name=order_id type=int role=id
@@ -67,7 +67,7 @@ order_id,status,amount,created_at
 `;
 
 export const SAMPLE_JSON = `{
-  "excsv": "0.4",
+  "excsv": "0.5",
   "layout": "inline",
   "csv": { "delim": "comma", "header": true },
   "meta": { "grain": "one row per order", "source": "sales_db.orders" },

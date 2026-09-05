@@ -16,6 +16,7 @@ It extends CSV with:
 
 - An inline metadata header (`#!excsv`)
 - Column schema annotations (`#column` — types, units, `role`/`agg`, enums, patterns)
+- Computed (virtual) columns (`#column formula=` — derived, zero-storage-cost columns, optionally materialized and cached — see [Columns § Computed columns](columns.md#computed-columns-formula))
 - Optional aggregation metadata (`#%` — sum/avg/count/… as a trust anchor)
 - Optional file metadata and provenance (`#@` — including `#@grain`, `#@source`)
 - Optional SQL companions (`#$` — DDL/DQL with dialect tagging)

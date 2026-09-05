@@ -54,13 +54,13 @@ If you have CSVW `metadata.json`, migrate `tableSchema.columns[].datatype` → `
 
 ## CSVY
 
-[CSVY](https://csvy.org/) (used by R's `rio`/`datapass` packages) prefixes a CSV with a **YAML front-matter block** delimited by `---` lines — file-level metadata plus a `schema.fields[]` list (`name`, `type`, `description`) — followed by plain CSV rows, no `#` prefix. It's the closest single-file sibling to ExCSV's inline profile: same "metadata block on top, rows below" shape, YAML instead of line-oriented `key=value`.
+[CSVY](https://github.com/leeper/csvy) (used by R's `rio`/`csvy` packages) prefixes a CSV with a **YAML front-matter block** delimited by `---` lines — file-level metadata plus a `schema.fields[]` list (`name`, `type`, `description`) — followed by plain CSV rows, no `#` prefix. It's the closest single-file sibling to ExCSV's inline profile: same "metadata block on top, rows below" shape, YAML instead of line-oriented `key=value`.
 
 Because the front matter isn't `#`-prefixed, a CSVY file is **not** valid plain CSV to a reader that doesn't know CSVY — the YAML block would be read as garbage data rows. That's the one property ExCSV treats as non-negotiable: every `#` line is safely ignorable by tools that have never heard of ExCSV. CSVY also has no aggregations, SQL companions, checksum, or container forms.
 
 ## Frictionless Data — Table Schema & Data Package
 
-[Frictionless Table Schema](https://data.frictionlessdata.io/specification/table-schema/) (Open Knowledge Foundation) is the closest widely-adopted sibling in spirit: a JSON document describing a CSV's fields (`type`, `format`, `constraints.enum` / `minimum` / `maximum` / `pattern`, `constraints.unique`), typically shipped as `resource.json` or bundled with other resources into one `datapackage.json`, with `foreignKeys` linking resources inside the package.
+[Frictionless Table Schema](https://datapackage.org/standard/table-schema/) (Open Knowledge Foundation) is the closest widely-adopted sibling in spirit: a JSON document describing a CSV's fields (`type`, `format`, `constraints.enum` / `minimum` / `maximum` / `pattern`, `constraints.unique`), typically shipped as `resource.json` or bundled with other resources into one `datapackage.json`, with `foreignKeys` linking resources inside the package.
 
 The difference is where the metadata lives: Table Schema is JSON-first and **detached by default** — the CSV itself never carries it. ExCSV is line-oriented and **inline-first**, with JSON (`.excsv.json`) as a lossless secondary form for exactly the cases (APIs, LLM structured output) where JSON is the more natural fit. Table Schema also has no aggregation or SQL-companion concept — same gap as ECSV/MetaCSV.
 

@@ -188,7 +188,7 @@ export async function readPack(
 
 function tableHeaderText(table: PackTable): string {
   const rows = table.data?.length ?? table.rows ?? 0;
-  const headerParts = ['#!excsv version=0.4 layout=columnar', `rows=${rows}`];
+  const headerParts = ['#!excsv version=0.5 layout=columnar', `rows=${rows}`];
   if (table.sectionSize) headerParts.push(`section-size=${table.sectionSize}`);
   if (table.csv?.delim && table.csv.delim !== 'comma') headerParts.push(`delim=${table.csv.delim}`);
   if (table.csv?.quote && table.csv.quote !== 'none') headerParts.push(`quote=${table.csv.quote}`);
@@ -197,7 +197,7 @@ function tableHeaderText(table: PackTable): string {
   if (table.csv?.null?.length === 1) headerParts.push(`null=${table.csv.null[0]}`);
 
   const subDoc: ExcsvDocument = {
-    excsv: '0.4',
+    excsv: '0.5',
     csv: table.csv,
     meta: table.meta,
     columns: table.columns,

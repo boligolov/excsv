@@ -25,10 +25,10 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
     headerPairs = parseKvPairs(lines[0].slice('#!excsv'.length));
     lineIdx = 1;
   } else if (lines[0].startsWith('#')) {
-    headerPairs = { version: '0.4' };
-    warnings.push({ code: 'no_header', message: 'No #!excsv line; assuming version=0.4 defaults.' });
+    headerPairs = { version: '0.5' };
+    warnings.push({ code: 'no_header', message: 'No #!excsv line; assuming version=0.5 defaults.' });
   } else {
-    headerPairs = { version: '0.4' };
+    headerPairs = { version: '0.5' };
     warnings.push({ code: 'no_header', message: 'No #!excsv line; treating entire input as CSV data.' });
   }
 
@@ -39,7 +39,7 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
   const nullMarkers = new Set(csv.null ?? []);
 
   const doc: ExcsvDocument = {
-    excsv: headerPairs.version ?? '0.4',
+    excsv: headerPairs.version ?? '0.5',
     csv,
   };
 

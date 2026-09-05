@@ -6,9 +6,11 @@ The answers used to live somewhere else: a README, a Slack thread, someone's mem
 
 Your file stays plain CSV. `grep`, `awk`, `cut`, pandas, Excel keep working exactly as before. It just stops being anonymous.
 
-## It describes; it never changes your data
+## It describes; it never changes your data on its own
 
-ExCSV is a layer of description on top of CSV. The rows themselves stay byte-for-byte the same CSV they always were — ExCSV only *annotates* them. Reading an ExCSV file never rewrites a value, never fills in a blank, never "corrects" anything. What you see in the data section is what's there. That's the whole point: you can trust the file to describe reality, not reshape it.
+ExCSV is a layer of description on top of CSV. Reading an ExCSV file never rewrites a value, never fills in a blank, never "corrects" anything — what you see in the data section is what's there, every time you just open or parse the file. That's the whole point: you can trust the file to describe reality, not reshape it.
+
+A [sidecar](file-structure.md#sidecar--annotate-without-touching-the-data) takes that furthest: the file it describes stays byte-for-byte untouched, permanently, no matter what you do to the sidecar. An inline or pack file is yours to build up, though, and a few explicit commands *do* write data — `excsv column materialize` computes a [computed column](columns.md#computed-columns)'s values and adds them as a real column; `dematerialize` removes them again. Those are deliberate, one-command-at-a-time edits, never something that happens as a side effect of opening or reading the file.
 
 ## What you can add
 
@@ -16,6 +18,7 @@ Every piece is optional. Add a header, then types, then stats, then SQL — each
 
 - **A header line** (`#!excsv`) — declares the dialect: delimiter, quote, encoding, whether row one is a header, how many rows there are.
 - **Column schema** (`#column`) — types, units, display formats, allowed values (enums), and analytical roles like *id* / *measure* / *time*.
+- **Computed columns** (`#column formula=`) — a column derived from others, priced in bytes only if you choose to materialize it.
 - **Aggregations** (`#%`) — sum / avg / min / max / counts, pre-computed, so a total is a fact in the file, not something a preview tool guesses.
 - **File metadata** (`#@`) — source, author, license, tags, and `#@grain` ("one row per order") that says what a single row *is*.
 - **SQL companions** (`#$`) — DDL to recreate the schema and DQL queries for provenance, tagged by dialect (MySQL / Postgres / ClickHouse / …).

@@ -57,7 +57,7 @@ The manifest is the source of truth. Test runners walk it, not the directory.
     parse: ok
     warnings: []
     header:
-      version: "0.4"
+      version: "0.5"
     rows: 0
     columns: 0
 
@@ -82,7 +82,7 @@ The manifest is the source of truth. Test runners walk it, not the directory.
   expect:
     parse: ok
     comment:
-      starts_with: "#!excsv version=0.4"
+      starts_with: "#!excsv version=0.5"
       ends_with: "#@comment-truncated: 1"
 ```
 
@@ -148,6 +148,7 @@ Warn-only cases live here (not under `invalid/`):
 | 064 | `encoding_unsupported` |
 | 065 | `encoding_not_ascii_compatible` |
 | 066 | custom `#@` keys |
+| 067 | `columns_mismatch` (`verify: fail`) |
 
 Still out: `##` round-trip preservation (if a writer opts in); on-demand 100k-row streaming file; computed-column fixtures (spec §5, not yet in implementation docs).
 
@@ -164,6 +165,7 @@ Retired slots (never reuse): 007, 009, 010, 017, 022, 025, 026, 029, 031, 032 �
 | 019 | `rows=abc` → `header_invalid_value` (not `rows_mismatch`) |
 | 024 | `invalid_utf8` |
 | 027, 028, 030, 033 | sidecar FAIL (`033` = `sidecar_reference_escapes_dir`) |
+| 034 | `header_missing_rows` (header present, no `rows=`) |
 
 ### Zip — valid (001–013, generated)
 

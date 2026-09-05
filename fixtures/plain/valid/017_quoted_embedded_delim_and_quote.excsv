@@ -1,4 +1,4 @@
-﻿#!excsv version=0.4 quote=double
+﻿#!excsv version=0.5 quote=double rows=2
 id,note
 1,"a,b"
 2,"She said ""hello"""

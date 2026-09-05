@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://excsv.org/schema/excsv-0.4.schema.json",
+  "$id": "https://excsv.org/schema/excsv-0.5.schema.json",
   "title": "ExCSV JSON form (.excsv.json)",
   "description": "The JSON form of an ExCSV document, carried in a .excsv.json file (media type application/excsv+json). Carries the same vocabulary as the text form (#!excsv header, #@ metadata, #column schema, #% aggregates, #$ SQL) so the two round-trip losslessly. The CSV text form stays canonical; the JSON form is for JSON-native contexts (APIs, config, LLM structured output).",
   "type": "object",
@@ -10,7 +10,7 @@
     "excsv": {
       "description": "Format version. Mirrors #!excsv version=.",
       "type": "string",
-      "examples": ["0.4"]
+      "examples": ["0.5"]
     },
     "layout": {
       "description": "Document shape. inline/sidecar are single-table (use root-level columns/data/reference); pack is multi-table (use tables[]).",
@@ -96,7 +96,12 @@
       "pattern": "^[a-z0-9-]+:[0-9a-f]+$"
     },
     "rows": {
-      "description": "Number of data rows (excluding the header). For inline data this should equal data.length.",
+      "description": "Number of physical data rows (excluding the header). Required except in a pack (tables[] carries per-table rows instead). For inline data this should equal data.length.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "column_count": {
+      "description": "Total physical column count — stored plus materialized:true computed columns; virtual computed columns don't count. Optional. Named distinctly from `columns` (the #column schema array) to avoid collision; mirrors text-form `columns=`.",
       "type": "integer",
       "minimum": 0
     },
@@ -141,6 +146,15 @@
         "description": "A pack (tables) cannot also carry a root-level sidecar reference.",
         "required": ["tables", "reference"]
       }
+    },
+    {
+      "if": {
+        "not": { "required": ["tables"] }
+      },
+      "then": {
+        "description": "Non-pack documents (inline, sidecar, header-only stub) MUST declare rows. A pack carries rows per-table instead.",
+        "required": ["rows"]
+      }
     }
   ],
   "$defs": {
@@ -153,12 +167,13 @@
     },
     "column": {
       "type": "object",
-      "required": ["index"],
       "properties": {
         "name": { "type": "string", "description": "Column identifier. No spaces." },
         "title": { "type": "string", "description": "Human-readable display name." },
         "description": { "type": "string" },
-        "index": { "type": "integer", "minimum": 0, "description": "Zero-based position of this column's value in each `data` row array (`data[row][index]`)." },
+        "index": { "type": "integer", "minimum": 0, "description": "Zero-based position of this column's value in each `data` row array (`data[row][index]`). REQUIRED on every physical (stored or materialized) column; MUST NOT be present on a virtual computed column (see `formula`)." },
+        "formula": { "type": "string", "description": "Computed-column definition: derives this column's values from other columns instead of storing them, using one portable expression language (no dialect selector) so any conforming tool can evaluate it to materialize the result. Never dropped, virtual or materialized." },
+        "materialized": { "type": "boolean", "description": "For a `formula` column: true = values are also cached as real data (present in `data`, has `index`). Absent/false = virtual (no data cells, no `index`)." },
         "type": {
           "type": "string",
           "enum": ["string", "int", "long", "float", "double", "decimal", "boolean", "date", "time", "datetime", "uuid", "binary"]
@@ -199,7 +214,21 @@
       "patternProperties": {
         "^x-": { "description": "Custom, tool-specific attribute." }
       },
-      "additionalProperties": true
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "required": ["formula"],
+            "properties": { "materialized": { "not": { "const": true } } }
+          },
+          "then": {
+            "properties": { "index": false }
+          },
+          "else": {
+            "required": ["index"]
+          }
+        }
+      ]
     },
     "statement": {
       "description": "A single SQL statement, optionally tagged by dialect and version.",
@@ -215,7 +244,7 @@
     "table": {
       "description": "One table inside a pack. Mirrors a single-table document, plus a name.",
       "type": "object",
-      "required": ["name"],
+      "required": ["name", "rows"],
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string", "description": "Table name. Unique within the pack." },
@@ -256,6 +285,7 @@
         },
         "checksum": { "type": "string", "pattern": "^[a-z0-9-]+:[0-9a-f]+$" },
         "rows": { "type": "integer", "minimum": 0 },
+        "column_count": { "type": "integer", "minimum": 0 },
         "data": {
           "type": "array",
           "items": {

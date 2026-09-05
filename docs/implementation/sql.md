@@ -88,12 +88,25 @@ ExCSV has **no dedicated key/foreign-key construct** in the descriptive layer. E
 
 ExCSV tools **do not** run SQL against a database. `excsv sql apply --dialect=D` prints matching statements to **stdout** in file order; warnings go to **stderr**. Pipe to `psql`, `mysql`, etc.
 
+## Computed columns in DDL
+
+A `#column` with `formula=` ([Columns § Computed columns](columns.md#computed-columns-formula)) generates a `GENERATED` column definition instead of an ordinary one, when a tool **derives fresh DDL from `#column`** for a table's `CREATE TABLE` (e.g. `excsv sql ddl <dialect>`):
+
+| State | Postgres ≥ 12 / MySQL ≥ 5.7 | ClickHouse | Target with no generated-column support |
+| --- | --- | --- | --- |
+| Virtual (`materialized` absent/`0`) | `GENERATED ALWAYS AS (<expr>) VIRTUAL` | `ALIAS <expr>` | Omit the column, or emit `<expr>` as a comment |
+| Materialized (`materialized=1`) | `GENERATED ALWAYS AS (<expr>) STORED` | `MATERIALIZED <expr>` | Ordinary stored column (no `GENERATED` clause) |
+
+`<expr>` is the `formula=` payload translated into the target dialect. `formula=` is always the one portable grammar ([Columns § Formula language](columns.md#formula-language)) — there is no per-formula dialect to match or fall back on — so this translation is deterministic for **any** target dialect: the grammar's operators and whitelisted functions map onto ANSI SQL equivalents everywhere.
+
+This describes DDL a tool **generates on demand** from the current `#column` list. It does **not** describe editing `#$ddl` lines already sitting in the file — materializing or dematerializing a computed column never touches pre-existing DDL, which can then disagree with the current column set. See [Columns § `#$ddl` is not touched](columns.md#ddl-is-not-touched) and `ddl_column_mismatch`.
+
 ## Examples
 
 **Single dialect via header:**
 
 ```
-#!excsv version=0.4 sql-dialect=mysql
+#!excsv version=0.5 sql-dialect=mysql
 #$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(254) NOT NULL) ENGINE=InnoDB
 #$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)
 #$dql: SELECT * FROM orders WHERE id > 100
@@ -102,7 +115,7 @@ ExCSV tools **do not** run SQL against a database. `excsv sql apply --dialect=D`
 **Multi-dialect side-by-side:**
 
 ```
-#!excsv version=0.4
+#!excsv version=0.5
 #$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(8,2))
 #$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB
 #$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))

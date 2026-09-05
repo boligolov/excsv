@@ -46,7 +46,7 @@ mybundle.excsv.pack.zip
 Header-only ExCSV (`#!excsv ... layout=pack`). Reuses ExCSV meta grammar; pack-specific kinds below.
 
 ```
-#!excsv version=0.4 layout=pack table-count=3 original-size=3123200
+#!excsv version=0.5 layout=pack table-count=3 original-size=3123200
 #@pack-name: sales-q1-2026
 #@author: ops@example.com
 #@created: 2026-04-01T00:00:00Z
@@ -62,7 +62,7 @@ Header-only ExCSV (`#!excsv ... layout=pack`). Reuses ExCSV meta grammar; pack-s
 Single-table example:
 
 ```
-#!excsv version=0.4 layout=pack single-table=orders table-count=1 original-size=1843200
+#!excsv version=0.5 layout=pack single-table=orders table-count=1 original-size=1843200
 #@pack-name: orders-only-export
 #table name=orders dir=orders/ columns=4 original-size=1843200
 ```
@@ -75,7 +75,7 @@ Single-table example:
 | `#fk` | `#fk from=<t>.<col> to=<t>.<col>` | Informational FK (no enforcement) |
 
 - `dir` — ZIP path prefix with trailing `/`.
-- `columns` — physical column count = non-virtual `#column` lines in that table's `_header.excsv` (stored + `materialized=1`). Virtual computed columns (`formula=` without `materialized=1`) have no `.col` and are excluded.
+- `columns` — physical column count = non-virtual `#column` lines in that table's `_header.excsv` (stored + `materialized=1`). Virtual [computed columns](columns.md#computed-columns-formula) (`formula=` without `materialized=1`) have no `.col` and are excluded.
 - `original-size` — uncompressed sum of `.col` / section `.col` bytes under `dir/` (excludes `_header.excsv`).
 
 Never use `#table` / `#fk` in table `_header.excsv` or plain / row-ZIP files.
@@ -85,7 +85,7 @@ Never use `#table` / `#fk` in table `_header.excsv` or plain / row-ZIP files.
 | Field | Requirement | Description |
 | --- | --- | --- |
 | `layout` | **MUST** | `pack` |
-| `version` | **MUST** | `0.4` for pack archives |
+| `version` | **MUST** | `0.5` for pack archives |
 | `original-size` | **MUST** | Sum of all `#table` `original-size=` values |
 | `single-table` | MAY | Default table name while one `#table` exists |
 | `table-count` | MAY | Must equal `#table` count if present |
@@ -115,7 +115,7 @@ Per table directory:
 - **Column payloads** — one `.col` per column, or section folders.
 
 ```
-#!excsv version=0.4 layout=columnar rows=237000 section-size=10000 sql-dialect=postgres
+#!excsv version=0.5 layout=columnar rows=237000 section-size=10000 sql-dialect=postgres
 #@source: sales_db.orders
 #column name=id type=int unique=1
 #column name=customer_id type=int
@@ -137,6 +137,7 @@ Per table directory:
 - Name: `<index>-<safe_name>.col` (zero-padded index; `header=0` → `<index>.col`).
 - Contents: one value per line, plain text; empty line = empty field; `null=` from header applies.
 - `wc -l` on a column file MUST equal `rows` (per section, section lines sum to `rows`).
+- A materialized [computed column](columns.md#computed-columns-formula) (`formula=` + `materialized=1`) gets an ordinary `.col` file like any stored column. A virtual computed column (`formula=` without `materialized=1`) has none and does not consume an index slot.
 
 ### Sectioning
 
@@ -212,7 +213,7 @@ Archives **MAY** use standard ZIP encryption. Password via tooling (`--password`
 ### Pack-level
 
 - Extension `.excsv.pack.zip` or `.extsv.pack.zip`.
-- `_manifest.excsv` first in central directory; `layout=pack`, `version=0.4`, `original-size=` = sum of `#table` `original-size=`.
+- `_manifest.excsv` first in central directory; `layout=pack`, `version=0.5`, `original-size=` = sum of `#table` `original-size=`.
 - Each `#table dir=` exists; `columns=` / `original-size=` SHOULD match reality.
 - `single-table=` stale if multiple `#table` lines → ignore, MAY warn.
 - Table names unique; SHOULD match `[a-z_][a-z0-9_]*`.

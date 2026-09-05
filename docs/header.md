@@ -1,9 +1,9 @@
 ﻿# Header line
 
-The first line, when present, names the CSV dialect and a few facts about the file. It starts with `#!excsv` and always carries `version`:
+The first line, when present, names the CSV dialect and a few facts about the file. It starts with `#!excsv` and always carries `version` and `rows`:
 
 ```
-#!excsv version=0.4 delim=comma header=1
+#!excsv version=0.5 delim=comma header=1 rows=2
 ```
 
 Everything else is `key=value`, separated by spaces. Values with spaces go in double quotes (`"like this"`); a literal double quote inside is written `""`. Leave out any field you don't need — sensible defaults fill in.
@@ -12,12 +12,13 @@ Everything else is `key=value`, separated by spaces. Values with spaces go in do
 
 | Field | Usual? | What it says |
 | --- | --- | --- |
-| `version` | always | Format version (`0.4`) |
+| `version` | always | Format version (`0.5`) |
+| `rows` | always | How many data rows there are (excluding the header). A stub with no data yet writes `rows=0` |
 | `delim` | common | The delimiter. A name (`comma`, `tab`, `pipe`, `semicolon`) or a literal like `::`. Default: `comma` |
 | `quote` | common | The quote character. `none`, `double`, `single`, or a literal. Default: `none` |
 | `header` | common | `1` if the first data row is a header row, `0` if not. Default: `1` |
 | `null` | optional | An extra string that also means null (e.g. `null=NA`, `null=\N`). Empty fields are always null already |
-| `rows` | optional | How many data rows there are (excluding the header) |
+| `columns` | optional | The physical column count — stored columns plus materialized [computed columns](columns.md#computed-columns); virtual ones don't count |
 | `checksum` | optional | Integrity fingerprint of the data — see [Checksum](checksum.md) |
 | `encoding` | optional | Character encoding. Default: `UTF-8` |
 | `sql-dialect` | optional | Default SQL dialect for `#$` lines that don't name one — see [SQL](sql.md) |

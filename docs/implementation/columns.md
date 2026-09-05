@@ -171,3 +171,86 @@ The default aggregation for a `measure` without `agg` is `sum`. `agg` carries no
 
 - Unknown attributes **MUST** be ignored by parsers.
 - Custom attributes **SHOULD** use the prefix `x-` (e.g. `x-source=erp`).
+
+## Computed columns (`formula=`)
+
+A `#column` MAY carry `formula=` to declare a **computed column**: a column whose value is derived from other columns rather than stored as independent data. `formula=` is the column's definition and is **never** dropped, whether or not the column is currently materialized.
+
+```
+#column name=total     type=decimal formula="price * quantity"
+#column name=margin    type=decimal formula="(price - cost) / price"
+#column name=full_name type=string  formula="concat(first_name, ' ', last_name)"
+```
+
+| Field | Requirement | Description |
+| --- | --- | --- |
+| `formula` | MAY | Defines a computed column — see [Formula language](#formula-language) |
+| `materialized` | MAY | `1` = the computed value is also cached as real, stored data. Absent or `0` = virtual (default) |
+
+### Virtual vs materialized
+
+| | Virtual (`materialized` absent/`0`) | Materialized (`materialized=1`) |
+| --- | --- | --- |
+| Values in the data | none | present — a real field in each row (or `.col` in [pack](pack.md)) |
+| Storage cost | zero | full column, same as any stored column |
+| `formula=` | kept | kept |
+| Position | none — no header cell, no data field | wherever the materialize operation placed it |
+| DDL, freshly generated from `#column` | `GENERATED ALWAYS AS (…) VIRTUAL` (ClickHouse: `ALIAS`) | `GENERATED ALWAYS AS (…) STORED` (ClickHouse: `MATERIALIZED`) — see [SQL § Computed columns in DDL](sql.md#computed-columns-in-ddl) |
+
+A computed column is virtual by default: pure metadata, with no header cell, no field in any data row, and no pack `.col` file. **Materializing** it (`excsv column materialize <name>`) writes its current values into the data as an ordinary physical column and sets `materialized=1`. **Dematerializing** it (`excsv column dematerialize <name>`) removes that physical data and clears `materialized` back to absent/`0`. Both are reversible tooling operations, not something a reader does implicitly — `formula=` is untouched either way, so cutting a materialized column for space never loses the definition of what the column means.
+
+### Position and `header=`
+
+A computed column, virtual or materialized, **MUST NOT** carry `index=` and is always addressed by `name=`, never by position. Consequently `formula=` **MUST** only be used when `header=1`; a `#column` that sets `formula=` while `header=0` **MUST fail** (`formula_requires_header`). When a virtual column is materialized, its physical position in the row is wherever the materialize operation places it (by default, appended after the last existing column; a tool MAY offer a specific position) — the `#column` line's own place in the meta block SHOULD then be updated to match, for readability, but it is never load-bearing the way `index=` is for a stored column under `header=0`.
+
+### Formula language
+
+`formula=` is always written in **one portable expression language** — there is no dialect selector. This is deliberate: `formula=` exists so a tool (`excsv-cli` or any conforming implementation) can actually **evaluate** it against a row's other columns to materialize the result — the whole point of a computed column is that the tool computes it from data already in the file. A language a parser can't evaluate (arbitrary target-SQL syntax, say) couldn't be materialized by anything but a live database, which defeats that purpose — see [SQL companions](sql.md#tooling): "ExCSV tools do not run SQL against a database." So the grammar is fixed and simple enough that every conforming tool implements it:
+
+- Operands: bare stored-column names, number literals, `'string'` literals, `true` / `false`, `null`.
+- Operators: `+ - * / %`, unary `-`, comparisons `= <> < <= > >=`, `and or not`, parentheses.
+- No `||` — use `concat(...)`.
+- Function whitelist: `abs round floor ceil coalesce nullif least greatest length lower upper trim substr concat`.
+- `case when … then … [else …] end`.
+
+A vendor-specific `GENERATED` column (a window function, a PostGIS/ClickHouse-only function, anything this grammar can't express) is not a `formula=` at all — write it directly as an ordinary `#$ddl-<dialect>` statement instead. See [SQL § Computed columns in DDL](sql.md#computed-columns-in-ddl).
+
+### Dependencies
+
+A `formula=` **MUST** reference only **stored** columns — plain columns without their own `formula=` — never another computed column (no chaining):
+
+| Condition | Code | Severity |
+| --- | --- | --- |
+| Formula references another computed column | `formula_references_computed` | FAIL |
+| Formula references an unknown column name | `formula_unknown_reference` | FAIL |
+| Formula does not parse under the grammar | `formula_parse_error` | FAIL |
+| `index=` present on a `formula=` column | `formula_index_forbidden` | FAIL |
+| `formula=` column present while `header=0` | `formula_requires_header` | FAIL |
+| `materialized=1` without matching physical data, or physical data present while `materialized` is absent/`0` | `computed_materialized_mismatch` | FAIL |
+| `default=` or `required=` set on a `formula=` column | `computed_default_ignored` | WARN (ignored either way) |
+
+Full definitions in [Error handling](error-handling.md#computed-columns).
+
+### Arity and aggregation
+
+A **virtual** computed column has no value slot: it is excluded from data-row arity (`data_row_arity_mismatch` counts physical columns only), from `#%` aggregation arity ([Aggregations](aggregations.md)), from a header's declared `columns=` ([Header](header.md#header-fields)), and from pack `columns=` / `.col` files ([Pack](pack.md#manifest-only-meta-lines)). A **materialized** computed column counts as an ordinary physical column everywhere — arity, `#%`, header `columns=`, pack `.col` — exactly like a stored column.
+
+### Staleness
+
+Materialized values are a cache. If a reader can tell the underlying stored columns changed since materialization (e.g. via `checksum=`) without the cached formula output being refreshed, it **SHOULD** warn `computed_stale` — advisory, never fatal, the same posture as `checksum=` itself.
+
+### Materialize / dematerialize by container
+
+`excsv column materialize <name> [FILE] [-o OUT]` and `excsv column dematerialize <name> [FILE] [-o OUT]` are writer operations, not something a reader does implicitly. What they rewrite depends on the shape of `FILE`:
+
+- **Plain, inline** (`.excsv`/`.extsv`, header + data in one file). Rewritten in place (or to `-o`). `materialize` appends the computed values as a new field in every row — by default at the end, or at a position the caller requests — adds the matching header cell if `header=1`, and sets `materialized=1` on the `#column` line. `dematerialize` reverses this: drop the field from every row and the header row, clear `materialized`. Either way `rows=` is unaffected (**MUST** stay accurate throughout, since it's required regardless); if the header declares `columns=`, it **MUST** be incremented (materialize) or decremented (dematerialize) to match the new physical width, or dropped rather than left stale. `checksum=`, if set, **MUST** be recomputed, since the data section changed.
+- **Sidecar** (header + meta only, `reference=`). The referenced CSV/TSV **MUST NOT** be modified — that is the sidecar's whole reason to exist, and a sidecar can never itself gain a data section (`sidecar_has_data_section` is a FAIL condition; see [File structure § Sidecar](file-structure.md#sidecar-detached-metadata)). There is no in-place materialize for a sidecar: `materialize` **MUST** write a new **inline** file (`-o` required, or a tool-chosen default name distinct from both the sidecar and its reference) carrying the sidecar's meta lines, the referenced rows, and the new materialized column. `reference=` **MUST NOT** appear in the output (it is now inline, not a sidecar); `rows=` carries over unchanged (same rows, one more field each — still **MUST** be present); a declared `columns=` is bumped the same way as the plain case. `checksum=` **MUST** be recomputed if present — the data section is no longer byte-identical to the sidecar's referenced file, since it now includes the materialized column. The original sidecar and the file it describes are left byte-identical.
+- **ZIP, inline primary** (`.excsv.zip`). Unzipped, the inner file is rewritten exactly as the plain inline case (data, header cell, `materialized=1`, `rows=`, `columns=` if declared, `original-size=`, `checksum=`), then re-zipped; the ZIP comment is regenerated from the new header ([ZIP § ZIP Comment](zip.md#zip-comment-summary)).
+- **ZIP, sidecar primary**. Same rule as the filesystem sidecar case: the bundled referenced entry is never rewritten. `materialize` produces a new inline artifact (`.excsv` or `.excsv.zip`); it never turns the archive's sidecar entry into an inline one in place.
+- **Pack**. `materialize` adds an ordinary `.col` file (one per section, if `section-size=` is set) to the table's directory, sets `materialized=1` on that table's `_header.excsv`, and increments that table's `columns=`; the table's and the manifest's `original-size=` are recomputed as their sums ([Pack § Manifest header fields](pack.md#manifest-header-fields)). `dematerialize` removes the `.col` file(s), decrements `columns=`, clears `materialized`, and recomputes `original-size=` at both levels. Column position follows the same append-by-default rule as plain files.
+
+The invariant that survives every shape: a sidecar's referenced file is never rewritten by a column operation, in or out of a ZIP. Every other shape supports genuine in-place materialize/dematerialize, because none of them carries an "untouchable original" to protect.
+
+### `#$ddl` is not touched
+
+`materialize` and `dematerialize` never edit `#$ddl`. If the file already ships DDL — a `CREATE TABLE` written before the computed column existed, say — that DDL doesn't know about a column added (or removed) by a later materialize/dematerialize, exactly as it wouldn't know about any other manual change to the `#column` set: `#$ddl` is opaque text ([SQL companions](sql.md#tooling)), never structurally validated against `#column`. Keeping it in sync is the author's responsibility. A validator **MAY** warn `ddl_column_mismatch` if it can determine the two disagree — detecting this requires parsing the DDL text, which a conforming parser is **not** required to do, so this is best-effort, never guaranteed. Tooling **SHOULD** at least surface a note at materialize/dematerialize time when the file carries `#$ddl` it didn't touch.

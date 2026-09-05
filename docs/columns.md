@@ -120,3 +120,30 @@ For a measure, `agg` says how it's meant to combine — its *additivity*. This i
 | `none` | Not a number to aggregate | ratio, percentage, rating |
 
 A measure with no `agg` defaults to `sum`. `agg` is a hint that steers the *default* choice — notably away from summing a balance across months.
+
+## Computed columns
+
+A column's value doesn't have to be stored — it can be a formula over the other columns, the same idea as a spreadsheet formula column or a database's `GENERATED` column, just written down as metadata instead of hiding in a formula bar or a migration file.
+
+```
+#column name=price    type=decimal unit=USD
+#column name=quantity type=int
+#column name=total    type=decimal unit=USD formula="price * quantity"
+```
+
+`total` never shows up in the data section and costs zero bytes — a reader computes it on demand from `price` and `quantity`. That's a **virtual** column: metadata only, no header cell, no field in any row.
+
+Ask a tool to **materialize** it and the values get written into the file as an ordinary column — useful when a downstream tool can't evaluate `formula=` itself and just needs the number sitting in the row. The formula stays on the column either way, so you can **dematerialize** it later — drop the cached values to shrink the file — without losing the definition of what that column *means*. It's the same column, just with its cache toggled on or off:
+
+```
+excsv column materialize total data.excsv     # writes the computed values into the data
+excsv column dematerialize total data.excsv   # cuts them back out, keeps formula=
+```
+
+Where a virtual column sits in the file doesn't matter — it has no position, only a name (which is also why `formula=` needs `header=1`: without a header row there's no name to hang it on). A materialized one lands wherever the tool put it, by default at the end. This is also where a [pack](pack.md) pays off most: a virtual computed column in a `.excsv.pack.zip` costs **zero `.col` files** — pure metadata riding on top of columns that are actually stored.
+
+Materializing doesn't touch any `#$ddl` you've already shipped in the file. If there's a `CREATE TABLE` in there from before the computed column existed, it won't grow the new column on its own — add it there yourself if you need the real database to know about it too.
+
+What it *does* keep honest is the header's own count of things: `rows=` (always there) stays the same — materializing adds a column, not rows — but a declared `columns=` moves by one, the same way `rows=` would if you added or removed a row.
+
+Formulas use a small, portable expression language — arithmetic, comparisons, `case when`, a handful of functions like `concat`/`coalesce`/`round` — not raw SQL, so the same `formula=` means the same thing regardless of which database eventually reads the generated DDL. The full grammar and dependency rules are in [implementation/columns.md](implementation/columns.md#computed-columns-formula); the DDL it generates (`GENERATED … VIRTUAL`/`STORED`, ClickHouse `ALIAS`/`MATERIALIZED`) is in [SQL companions](implementation/sql.md#computed-columns-in-ddl).

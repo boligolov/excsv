@@ -1,4 +1,4 @@
-﻿# ExCSV v0.4 — Implementation spec (normative)
+﻿# ExCSV v0.5 — Implementation spec (normative)
 
 The precise, normative specification for people **building ExCSV tools** — parsers, writers, validators. Uses RFC 2119 keywords (**MUST** / **SHOULD** / **MAY**), pins parser behaviour, and defines the canonical error-code registry.
 

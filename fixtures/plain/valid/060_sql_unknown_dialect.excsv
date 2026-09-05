@@ -1,4 +1,4 @@
-#!excsv version=0.4
+#!excsv version=0.5 rows=1
 #$ddl-bogus: CREATE TABLE t (id INT)
 id
 1

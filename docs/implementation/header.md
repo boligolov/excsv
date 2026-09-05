@@ -5,7 +5,7 @@
 If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, and **MUST** contain at least the `version` field.
 
 ```
-#!excsv version=0.4 delim=comma header=1
+#!excsv version=0.5 delim=comma header=1
 ```
 
 ## Key-Value Pairs
@@ -26,12 +26,13 @@ If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, a
 
 | Field           | Requirement                | Description                                                                                                                          |
 | --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `version`       | **MUST**                   | Format version (`0.4`)                                                                                                               |
+| `version`       | **MUST**                   | Format version (`0.5`)                                                                                                               |
 | `delim`         | SHOULD                     | Delimiter — a known name **or** a literal character/sequence (see below). Default: `comma`                                            |
 | `quote`         | SHOULD                     | Quote — a known name **or** a literal character (see below). Default: `none`                                                          |
 | `header`        | SHOULD                     | `1` if the first data row is a header row, `0` otherwise. Default: `1`                                                                |
 | `null`          | MAY                        | Additional non-empty string representing null. Empty fields are **always** null by default. Use only when a non-empty value also means null (e.g. `null=NA`, `null=\N`). `null=""` is redundant. |
-| `rows`          | MAY                        | Total number of data rows (excluding header)                                                                                         |
+| `rows`          | **MUST** (**not used** on a pack manifest — `layout=pack` has no single row count; each table's own `_header.excsv` carries it) | Total number of physical data rows (excluding header). See [`rows_mismatch`](error-handling.md#zip-container-row-form) |
+| `columns`       | MAY                        | Total physical column count — stored plus `materialized=1` computed columns; virtual computed columns don't count. See [Columns § Computed columns](columns.md#computed-columns-formula) and [`columns_mismatch`](error-handling.md#zip-container-row-form) |
 | `checksum`      | MAY                        | Checksum of the data section (see [Checksum](checksum.md))                                                                          |
 | `encoding`      | MAY                        | Character encoding (default `UTF-8`)                                                                                                 |
 | `sql-dialect`   | MAY                        | Default SQL dialect for unqualified `#$` lines (see [SQL](sql.md))                                                  |
