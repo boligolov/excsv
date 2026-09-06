@@ -57,14 +57,65 @@ excsv convert to-csv data.excsv</code></pre>
         <a href="https://pkg.go.dev/github.com/boligolov/excsv-golang/pkg/excsv" target="_blank" rel="noopener">pkg/excsv</a>
       </p>
     </article>
+
+    <article class="tool-card">
+      <div class="tool-head">
+        <div>
+          <h2><a href="https://github.com/boligolov/excsv-python" target="_blank" rel="noopener">excsv-python</a></h2>
+          <p class="tool-meta">Python 3.10+ · Library only · Alpha</p>
+        </div>
+        <span class="badge">v0.5</span>
+      </div>
+
+      <p>
+        Python reference implementation of ExCSV, ported from
+        <a href="https://github.com/boligolov/excsv-golang" target="_blank" rel="noopener">excsv-golang</a>
+        with matching module layout and error taxonomy. Supports plain
+        (<code>.excsv</code>, <code>.ecsv</code>, <code>.extsv</code> sidecars), JSON
+        (<code>.excsv.json</code>), row ZIP (<code>.excsv.zip</code>, <code>.ecsv.zip</code>), and
+        pack (<code>.excsv.pack.zip</code>). Pre-1.0 — pin a version and check release notes before upgrading.
+      </p>
+
+      <ul class="feature-list">
+        <li>Parse, validate, fix, and serialize ExCSV documents</li>
+        <li>CSV/TSV import, JSON and CSVW export</li>
+        <li>Computed columns (<code>formula=</code>): materialize / dematerialize</li>
+        <li>Row ZIP and pack containers, with optional AES-256 password support via <code>pyzipper</code></li>
+        <li>Fixture-driven tests against the shared <code>fixtures/</code> corpus</li>
+      </ul>
+
+      <div class="tool-install">
+        <h3>Install</h3>
+        <pre><code>git clone https://github.com/boligolov/excsv-python
+cd excsv-python
+pip install -e .            # core library, stdlib only
+pip install -e ".[crypto]"  # + AES-256 zip password support</code></pre>
+      </div>
+
+      <div class="tool-example">
+        <h3>Quick start</h3>
+        <pre><code>import excsv
+
+res = excsv.parse_file("data.excsv", excsv.strict_options())
+doc = res.doc
+print(doc.row_count(), doc.header.delim_name)</code></pre>
+      </div>
+
+      <p class="tool-links">
+        <a href="https://github.com/boligolov/excsv-python" target="_blank" rel="noopener">GitHub</a>
+        ·
+        <a href="https://github.com/boligolov/excsv-python#quick-start" target="_blank" rel="noopener">Usage docs</a>
+      </p>
+    </article>
   </section>
 
   <section class="coming-soon">
     <h2>Planned</h2>
     <ul>
       <li><strong>Pack CLI</strong> — <code>col get</code>, <code>table list</code>, <code>pack create</code> on <code>.excsv.pack.zip</code>.</li>
-      <li>Python package (<code>excsv</code>) and additional language bindings — see the
-        <a href="https://github.com/boligolov/excsv/blob/master/plan/README.md" target="_blank" rel="noopener">implementation plan</a>.</li>
+      <li>Additional language bindings — see the
+        <a href="https://github.com/boligolov/excsv/blob/master/plan/README.md" target="_blank" rel="noopener">implementation plan</a>.
+        No library at all? See the <a href="/cookbook/">CLI Cookbook</a> for <code>grep</code>/<code>awk</code> one-liners.</li>
     </ul>
   </section>
 </Base>

@@ -19,7 +19,7 @@ Replaces the old `golang/features.md`, which is implemented but **obsolete**: it
 | Track | Repository | Role |
 | --- | --- | --- |
 | **Go** | [excsv-golang](https://github.com/boligolov/excsv-golang) | Primary CLI/library. Reference behaviour and performance. |
-| **Python** | separate repo (TBD) | Idiomatic API; parity-tested against Go on `fixtures/`. |
+| **Python** | [excsv-python](https://github.com/boligolov/excsv-python) | Idiomatic API; parity-tested against Go on `fixtures/`. |
 | **Cookbook** | separate repo (TBD) | Copy-paste CLI recipes by user goal; cites fixture IDs. |
 
 Each implementation repo owns its own plan: package layout, command tree, API surface. They **read** `plan/01-features.md` and **test against** `fixtures/` — symlink, junction, submodule, or vendored copy; no duplication of fixture files inside impl repos.
