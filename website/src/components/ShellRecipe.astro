@@ -1,0 +1,146 @@
+---
+interface Props {
+  title: string;
+  command: string;
+  output?: string;
+}
+
+const { title, command, output } = Astro.props;
+
+const prompted = command
+  .split('\n')
+  .map((line) => `$ ${line}`)
+  .join('\n');
+---
+
+<div class="recipe" class:list={[{ 'has-output': !!output }]}>
+  <h3>{title}</h3>
+  <div class="cmd-wrap">
+    <pre class="cmd"><code>{prompted}</code></pre>
+    <button type="button" class="copy-btn" aria-label="Copy command" title="Copy command">
+      <svg class="icon-copy" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      <svg class="icon-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </button>
+  </div>
+  {output && <pre class="out"><code>{output}</code></pre>}
+  {Astro.slots.has('default') && (
+    <p class="recipe-note"><slot /></p>
+  )}
+</div>
+
+<style>
+  .recipe {
+    margin-bottom: 1.75rem;
+  }
+  .recipe h3 {
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+  }
+  .recipe pre {
+    margin: 0;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--color-border);
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+  .cmd-wrap {
+    position: relative;
+  }
+  .cmd {
+    background: var(--color-code-bg);
+    border-radius: 8px;
+    color: var(--color-text);
+    padding-right: 2.75rem;
+  }
+  .recipe.has-output .cmd {
+    border-radius: 8px 8px 0 0;
+    border-bottom: none;
+  }
+  .out {
+    background: var(--color-bg);
+    border-radius: 0 0 8px 8px;
+    color: var(--color-muted);
+  }
+  .copy-btn {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 0;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .copy-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-muted);
+  }
+  .copy-btn .icon-check {
+    display: none;
+  }
+  .copy-btn.copied {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  .copy-btn.copied .icon-copy {
+    display: none;
+  }
+  .copy-btn.copied .icon-check {
+    display: block;
+  }
+  .recipe-note {
+    margin: 0.5rem 0 0;
+    font-size: 0.88rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach((btn) => {
+    const code = btn.closest('.cmd-wrap')?.querySelector('code');
+    if (!code) return;
+
+    btn.addEventListener('click', async () => {
+      const text = (code.textContent ?? '')
+        .split('\n')
+        .map((line) => line.replace(/^\$ ?/, ''))
+        .join('\n');
+
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+
+      btn.classList.add('copied');
+      btn.setAttribute('aria-label', 'Copied');
+      window.clearTimeout((btn as any)._copyTimeout);
+      (btn as any)._copyTimeout = window.setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.setAttribute('aria-label', 'Copy command');
+      }, 1500);
+    });
+  });
+</script>

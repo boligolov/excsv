@@ -1,0 +1,477 @@
+---
+import Base from '../layouts/Base.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import ShellRecipe from '../components/ShellRecipe.astro';
+---
+
+<Base title="ExCSV CLI Cookbook" description="Copy-paste grep/awk/cut one-liners for reading ExCSV files — schema, stats, SQL, ZIP previews, and pack columns — with no library at all.">
+  <h1>CLI Cookbook</h1>
+  <p class="intro">
+    An ExCSV file is still plain, delimiter-separated text — every metadata line starts with
+    <code>#</code>, so <code>grep</code>, <code>awk</code>, and <code>cut</code> already know how
+    to skim it. You don't need a parser to answer "how many rows," "what's column 3 called," or
+    "what's the total" — one shell command does it. Reach for a real library
+    (<a href="/tools/">Go</a> or <a href="/tools/">Python</a>) once you need error handling,
+    validation, or to write files back out; these recipes are for the terminal, a notebook cell,
+    or a shell script glued into a bigger pipeline.
+  </p>
+  <p class="intro">
+    Every command below is verified against the format's own <a href="https://github.com/boligolov/excsv/tree/master/fixtures" target="_blank" rel="noopener">fixture corpus</a>.
+    Save the sample below as <code>orders.excsv</code> and follow along.
+  </p>
+
+  <CodeBlock title="orders.excsv" description="Inline ExCSV — the sample every recipe in the first sections runs against.">
+{`#!excsv version=0.5 rows=2 schema=excsv sql-dialect=mysql
+#@author: author@example.com
+#@source: sales_db.orders
+#@created: 2026-01-01T00:00:00Z
+#@exported: 2026-03-24T12:00:00Z
+#@license: CC-BY-4.0
+#@tool: excsv-cli/0.2.0
+#@tags: sales,Q1
+#$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, customer VARCHAR(100), amount DECIMAL(8,2)) ENGINE=InnoDB
+#$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB
+#$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))
+#$ddl-clickhouse: CREATE TABLE orders (id UInt64, amount Decimal(8,2)) ENGINE = MergeTree() ORDER BY id
+#$dql: SELECT * FROM orders WHERE amount > 0
+#column name=id type=int unique=1
+#column name=customer type=string required=1 len_max=100
+#column name=amount type=decimal unit=USD min=0
+#%count_nonnull: 2,2,2
+#%count_null: 0,0,0
+#%count_distinct: 2,2,2
+#%sum: ,,120.50
+#%avg: ,,60.25
+#%min: ,,20.50
+#%max: ,,100.00
+id,customer,amount
+1,Acme,100.00
+2,Globex,20.50`}
+  </CodeBlock>
+
+  <section class="cb-section">
+    <h2>Read the data</h2>
+    <p class="section-note">The <code>#</code> lines are comments. Drop them and it's a CSV file, full stop.</p>
+
+    <ShellRecipe
+      title="Strip the metadata — get plain CSV"
+      command={`grep -v '^#' orders.excsv`}
+      output={`id,customer,amount
+1,Acme,100.00
+2,Globex,20.50`}
+    >
+      Every ExCSV reader already does this on your behalf. If the file has a UTF-8 BOM, see the <a href="#bom">BOM gotcha</a> below first.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Pretty-print as an aligned table"
+      command={`grep -v '^#' orders.excsv | column -t -s,`}
+      output={`id  customer  amount
+1   Acme      100.00
+2   Globex    20.50`}
+    />
+
+    <ShellRecipe
+      title="Pull one column by name"
+      command={`grep -v '^#' orders.excsv | awk -F, -v col=amount 'NR==1{for(i=1;i<=NF;i++) if($i==col) c=i} {print $c}'`}
+      output={`amount
+100.00
+20.50`}
+    >
+      Looks up the position from the header row instead of hard-coding a column index, so it survives reordered columns.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Filter rows by a numeric threshold, by column name"
+      command={`grep -v '^#' orders.excsv | awk -F, -v col=amount -v min=50 'NR==1{for(i=1;i<=NF;i++) if($i==col) c=i; print; next} $c+0>min'`}
+      output={`id,customer,amount
+1,Acme,100.00`}
+    />
+  </section>
+
+  <section class="cb-section">
+    <h2>Read the header</h2>
+    <p class="section-note">The first line carries everything about the file as a whole — version, delimiter, row count, checksum. It's one long line; here's how to make it skimmable.</p>
+
+    <ShellRecipe
+      title="Print the header, one attribute per line"
+      command={`head -1 orders.excsv | tr ' ' '\\n'`}
+      output={`#!excsv
+version=0.5
+rows=2
+schema=excsv
+sql-dialect=mysql`}
+    >
+      Turns a long <code>key=value key=value …</code> line into a scannable list. (A quoted value with a space inside — rare — would get split too; check for <code>"</code> before relying on this in a script.)
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Row count"
+      command={`grep -v '^#' orders.excsv | tail -n +2 | wc -l`}
+      output={`2`}
+    />
+  </section>
+
+  <section class="cb-section">
+    <h2>Trust the stats — or check them yourself</h2>
+    <p class="section-note">Sums, averages, and null counts ride along in the header, lined up with the columns in the same order. Find a column's position once, then reuse it.</p>
+
+    <ShellRecipe
+      title="Find a column's position"
+      command={`grep '^#column' orders.excsv | nl -ba -s': '`}
+      output={`     1: #column name=id type=int unique=1
+     2: #column name=customer type=string required=1 len_max=100
+     3: #column name=amount type=decimal unit=USD min=0`}
+    >
+      <code>amount</code> is the 3rd <code>#column</code> line.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Read a stat at that position"
+      command={`grep '^#%sum:' orders.excsv | cut -d' ' -f2 | cut -d, -f3`}
+      output={`120.50`}
+    >
+      The aggregation lines list one value per column, in the same order as the <code>#column</code> lines above — position 3 is <code>amount</code> in both. Swap <code>#%sum:</code> for <code>#%avg:</code>, <code>#%min:</code>, <code>#%max:</code>, <code>#%count_null:</code>, … — same trick, same position.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Null count for a different column, same trick"
+      command={`grep '^#%count_null:' orders.excsv | cut -d' ' -f2 | cut -d, -f2`}
+      output={`0`}
+    >
+      <code>customer</code> is position 2, so this cuts field 2 instead of field 3.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Recompute a total yourself, as a sanity check"
+      command={`grep -v '^#' orders.excsv | awk -F, -v col=amount 'NR==1{for(i=1;i<=NF;i++) if($i==col) c=i; next} {s+=$c} END{printf "%.2f\\n", s}'`}
+      output={`120.50`}
+    >
+      If this disagrees with the stored <code>#%sum:</code>, the file's stats are stale — the data changed after the aggregates were written.
+    </ShellRecipe>
+  </section>
+
+  <section class="cb-section">
+    <h2>Schema, provenance, and meaning</h2>
+
+    <ShellRecipe
+      title="List column names"
+      command={`grep '^#column' orders.excsv | sed -E 's/.*name=([^ ]+).*/\\1/'`}
+      output={`id
+customer
+amount`}
+    />
+
+    <ShellRecipe
+      title="List name:type pairs"
+      command={`grep '^#column' orders.excsv | sed -E 's/.*name=([^ ]+) type=([^ ]+).*/\\1:\\2/'`}
+      output={`id:int
+customer:string
+amount:decimal`}
+    />
+
+    <ShellRecipe
+      title="Who exported this, and when?"
+      command={`grep '^#@' orders.excsv`}
+      output={`#@author: author@example.com
+#@source: sales_db.orders
+#@created: 2026-01-01T00:00:00Z
+#@exported: 2026-03-24T12:00:00Z
+#@license: CC-BY-4.0
+#@tool: excsv-cli/0.2.0
+#@tags: sales,Q1`}
+    />
+  </section>
+
+  <CodeBlock title="sales.excsv" description="A second sample — adds #@grain and per-column role= / agg= hints for the next two recipes.">
+{`#!excsv version=0.5 header=1 rows=4
+#@source: sales_db.orders
+#@grain: one row per order
+#column name=order_id type=long unique=1 role=id
+#column name=status type=string role=dimension enum=pending|completed|cancelled
+#column name=amount type=decimal unit=USD role=measure agg=sum
+#column name=balance type=decimal unit=USD role=measure agg=avg
+#column name=created_at type=datetime role=time
+#%count_nonnull: 4,4,4,4,4
+#%sum: ,,1050.50,,
+order_id,status,amount,balance,created_at
+1,completed,500.00,1200.00,2026-01-15T09:30:00Z
+2,completed,300.50,900.00,2026-02-20T14:00:00Z
+3,pending,200.00,700.00,2026-03-01T11:45:00Z
+4,cancelled,50.00,650.00,2026-03-10T16:20:00Z`}
+  </CodeBlock>
+
+  <section class="cb-section">
+    <h2>Semantics: grain, roles, aggregation</h2>
+
+    <ShellRecipe
+      title="What does one row mean?"
+      command={`grep '^#@grain:' sales.excsv | sed 's/^#@grain: //'`}
+      output={`one row per order`}
+    />
+
+    <ShellRecipe
+      title="Which columns are safe to sum?"
+      command={`grep '^#column' sales.excsv | grep 'agg=sum' | sed -E 's/.*name=([^ ]+).*/\\1/'`}
+      output={`amount`}
+    >
+      <code>balance</code> is a <code>measure</code> too, but <code>agg=avg</code> — summing it across rows would double-count. <code>order_id</code> has <code>role=id</code>: never aggregate it at all. This is the difference between a plain CSV and one that tells an LLM (or a teammate) what not to do with it.
+    </ShellRecipe>
+  </section>
+
+  <CodeBlock title="notes.excsv" description="Human comment lines (##) mixed in with machine metadata.">
+{`#!excsv version=0.5 rows=1
+## this is a human note
+#@source: demo
+## comment between meta kinds
+#column name=id type=int
+#column name=name type=string
+## another human note
+id,name
+1,Alice`}
+  </CodeBlock>
+
+  <section class="cb-section">
+    <h2>Human notes, and a real-world gotcha</h2>
+
+    <ShellRecipe
+      title="Read the notes a person left behind"
+      command={`grep '^##' notes.excsv | sed 's/^## //'`}
+      output={`this is a human note
+comment between meta kinds
+another human note`}
+    >
+      <code>##</code> lines are for people, not tooling — they can appear anywhere between the machine metadata lines.
+    </ShellRecipe>
+
+    <div id="bom">
+      <ShellRecipe
+        title="The BOM gotcha"
+        command={`printf '\\xef\\xbb\\xbf#!excsv version=0.5 rows=1\\n#column name=id type=int\\nid\\n1\\n' > bom.excsv
+grep -v '^#' bom.excsv`}
+        output={`#!excsv version=0.5 rows=1
+id
+1`}
+      >
+        Plenty of real-world CSV exports (Excel especially) carry a UTF-8 byte-order mark, and it sits <em>before</em> the <code>#</code> on line 1 — so <code>grep -v '^#'</code> doesn't match line 1 at all, and the un-stripped header leaks into the "clean" output above (it's just invisible: the BOM is a zero-width character). Fix it with <code>sed '1s/^\xef\xbb\xbf//'</code> before piping into <code>grep -v '^#'</code>.
+      </ShellRecipe>
+    </div>
+  </section>
+
+  <section class="cb-section">
+    <h2>SQL companions</h2>
+    <p class="section-note">The DDL that created the table travels with the data. No separate migration file to lose track of.</p>
+
+    <ShellRecipe
+      title="Recreate the table"
+      command={`grep '^#\\$ddl:' orders.excsv | sed 's/^#\\$ddl: //' | psql mydb`}
+    >
+      Pulls the unqualified <code>#$ddl:</code> line — the portable fallback — and pipes it straight into <code>psql</code> (swap for <code>mysql</code>, <code>clickhouse-client</code>, …). See <a href="/spec/#sql">SQL companions</a>.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="DDL for a specific dialect, with fallback"
+      command={`grep -E '^#\\$ddl:|^#\\$ddl-postgres:' orders.excsv | sed -E 's/^#\\$ddl(-postgres)?: //'`}
+      output={`CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, customer VARCHAR(100), amount DECIMAL(8,2)) ENGINE=InnoDB
+CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))`}
+    >
+      A consumer targeting <code>postgres</code> runs the unqualified line, then the <code>-postgres</code> override — same rule the spec defines for any dialect.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Which dialects does this file cover?"
+      command={`grep -o '^#\\$ddl-[a-z0-9-]*' orders.excsv | sed 's/^#\\$ddl-//'`}
+      output={`mysql
+postgres
+clickhouse`}
+    />
+  </section>
+
+  <CodeBlock title="report.excsv (sidecar) + report.csv" description="The sidecar profile: metadata in one file, the untouched original in another.">
+{`# report.excsv
+#!excsv version=0.5 delim=comma header=1 rows=2 reference=report.csv
+#@source: fixtures_db.orders
+#column name=id type=int
+#column name=customer type=string
+#column name=amount type=decimal
+#%sum: ,,750.50
+
+# report.csv — byte-for-byte original, never touched
+id,customer,amount
+1,Acme,500.00
+2,Globex,250.50`}
+  </CodeBlock>
+
+  <section class="cb-section">
+    <h2>Sidecar — annotate a file you can't touch</h2>
+
+    <ShellRecipe
+      title="Find the file this sidecar describes"
+      command={`grep -o 'reference=[^ ]*' report.excsv`}
+      output={`reference=report.csv`}
+    />
+
+    <ShellRecipe
+      title="Tell inline from sidecar"
+      command={`grep -q 'reference=' report.excsv && echo sidecar || echo inline`}
+      output={`sidecar`}
+    >
+      An inline file (like <code>orders.excsv</code> at the top of this page) has no <code>reference=</code> key — it carries its own rows.
+    </ShellRecipe>
+  </section>
+
+  <CodeBlock title="signed.excsv" description="A minimal file carrying an integrity checksum.">
+{`#!excsv version=0.5 checksum=sha256:7cde7fb64fd82bd152710cf238e017b9ab46c0592483edc067ba4f6c75fac108 rows=1
+id
+1`}
+  </CodeBlock>
+
+  <section class="cb-section">
+    <h2>Checksum</h2>
+
+    <ShellRecipe
+      title="Extract the declared checksum"
+      command={`grep -o 'checksum=[^ ]*' signed.excsv`}
+      output={`checksum=sha256:7cde7fb64fd82bd152710cf238e017b9ab46c0592483edc067ba4f6c75fac108`}
+    >
+      Presence alone tells you the file claims integrity protection; verifying it means recomputing the hash over the canonical form — see <a href="/spec/#header">the header reference</a> or just use a library.
+    </ShellRecipe>
+  </section>
+
+  <section class="cb-section">
+    <h2>ZIP — preview a compressed file without unzipping it</h2>
+    <p class="section-note">
+      A <code>.excsv.zip</code> mirrors its header, columns, and stats into the archive's <strong>comment field</strong>.
+      Browsing a folder of zipped exports, you see what each one holds without extracting a single byte.
+      Zip the <code>orders.excsv</code> from the top of this page as <code>orders.excsv.zip</code> and try:
+    </p>
+
+    <ShellRecipe
+      title="Peek the schema and stats"
+      command={`zipinfo -z orders.excsv.zip`}
+      output={`Archive:  orders.excsv.zip
+#!excsv version=0.5 rows=2 schema=excsv sql-dialect=mysql
+#@author: author@example.com
+#@source: sales_db.orders
+#@created: 2026-01-01T00:00:00Z
+#@exported: 2026-03-24T12:00:00Z
+#@license: CC-BY-4.0
+#@tool: excsv-cli/0.2.0
+#@tags: sales,Q1
+#$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, customer VARCHAR(100), amount DECIMAL(8,2)) ENGINE=InnoDB
+#$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB
+#$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))
+#$ddl-clickhouse: CREATE TABLE orders (id UInt64, amount Decimal(8,2)) ENGINE = MergeTree() ORDER BY id
+#$dql: SELECT * FROM orders WHERE amount > 0
+#column name=id type=int unique=1
+#column name=customer type=string required=1 len_max=100
+#column name=amount type=decimal unit=USD min=0
+#%count_nonnull: 2,2,2
+#%count_null: 0,0,0
+#%count_distinct: 2,2,2
+#%sum: ,,120.50
+#%avg: ,,60.25
+#%min: ,,20.50
+#%max: ,,100.00
+Zip file size: 1627 bytes, number of entries: 1
+...`}
+    >
+      <code>unzip -z</code> works the same way. Only the header, columns, SQL, and aggregates are mirrored — never the data rows.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Pull clean CSV straight out of the zip"
+      command={`unzip -p orders.excsv.zip orders.excsv | grep -v '^#'`}
+      output={`id,customer,amount
+1,Acme,100.00
+2,Globex,20.50`}
+    >
+      <code>unzip -p</code> streams the entry to stdout — no temp file, no cleanup.
+    </ShellRecipe>
+  </section>
+
+  <CodeBlock title="sales.excsv.pack.zip" description="A pack archive holding the same orders table, one column per entry.">
+{`sales.excsv.pack.zip
+├── _manifest.excsv
+└── orders/
+    ├── _header.excsv
+    ├── 00-id.col
+    ├── 01-customer.col
+    └── 02-amount.col`}
+  </CodeBlock>
+
+  <section class="cb-section">
+    <h2>Pack — read one column, not the whole file</h2>
+    <p class="section-note">
+      A <code>.excsv.pack.zip</code> stores each column as its own <code>.col</code> entry inside a per-table folder.
+      That means you can read a single column out of a wide table without decompressing the rest of it.
+    </p>
+
+    <ShellRecipe
+      title="List tables and columns without extracting anything"
+      command={`zipinfo -1 sales.excsv.pack.zip`}
+      output={`_manifest.excsv
+orders/_header.excsv
+orders/00-id.col
+orders/01-customer.col
+orders/02-amount.col`}
+    />
+
+    <ShellRecipe
+      title="Read one column, untouched by the rest"
+      command={`unzip -p sales.excsv.pack.zip orders/02-amount.col`}
+      output={`100.00
+20.50`}
+    >
+      Only that one <code>.col</code> entry gets inflated — the other columns, and other tables in the archive, are never touched. See <a href="/variants/#pack">Pack</a>.
+    </ShellRecipe>
+  </section>
+
+  <section class="cb-outro">
+    <h2>Where this stops working</h2>
+    <p>
+      These commands assume well-formed input and don't validate, handle quoted delimiters inside
+      fields, follow multi-line <code>#$ddl</code> continuations, or resolve computed
+      (<code>formula=</code>) columns. That's the line between a cookbook and a parser — cross it
+      with <a href="/tools/">excsv-golang</a> or <a href="/tools/">excsv-python</a>. Every recipe
+      above was run against the project's <a href="https://github.com/boligolov/excsv/tree/master/fixtures" target="_blank" rel="noopener">fixture corpus</a>; if you find one that breaks on a real file, <a href="https://github.com/boligolov/excsv/issues" target="_blank" rel="noopener">open an issue</a>.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .intro {
+    color: var(--color-muted);
+    font-size: 1.05rem;
+    max-width: 44rem;
+    line-height: 1.7;
+  }
+  .cb-section {
+    margin: 2.5rem 0;
+  }
+  .cb-section h2 {
+    font-size: 1.25rem;
+  }
+  .section-note {
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-top: -0.25rem;
+    margin-bottom: 1.25rem;
+    max-width: 42rem;
+  }
+  .cb-outro {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+    max-width: 44rem;
+  }
+  .cb-outro h2 {
+    font-size: 1.1rem;
+  }
+  .cb-outro p {
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+</style>
