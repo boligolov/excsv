@@ -554,6 +554,32 @@ def make_valid() -> None:
         ),
     )
 
+    # Virtual computed column (`total`) declared in header_meta but with no
+    # matching entry in `columns=` below, so table_entries() never emits a
+    # .col file for it — the pack payoff from docs/columns.md#computed-columns:
+    # a virtual column costs zero .col files.
+    computed_orders = manual_table(
+        "orders",
+        [
+            "#@source: fixtures.orders",
+            "#column name=price type=decimal unit=USD",
+            "#column name=quantity type=int",
+            '#column name=total type=decimal unit=USD formula="price * quantity"',
+        ],
+        [
+            ("price", ["10.00", "25.50"]),
+            ("quantity", ["3", "2"]),
+        ],
+    )
+    build_pack(
+        PACK_VALID / "012_compute_no_col.excsv.pack.zip",
+        PackBuild(
+            tables=[computed_orders],
+            single_table="orders",
+            pack_meta=["#@pack-name: compute-no-col"],
+        ),
+    )
+
 
 def corrupt_entry(entries: list[tuple[str, bytes]], name: str, payload: bytes) -> list[tuple[str, bytes]]:
     return [(n, payload if n == name else p) for n, p in entries]

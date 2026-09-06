@@ -1,0 +1,7 @@
+#!excsv version=0.5 header=1 rows=2
+#column name=price type=decimal unit=USD
+#column name=quantity type=int
+#column name=total type=decimal unit=USD formula="price * quantity" materialized=1
+price,quantity,total
+10.00,3,30.00
+25.50,2,51.00

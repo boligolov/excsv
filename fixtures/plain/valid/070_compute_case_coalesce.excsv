@@ -1,0 +1,8 @@
+#!excsv version=0.5 header=1 rows=2
+#column name=first_name type=string
+#column name=nickname type=string
+#column name=amount type=decimal unit=USD
+#column name=summary type=string formula="concat(coalesce(nickname, first_name), ': ', case when amount >= 100 then 'gold' else 'bronze' end)"
+first_name,nickname,amount
+Alice,,120.00
+Bob,Bobby,40.00

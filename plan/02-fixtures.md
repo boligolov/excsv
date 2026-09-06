@@ -1,6 +1,6 @@
 # Step 2 — Test Fixtures
 
-The shared corpus that drives every implementation's tests. Defined here once, consumed by [excsv-golang](https://github.com/boligolov/excsv-golang), the Python package (separate repo), and the cookbook (separate repo). Implementation-agnostic.
+The shared corpus that drives every implementation's tests. Defined here once, consumed by [excsv-golang](https://github.com/boligolov/excsv-golang), [excsv-python](https://github.com/boligolov/excsv-python), and the [cookbook](https://excsv.org/cookbook/) (lives on the website, not a separate repo). Implementation-agnostic.
 
 ## Purpose
 
@@ -113,7 +113,7 @@ A shared **error kind enum** lives in the manifest header and **MUST** match the
 
 What each category needs, organized by feature domain from `01-features.md`. Counts are minimums; add more as edge cases emerge.
 
-### Plain — valid (001–066)
+### Plain — valid (001–070)
 
 001–039: dialect/header/meta/column/agg/sql/checksum/sidecar happy path. Slots 014, 015, and 033 held CSVW cases and were retired in v0.4; the numbers are not reused.
 
@@ -149,8 +149,11 @@ Warn-only cases live here (not under `invalid/`):
 | 065 | `encoding_not_ascii_compatible` |
 | 066 | custom `#@` keys |
 | 067 | `columns_mismatch` (`verify: fail`) |
+| 068 | `compute_basic` — virtual `formula=` column (D7) |
+| 069 | `compute_materialized` — `formula=` + `materialized=1`, cached values in the data (D7) |
+| 070 | `compute_case_coalesce` — `formula=` exercising `case when` / `coalesce` / `concat` (D7) |
 
-Still out: `##` round-trip preservation (if a writer opts in); on-demand 100k-row streaming file; computed-column fixtures (spec §5, not yet in implementation docs).
+Still out: `##` round-trip preservation (if a writer opts in); on-demand 100k-row streaming file.
 
 ### Plain — invalid (FAIL only)
 
@@ -166,6 +169,11 @@ Retired slots (never reuse): 007, 009, 010, 017, 022, 025, 026, 029, 031, 032 �
 | 024 | `invalid_utf8` |
 | 027, 028, 030, 033 | sidecar FAIL (`033` = `sidecar_reference_escapes_dir`) |
 | 034 | `header_missing_rows` (header present, no `rows=`) |
+| 035 | `formula_references_computed` (D7) |
+| 036 | `formula_unknown_reference` (D7) |
+| 037 | `formula_index_forbidden` (D7) |
+| 038 | `computed_materialized_mismatch` (D7) |
+| 039 | `formula_requires_header` (D7) |
 
 ### Zip — valid (001–013, generated)
 
@@ -189,7 +197,7 @@ Retired slots 005, 006 (comment defects moved to valid/).
 
 `row_parser_got_pack` is dispatch, not a zip-file fixture: any `pack/*.excsv.pack.zip` opened with the row parser MUST fail that code.
 
-### Pack — valid (001–011, generated)
+### Pack — valid (001–012, generated)
 
 | ID | Coverage |
 | --- | --- |
@@ -204,6 +212,7 @@ Retired slots 005, 006 (comment defects moved to valid/).
 | 009 | auto-discovery: manifest with zero `#table` lines |
 | 010 | auto-discovery: no manifest |
 | 011 | stale `single-table=` on a two-table pack — ignore, not fatal |
+| 012 | `compute_no_col` — table with a `formula=` column and no matching `.col` file (D7) |
 
 No `mode=`. No per-table `primary=`.
 
@@ -237,7 +246,7 @@ The corpus already covers plain, zip, and pack. Implementations consume it in fu
 ## Open questions
 
 1. **Manifest format.** YAML chosen for readability; JSON or TOML are alternatives. Go and Python both have first-class support for all three. **Lean: YAML** for human edit-ability; CI will validate it against a schema.
-2. **Schema for the manifest itself.** Should there be a `fixtures.schema.json` that validates `fixtures.yaml`? Yes, but defer until the remaining spec fixtures (`formula=`, `#index`) land.
+2. **Schema for the manifest itself.** Should there be a `fixtures.schema.json` that validates `fixtures.yaml`? Yes, but defer until the remaining spec fixtures (`#index`) land.
 3. **Per-fixture expected canonical output.** Some fixtures might benefit from a sibling file (`001_minimal.excsv.canonical`) that's the byte-exact output of re-serializing through the canonical writer. Catches writer regressions. Add when a writer exists.
 4. **Big-file fixtures.** Do we ship one or two `>10MB` fixtures for streaming/perf tests, or generate them on-demand in CI? **Lean: generate on-demand** to keep the repo small; commit only their generator scripts and the manifest entry.
 5. **Cross-locale fixtures.** Number / date parsing with non-C locales. Defer until locale handling is implemented.

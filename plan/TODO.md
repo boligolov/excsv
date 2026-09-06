@@ -18,10 +18,10 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ defe
 
 | Area | State |
 | --- | --- |
-| Spec (`docs/implementation/`) | v0.5; remaining: C10, L1, computed-column fixtures (§5), `#index` (§6) |
+| Spec (`docs/implementation/`) | v0.5; remaining: C10, L1, `#index` (§6) |
 | Website | live |
 | Feature catalog | draft; version-gating unfinished |
-| Fixtures | plain valid 001–066 / invalid FAIL-only; zip/pack via generators |
+| Fixtures | plain valid 001–070 / invalid 001–039 (FAIL-only); zip/pack via generators |
 | Implementation (Go/Python) | full spec (plain + zip + pack), not gated |
 
 ---
@@ -42,7 +42,7 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ✅ done · ↗ defe
 
 ## 3. Fixtures — remaining
 
-- 🟡 Computed-column fixtures (§5) — not yet created.
+- ✅ Computed-column fixtures (§5). Done — `plain/valid/068–070`, `plain/invalid/035–039`, `pack/valid/012_compute_no_col`.
 - 🟡 `#index` fixtures (§6.5) once the meta line lands in the spec.
 - 🟡 CI: regenerate zip/pack via `fixtures/generate/make_*.py` and assert byte-identical to committed.
 - 🟢 `plain/valid/NNN_big_100k_rows.excsv` — streaming/perf; **generate on-demand in CI, do not commit**.
@@ -67,8 +67,9 @@ Spec is the source of truth: `docs/implementation/columns.md` (`formula=`, `mate
 
 Remaining:
 
-- 🟡 Fixtures — `plain/valid/NNN_compute_{basic,materialized,case_coalesce}.excsv`; `plain/invalid/NNN_compute_{references_computed,unknown_ref,index_forbidden,materialized_mismatch,requires_header}.excsv`; `pack/valid/NNN_compute_no_col.excsv.pack.zip`. Not yet created.
-- 🟡 Go/Python parser implementation. Not yet done.
+- ✅ Fixtures — `plain/valid/068_compute_basic.excsv`, `069_compute_materialized.excsv`, `070_compute_case_coalesce.excsv`; `plain/invalid/035_compute_references_computed.excsv`, `036_compute_unknown_ref.excsv`, `037_compute_index_forbidden.excsv`, `038_compute_materialized_mismatch.excsv`, `039_compute_requires_header.excsv`; `pack/valid/012_compute_no_col.excsv.pack.zip` (generated — table has a `formula=` column with no `.col` file). Landed; exercises `D7` in `01-features.md`.
+- ✅ Go/Python parser implementation. Done (`column materialize` / `dematerialize` in both).
+- 🟡 Go/Python CI hasn't run against these fixtures yet — cross-impl parity on `formula=`/`materialized=` is still unverified until the next upstream sync.
 
 ---
 

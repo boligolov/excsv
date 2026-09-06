@@ -20,7 +20,7 @@ Replaces the old `golang/features.md`, which is implemented but **obsolete**: it
 | --- | --- | --- |
 | **Go** | [excsv-golang](https://github.com/boligolov/excsv-golang) | Primary CLI/library. Reference behaviour and performance. |
 | **Python** | [excsv-python](https://github.com/boligolov/excsv-python) | Idiomatic API; parity-tested against Go on `fixtures/`. |
-| **Cookbook** | separate repo (TBD) | Copy-paste CLI recipes by user goal; cites fixture IDs. |
+| **Cookbook** | [excsv.org/cookbook](https://excsv.org/cookbook/) | `grep`/`awk`/`cut` one-liners for reading ExCSV with no library at all. Lives on the website, not a separate repo. |
 
 Each implementation repo owns its own plan: package layout, command tree, API surface. They **read** `plan/01-features.md` and **test against** `fixtures/` — symlink, junction, submodule, or vendored copy; no duplication of fixture files inside impl repos.
 

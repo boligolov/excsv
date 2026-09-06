@@ -24,15 +24,17 @@ import Base from '../layouts/Base.astro';
 
       <p>
         Reference command-line tool and Go library for ExCSV. Supports plain
-        (<code>.excsv</code>, <code>.extsv</code>) and row-ZIP
-        (<code>.excsv.zip</code>, <code>.extsv.zip</code>) storage forms.
-        <a href="/variants/#pack">Pack</a> (<code>.excsv.pack.zip</code>) is in v0.5; this CLI doesn't open it yet.
+        (<code>.excsv</code>, <code>.extsv</code>), row-ZIP
+        (<code>.excsv.zip</code>, <code>.extsv.zip</code>), and
+        <a href="/variants/#pack">pack</a> (<code>.excsv.pack.zip</code>) storage forms.
       </p>
 
       <ul class="feature-list">
-        <li>Parse, validate, and serialize ExCSV documents</li>
+        <li>Parse, validate, fix, and serialize ExCSV documents</li>
         <li>Header, metadata, rows, and conversion commands</li>
+        <li>Computed columns (<code>formula=</code>): materialize / dematerialize</li>
         <li>ZIP wrap / unwrap / peek with <code>original-size</code> checks</li>
+        <li>Pack <code>create</code> and multi-table <code>table list</code></li>
         <li>Fixture-driven tests against the shared <code>fixtures/</code> corpus</li>
       </ul>
 
@@ -43,10 +45,10 @@ import Base from '../layouts/Base.astro';
 
       <div class="tool-example">
         <h3>Quick start</h3>
-        <pre><code>excsv validate data.excsv
-excsv info data.excsv --json
-excsv zip peek archive.excsv.zip
-excsv convert to-csv data.excsv</code></pre>
+        <pre><code>excsv data.excsv validate
+excsv data.excsv info
+excsv data.excsv.zip zip unwrap -o data.excsv
+excsv data.excsv pack create -o data.excsv.pack.zip</code></pre>
       </div>
 
       <p class="tool-links">
@@ -112,10 +114,8 @@ print(doc.row_count(), doc.header.delim_name)</code></pre>
   <section class="coming-soon">
     <h2>Planned</h2>
     <ul>
-      <li><strong>Pack CLI</strong> — <code>col get</code>, <code>table list</code>, <code>pack create</code> on <code>.excsv.pack.zip</code>.</li>
-      <li>Additional language bindings — see the
-        <a href="https://github.com/boligolov/excsv/blob/master/plan/README.md" target="_blank" rel="noopener">implementation plan</a>.
-        No library at all? See the <a href="/cookbook/">CLI Cookbook</a> for <code>grep</code>/<code>awk</code> one-liners.</li>
+      <li><strong>DDL generation from schema</strong> — auto-generate <code>CREATE TABLE</code> straight from <code>#column</code> definitions (today's <code>#$ddl:</code> lines are hand-authored). Streaming reads and file diffing are on the same roadmap — see the Go tool's <a href="https://github.com/boligolov/excsv-golang#status" target="_blank" rel="noopener">status table</a>.</li>
+      <li>Curious what's next for the spec itself? The <a href="https://github.com/boligolov/excsv/blob/master/plan/TODO.md" target="_blank" rel="noopener">backlog</a> tracks it. No library at all? See the <a href="/cookbook/">CLI Cookbook</a> for <code>grep</code>/<code>awk</code> one-liners.</li>
     </ul>
   </section>
 </Base>
@@ -129,6 +129,9 @@ print(doc.row_count(), doc.header.delim_name)</code></pre>
   }
   .tool-list {
     margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
   }
   .tool-card {
     background: var(--color-card-bg);

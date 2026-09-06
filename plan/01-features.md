@@ -83,6 +83,7 @@ Core lifecycle: open, parse, materialize, serialize, stream.
 | D4 | Infer types and constraints from data (Mode B) | ✓ | ✓ | ✓ | PF: cheaper per-column thanks to columnar layout. |
 | D5 | Reorder declarations (Mode A) | ✓ | ✓ | ≈ | PF: renumbers the `<index>-` prefix on every shifted column entry. Same single-pass ZIP rewrite cost as D3, multiplied by the number of shifted columns. |
 | D6 | Validate header row matches `#column name=` | ✓ | ✓ | — | RF only; PF has no in-data header row. |
+| D7 | Computed columns (`formula=`): declare, materialize, dematerialize | ✓ | ✓ | ≈ | Requires `header=1` (RF) / name addressing (PF) — no `index=`. PF: virtual costs zero `.col` files; materialize adds one `.col` (or one per section). |
 
 ## E. Aggregations (`#%`)
 
@@ -288,5 +289,5 @@ This catalog feeds downstream work:
 
 - **`02-fixtures.md`** — shared test-fixture corpus: every feature above gets at least one success and (where applicable) one failure fixture. Drives parity between Go and Python.
 - **[excsv-golang](https://github.com/boligolov/excsv-golang)** — map each feature to packages / commands; tests walk the fixture corpus.
-- **Python repo (TBD)** — mirror of the Go plan; parity tests run against the **same** fixture corpus.
-- **Cookbook repo (TBD)** — 30–50 most common user workflows as terminal recipes; each cites the fixture it uses so readers can reproduce locally.
+- **[excsv-python](https://github.com/boligolov/excsv-python)** — mirror of the Go plan; parity tests run against the **same** fixture corpus.
+- **[Cookbook](https://excsv.org/cookbook/)** — terminal recipes for common workflows, on the website rather than a separate repo.
