@@ -23,6 +23,8 @@ export interface Column {
   unique?: boolean;
   required?: boolean;
   default?: Scalar;
+  formula?: string;
+  materialized?: boolean;
   [key: string]: unknown;
 }
 

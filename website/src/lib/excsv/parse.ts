@@ -1,9 +1,10 @@
 import { parseCsvRow, resolveDelim, resolveQuote, splitLines } from './csv';
 import { parseKvPairs } from './kv';
 import { normalizeDocForJson } from './serialize';
+import { assignPhysicalIndexes, physicalColumns } from './computed';
 import type { Cell, Column, ConvertWarning, ExcsvDocument, PackTable, SqlStatement } from './types';
 
-const BOOL_ATTRS = new Set(['unique', 'required']);
+const BOOL_ATTRS = new Set(['unique', 'required', 'materialized']);
 const INT_ATTRS = new Set(['len_min', 'len_max', 'index']);
 
 export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: ConvertWarning[] } {
@@ -120,7 +121,7 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
   }
 
   if (Object.keys(meta).length) doc.meta = meta;
-  if (columns.length) doc.columns = assignColumnIndexes(columns);
+  if (columns.length) doc.columns = assignPhysicalIndexes(columns);
   if (Object.keys(aggregates).length) doc.aggregates = aggregates;
   if (ddl.length || dql.length) doc.sql = { ...(ddl.length && { ddl }), ...(dql.length && { dql }) };
   if (tables.length) doc.tables = tables;
@@ -145,8 +146,9 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
     dataRows = parsedRows.slice(1);
   }
 
+  const physCols = physicalColumns(columns);
   doc.data = dataRows.map((row) =>
-    row.map((cell, colIdx) => parseCell(cell, columns[colIdx], nullMarkers)),
+    row.map((cell, colIdx) => parseCell(cell, physCols[colIdx], nullMarkers)),
   );
 
   if (doc.rows === undefined) doc.rows = doc.data.length;
@@ -170,13 +172,6 @@ function parseMetaValue(key: string, value: string): unknown {
     return value.includes(',') ? value.split(',').map((t) => t.trim()) : value;
   }
   return value;
-}
-
-function assignColumnIndexes(columns: Column[]): Column[] {
-  return columns.map((col, i) => ({
-    ...col,
-    index: col.index ?? i,
-  }));
 }
 
 function parseColumnLine(body: string): Column {
@@ -254,7 +249,8 @@ function parseAggregateRow(
   columns: Column[],
 ): Cell[] {
   const fields = parseCsvRow(raw, delim, quote);
-  return fields.map((f, i) => parseCell(f, columns[i], nullMarkers));
+  const physCols = physicalColumns(columns);
+  return fields.map((f, i) => parseCell(f, physCols[i], nullMarkers));
 }
 
 export function parseCell(raw: string, column: Column | undefined, nullMarkers: Set<string>): Cell {
@@ -291,7 +287,8 @@ export function parseCsvDataSection(text: string, doc: ExcsvDocument): Cell[][] 
   if (!lines.length) return [];
   let rows = lines.map((l) => parseCsvRow(l, delim, quote));
   if (hasHeaderRow && rows.length > 0) rows = rows.slice(1);
-  return rows.map((row) => row.map((cell, i) => parseCell(cell, doc.columns?.[i], nullMarkers)));
+  const physCols = physicalColumns(doc.columns);
+  return rows.map((row) => row.map((cell, i) => parseCell(cell, physCols[i], nullMarkers)));
 }
 
 export function detectInputFormat(text: string): 'text' | 'json' {

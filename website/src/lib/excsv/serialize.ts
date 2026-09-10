@@ -1,20 +1,14 @@
 import { formatKvValue, serializeKvPairs } from './kv';
 import { resolveDelim, resolveQuote, serializeCsvRow } from './csv';
+import { assignPhysicalIndexes, physicalColumns } from './computed';
 import type { Cell, Column, ConvertWarning, ExcsvDocument, SqlStatement } from './types';
-
-function assignColumnIndexes(columns: Column[]): Column[] {
-  return columns.map((col, i) => ({
-    ...col,
-    index: col.index ?? i,
-  }));
-}
 
 export function normalizeDocForJson(doc: ExcsvDocument): ExcsvDocument {
   const out: ExcsvDocument = { ...doc };
-  if (out.columns?.length) out.columns = assignColumnIndexes(out.columns);
+  if (out.columns?.length) out.columns = assignPhysicalIndexes(out.columns);
   if (out.tables?.length) {
     out.tables = out.tables.map((table) =>
-      table.columns?.length ? { ...table, columns: assignColumnIndexes(table.columns) } : table,
+      table.columns?.length ? { ...table, columns: assignPhysicalIndexes(table.columns) } : table,
     );
   }
   return out;
@@ -115,15 +109,17 @@ export function serializeExcsvText(doc: ExcsvDocument): { text: string; warnings
     const nullMarkers = csv.null ?? [];
     const hasHeader = csv.header !== false;
 
+    const physCols = physicalColumns(doc.columns);
+
     if (hasHeader) {
-      const headerCells = (doc.columns ?? []).map((c) => c.title ?? c.name ?? '');
+      const headerCells = physCols.map((c) => c.title ?? c.name ?? '');
       if (headerCells.some(Boolean)) {
         lines.push(serializeCsvRow(headerCells, delim, quote));
       }
     }
 
     for (const row of doc.data) {
-      const fields = row.map((cell, i) => serializeCell(cell, doc.columns?.[i], nullMarkers));
+      const fields = row.map((cell, i) => serializeCell(cell, physCols[i], nullMarkers));
       lines.push(serializeCsvRow(fields, delim, quote));
     }
   }
@@ -175,11 +171,12 @@ export function serializeDataCsv(doc: ExcsvDocument): string {
   const quote = resolveQuote(csv.quote);
   const nullMarkers = csv.null ?? [];
   const lines: string[] = [];
+  const physCols = physicalColumns(doc.columns);
 
-  if (csv.header !== false && doc.columns?.length) {
+  if (csv.header !== false && physCols.length) {
     lines.push(
       serializeCsvRow(
-        doc.columns.map((c) => c.title ?? c.name ?? ''),
+        physCols.map((c) => c.title ?? c.name ?? ''),
         delim,
         quote,
       ),
@@ -187,7 +184,7 @@ export function serializeDataCsv(doc: ExcsvDocument): string {
   }
 
   for (const row of doc.data ?? []) {
-    const fields = row.map((cell, i) => serializeCell(cell, doc.columns?.[i], nullMarkers));
+    const fields = row.map((cell, i) => serializeCell(cell, physCols[i], nullMarkers));
     lines.push(serializeCsvRow(fields, delim, quote));
   }
 

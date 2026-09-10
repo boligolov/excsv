@@ -128,7 +128,125 @@ ZIP comment: include `#index` early (right after `#!excsv`) so `peek` can dispat
 
 ---
 
-## 7. Deferred / out-of-scope
+## 7. NEW FEATURE — `#chart` chart suggestions
+
+**Status:** 🟡 draft / undecided — captured from a design discussion, not yet a spec commitment. Open question: does this belong in the spec at all, or only as a cookbook heuristic derived from existing `role=`/`agg=`/`type=` (see "Open questions" below)? Tension with **L7** ("do NOT add a task/prompt field — Data ≠ query") is real: a chart suggestion is declarative (like `role=`/`agg=`), not imperative (like a query to run), but it's the first meta-line that describes a *relation between columns + a presentation*, not a fact about one column or the dataset as a whole. Land this only after that tension is explicitly resolved.
+
+**Goal:** let a producer (e.g. a data scientist authoring the file) suggest one or more ready-made chart views over already-declared columns, so a consuming tool can render a sensible chart without guessing.
+
+### 7.1 Syntax
+
+Two forms, matching the two existing syntax families in `meta-lines.md`:
+
+**Compact form — `#column`-style (bare `key=value`, no colon):**
+
+```
+#chart type=<mark> <channel>=<column> [<channel>=<column> ...] [modifier=value ...]
+```
+
+One line per suggested chart (like one `#column` line per column) — multiple `#chart` lines are normal, not conflicting; each is an independent suggestion.
+
+**Escape hatch — `#$`-style (`verb: raw payload to EOL`):**
+
+```
+#chart-vega: <raw Vega-Lite unit-spec JSON>
+```
+
+For anything the compact vocabulary can't express (facets, layered views, interactive selections) — full Vega-Lite grammar, unrestricted. Same relationship as `#$ddl` (generic) vs `#$ddl-<dialect>` (escape into vendor-specific SQL) — common case stays terse, full power stays available.
+
+### 7.2 Vocabulary (compact form)
+
+**`type=` — mark, vocabulary borrowed from Vega-Lite `mark`:**
+
+| `type=` | Vega-Lite mark | Typical use | Required channels |
+| --- | --- | --- | --- |
+| `bar` | `bar` | Bar chart | `x`, `y` |
+| `line` | `line` | Trend over time | `x`, `y` |
+| `area` | `area` | Area under a line | `x`, `y` |
+| `point` | `point` | Scatter | `x`, `y` |
+| `circle` | `circle` | Filled-dot scatter | `x`, `y` |
+| `arc` | `arc` | Pie / donut (via `theta`) | `theta` |
+| `rect` | `rect` | Heatmap (`x`+`y`+`color`) | `x`, `y`, `color` |
+| `tick` | `tick` | Value comparison on one axis | `x` or `y` |
+| `boxplot` | `boxplot` | Distribution | `x` or `y` + value |
+| `text` | `text` | Numbers/labels as marks | `x`, `y`, `text` |
+
+**Encoding channels (attributes, each takes a column name):**
+
+| Channel | Meaning |
+| --- | --- |
+| `x` / `y` | Primary axes |
+| `x2` / `y2` | Second bound of a range (ranged bar, area-between, boxplot whiskers) |
+| `color` | Categorical/measure split by color |
+| `size` | Point size / stroke width |
+| `theta` | Arc angle (pie slice size) — usually a measure |
+| `radius` | Arc radius (donut/nightingale, usually paired with `theta`) |
+| `shape` | Marker shape (extra category on scatter) |
+| `opacity` | Opacity as a channel |
+| `column` / `row` | Facet (small multiples) |
+| `detail` | Extra grouping with no visual channel (e.g. one line per customer, no color) |
+| `order` | Point ordering on line/area (defaults to `x`) |
+| `tooltip` | Column(s) to show on hover (comma-separated for several) |
+| `text` | Label column for `type=text` |
+
+Channel *type* (nominal/ordinal/quantitative/temporal) is **not** restated here — inferred from the referenced column's `#column type=`/`role=`.
+
+**Chart-level modifiers:**
+
+| Attribute | Value | Meaning |
+| --- | --- | --- |
+| `title=` | quoted text | Chart title |
+| `aggregate=` | `sum`/`avg`/`min`/`max`/`count`/`count_distinct` | Overrides the column's own `agg=` for this chart only |
+| `bin=` | `1` or bin count | Bucket a continuous value (histograms) |
+| `stack=` | `1`/`0`/`normalize` | Stacking for bar/area with `color=` |
+| `sort=` | `asc`/`desc`/column name | Category ordering |
+| `limit=` | integer | Top-N cutoff (pairs with `sort=desc`) |
+| `hole=` | `0.0`–`1.0` | Donut hole size on `type=arc` |
+
+**Row-count literal:** `count()` is a reserved value (not a column name) usable wherever a channel expects a column, for "number of rows" — e.g. `#chart type=bar x=category y=count()` (bar of row-counts per category) or a histogram's `y=count()`.
+
+### 7.3 Examples
+
+```
+#column name=category type=string  role=dimension
+#column name=amount   type=decimal role=measure agg=sum unit=USD
+#column name=region   type=string  role=dimension
+#column name=date     type=date    role=time
+#column name=discount type=decimal role=measure agg=avg
+
+#chart type=arc theta=amount color=category title="Spend by category"
+#chart type=arc theta=amount color=category hole=0.5
+#chart type=bar x=category y=amount sort=desc limit=10
+#chart type=bar x=region y=amount color=category stack=1
+#chart type=line x=date y=amount
+#chart type=point x=amount y=discount color=category
+#chart type=bar bin=20 x=amount y=count()
+#chart type=rect x=region y=category color=amount aggregate=avg
+#chart type=boxplot x=category y=amount
+
+#chart-vega: {"mark":"arc","encoding":{"theta":{"field":"amount","aggregate":"sum","type":"quantitative"},"color":{"field":"category","type":"nominal"}}}
+```
+
+### 7.4 Semantics
+
+- Optional, advisory — like `checksum=`/`#index`. A consumer that ignores `#chart` still has a fully valid file (forward-compatible parsing rule, `01-features.md` P7).
+- Every column referenced by a channel MUST already have a `#column name=` declaration (chart references by name only — no positional/`index=` form, same restriction as `formula=`).
+- `aggregate=`/`sort=`/`limit=`/`bin=`/`stack=`/`hole=` apply only to that one `#chart` line; they never mutate the referenced column's own `#column agg=`.
+- Multiple `#chart` lines for the same or overlapping columns are normal — each is an independent suggested view, not a conflict to resolve.
+- Mirrors into `.excsv.json` as a `charts: [...]` array, same "every `#` line becomes a key" rule as everything else (see `docs/json.md`).
+- Pack (`_manifest.excsv` / table `_header.excsv`): follows the same per-table scoping as `#column`/`#%` — open question, not yet designed (see below).
+
+### 7.5 Open questions
+
+1. **Spec vs cookbook-only.** Does this land as an actual meta-line, or stay a documented heuristic ("dimension + measure(sum) → bar/pie candidate") with zero format changes? Unresolved — see L7 tension above.
+2. **Per-channel type override.** Vega-Lite lets you force a field's encoding type per-encoding (e.g. treat an int `year` column as nominal instead of quantitative on an axis). The compact form has no equivalent yet — would need something like `x-type=nominal` if this turns out to matter in practice.
+3. **Pack support.** Not designed — does a pack-level `#chart` reference columns across tables (needs `#fk`-style qualification), or stay strictly per-table like `#column`?
+4. **Fixtures.** None yet — would need `plain/valid/NNN_chart_*.excsv` (one per mark type, at minimum) and an invalid fixture for "chart references undeclared column" once/if the spec lands.
+5. **Docs to touch if it lands:** new `docs/charts.md` (guide) + `docs/implementation/` normative page + `meta-lines.md` (add `#chart` row) + `schema/excsv.schema.json` (`charts` array) + `json.md`.
+
+---
+
+## 8. Deferred / out-of-scope
 
 - F9 pack cross-table DDL ordered by FK; E8 pack cross-table aggregations; M2/M3 pack checksum strategy; L5 per-column `sha256=`; N6 FK-graph viz.
 - Sorted-id skip index (id on the fencepost) — not part of §6; add later if we want `WHERE id=` without a scan.

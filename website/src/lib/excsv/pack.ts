@@ -2,6 +2,7 @@ import { strFromU8, strToU8 } from 'fflate';
 import { parseCell, parseExcsvText } from './parse';
 import { parseKvPairs } from './kv';
 import { serializeExcsvText } from './serialize';
+import { physicalColumns } from './computed';
 import { readZipEntries, writeZipBundle, buildZipArchiveComment } from './zip';
 import type { Cell, Column, ConvertWarning, ExcsvDocument, PackTable } from './types';
 
@@ -35,6 +36,7 @@ function readFlatColumns(
 ): Cell[][] {
   const prefix = tableDir.endsWith('/') ? tableDir : `${tableDir}/`;
   const found: { idx: number; values: Cell[] }[] = [];
+  const physCols = physicalColumns(columns);
 
   for (const [path, data] of Object.entries(files)) {
     if (!path.startsWith(prefix)) continue;
@@ -45,7 +47,7 @@ function readFlatColumns(
     const idx = parseInt(m[1], 10);
     found.push({
       idx,
-      values: readColLines(strFromU8(data), columns, idx, nullMarkers),
+      values: readColLines(strFromU8(data), physCols, idx, nullMarkers),
     });
   }
 
@@ -61,6 +63,7 @@ function readSectionedColumns(
 ): Cell[][] {
   const prefix = tableDir.endsWith('/') ? tableDir : `${tableDir}/`;
   const folders = new Map<number, string>();
+  const physCols = physicalColumns(columns);
 
   for (const path of Object.keys(files)) {
     if (!path.startsWith(prefix)) continue;
@@ -81,7 +84,7 @@ function readSectionedColumns(
       const start = parseInt(path.slice(folder.length).replace('.col', ''), 10);
       parts.push({
         start,
-        values: readColLines(strFromU8(data), columns, idx, nullMarkers),
+        values: readColLines(strFromU8(data), physCols, idx, nullMarkers),
       });
     }
     parts.sort((a, b) => a.start - b.start);
@@ -224,9 +227,9 @@ function tableZipEntries(table: PackTable): { entries: [string, Uint8Array][]; p
 
   if (!table.data?.length || !table.columns?.length) return { entries, payloadSize };
 
-  const colCount = table.columns.length;
-  for (let i = 0; i < colCount; i++) {
-    const col = table.columns[i];
+  const physCols = physicalColumns(table.columns);
+  for (let i = 0; i < physCols.length; i++) {
+    const col = physCols[i];
     const name = col.name ?? `col${i}`;
     const values = table.data.map((row) => {
       const cell = row[i];
@@ -262,7 +265,7 @@ function manifestText(doc: ExcsvDocument, payloadSizes: number[]): string {
   }
   tables.forEach((t, i) => {
     const dir = t.dir ?? `${t.name}/`;
-    const cols = t.columns?.length ?? 0;
+    const cols = physicalColumns(t.columns).length;
     lines.push(`#table name=${t.name} dir=${dir} columns=${cols} original-size=${payloadSizes[i] ?? 0}`);
   });
   if (doc.fk) {
