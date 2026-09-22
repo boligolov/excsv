@@ -59,6 +59,11 @@
       "type": "array",
       "items": { "$ref": "#/$defs/column" }
     },
+    "charts": {
+      "description": "Chart suggestions (#chart / #chart-<engine> lines). Advisory — every channel MUST reference a name present in `columns`. See docs/implementation/charts.md.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/chart" }
+    },
     "aggregates": {
       "description": "Pre-computed aggregates (#% lines). Each key is an aggregation name; each value is an array with one entry per physical column (null = not applicable / not computed). The array length should equal the number of physical columns.",
       "type": "object",
@@ -230,6 +235,60 @@
         }
       ]
     },
+    "chart": {
+      "description": "One #chart suggestion. Either the compact form (type= + channels + modifiers) or the #chart-vega escape hatch (raw Vega-Lite unit-spec). See docs/implementation/charts.md.",
+      "type": "object",
+      "oneOf": [
+        {
+          "required": ["type"],
+          "not": { "required": ["vega"] },
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Chart mark. Unrecognized values MUST be preserved/ignored (chart_unknown_type), not rejected.",
+              "examples": ["bar", "line", "area", "point", "circle", "arc", "rect", "tick", "boxplot", "text", "sparkline"]
+            },
+            "title": { "type": "string" },
+            "name": { "type": "string", "description": "Unique identifier for this chart line, for tooling to address it (e.g. `excsv chart --name`)." },
+            "x": { "type": "string" },
+            "y": { "type": "string" },
+            "x2": { "type": "string" },
+            "y2": { "type": "string" },
+            "color": { "type": "string" },
+            "size": { "type": "string" },
+            "theta": { "type": "string" },
+            "radius": { "type": "string" },
+            "shape": { "type": "string" },
+            "opacity": { "type": "string" },
+            "column": { "type": "string", "description": "Facet column (small multiples)." },
+            "row": { "type": "string", "description": "Facet row (small multiples)." },
+            "detail": { "type": "string" },
+            "order": { "type": "string" },
+            "tooltip": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ]
+            },
+            "text": { "type": "string" },
+            "aggregate": { "type": "string", "enum": ["sum", "avg", "min", "max", "count", "count_distinct"] },
+            "bin": { "oneOf": [{ "type": "boolean" }, { "type": "integer", "minimum": 1 }] },
+            "stack": { "oneOf": [{ "type": "boolean" }, { "const": "normalize" }] },
+            "sort": { "type": "string", "description": "'asc', 'desc', or a column name." },
+            "limit": { "type": "integer", "minimum": 1 },
+            "hole": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "additionalProperties": true
+        },
+        {
+          "required": ["vega"],
+          "properties": {
+            "vega": { "type": "object", "description": "Raw Vega-Lite unit-spec, from #chart-vega:." }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "statement": {
       "description": "A single SQL statement, optionally tagged by dialect and version.",
       "type": "object",
@@ -267,6 +326,10 @@
         "columns": {
           "type": "array",
           "items": { "$ref": "#/$defs/column" }
+        },
+        "charts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/chart" }
         },
         "aggregates": {
           "type": "object",

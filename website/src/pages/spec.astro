@@ -22,6 +22,7 @@ import CodeBlock from '../components/CodeBlock.astro';
       <a href="#computed">Computed</a>
       <a href="#grain">Grain</a>
       <a href="#aggregations">Aggregations</a>
+      <a href="#charts">Charts</a>
       <a href="#sql">SQL</a>
       <a href="#open">Open it</a>
       <a href="#formats">Formats</a>
@@ -255,6 +256,44 @@ excsv column dematerialize total data.excsv</code></pre>
           </tbody>
         </table>
       </div>
+    </section>
+
+    <section class="block" id="charts">
+      <h2>Charts — a view, not a task</h2>
+      <p>
+        <code>#column</code> says what a value <em>is</em>. <code>#chart</code> says how a few of them are
+        meant to be looked at — advisory, like everything else here. Skip it and the file is still valid CSV.
+      </p>
+      <pre><code><span class="hl-meta">#chart type=bar x=category y=amount sort=desc limit=10 title="Top categories by spend"</span>
+<span class="hl-meta">#chart type=sparkline y=amount title="Amount trend"</span></code></pre>
+      <p>
+        <code>type</code> is the mark, borrowed from Vega-Lite: <code>bar</code>, <code>line</code>,
+        <code>area</code>, <code>point</code>/<code>circle</code> (scatter, or a one-axis distribution with
+        only one channel set), <code>arc</code> (pie — <code>hole=</code> for a donut), <code>rect</code>
+        (heatmap), <code>boxplot</code>, <code>tick</code>, <code>text</code>, and <code>sparkline</code> — a
+        compact inline trend with no axes. Every other attribute is a channel that takes a column name:
+        <code>x</code>, <code>y</code>, <code>color</code>, <code>theta</code>, <code>size</code>,
+        <code>detail</code>, <code>tooltip</code>, and a few more for facets and ranges — always a name already
+        declared with <code>#column</code>, never a position.
+      </p>
+      <p>
+        Bar orientation isn't a separate switch — <code>x=category y=amount</code> draws vertical bars,
+        swap them for horizontal. Add <code>color=</code> and <code>stack=1</code> to stack instead of
+        group. <code>count()</code> stands in for "number of rows" wherever a channel expects a column,
+        for a histogram or a per-category row count.
+      </p>
+      <p>
+        Past the compact vocabulary — facets, layered views, two measures on independent scales — drop into
+        raw Vega-Lite with the escape hatch, the same shape as <code>#$ddl</code> vs <code>#$ddl-mysql</code>:
+      </p>
+      <pre><code><span class="hl-meta">#chart-vega: &#123;"mark":"arc","encoding":&#123;"theta":&#123;"field":"amount","aggregate":"sum","type":"quantitative"&#125;,"color":&#123;"field":"category","type":"nominal"&#125;&#125;&#125;</span></code></pre>
+      <p>
+        A chart hint only earns its keep if something can act on it without a browser or an image — which is
+        exactly the medium ExCSV already targets: a terminal, a CI log, a PR diff. <a href="https://github.com/boligolov/asciicharts">asciicharts</a>
+        (MIT, stdlib-only Python) renders bars, lines, scatter, pie, heatmaps, boxplots, histograms, and
+        sparklines as monospace text from a small JSON spec — a direct target for a reference
+        <code>excsv chart</code> command, so the same file you already <code>grep</code> can draw its own chart.
+      </p>
     </section>
 
     <section class="block" id="sql">

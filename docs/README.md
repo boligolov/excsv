@@ -10,6 +10,7 @@ CSV that describes itself. These pages are for anyone who works with tables — 
 | [Meta lines (overview)](meta-lines.md) | A map of every `#` line kind so you know what you're looking at |
 | [File metadata (`#@`)](file-metadata.md) | Provenance: source, author, grain, license, tags |
 | [Column schema (`#column`)](columns.md) | Types, units, formats, enums, roles — stop guessing what a column is |
+| [Charts (`#chart`)](charts.md) | Suggest a bar, line, or pie over columns you've already described — renderable as plain text |
 | [SQL companions (`#$`)](sql.md) | Ship the `CREATE TABLE` (and the query) that made the data |
 | [Aggregations (`#%`)](aggregations.md) | Sums, averages, counts that ride along — trustworthy totals without scanning |
 | [Checksum](checksum.md) | An integrity fingerprint of the data |

@@ -26,6 +26,7 @@ The two forms are a **bijection**: any conforming ExCSV text document maps to ex
 | `csv` | `#!excsv` dialect fields | Round-trip hint: `delim`, `quote`, `header`, `encoding`, `null`. See [Dialect round-trip](#dialect-round-trip). |
 | `meta` | `#@key: value` | Object; known keys + any custom. |
 | `columns` | `#column` lines | Array; each entry **MUST** include `index` (position in `data[row]`). |
+| `charts` | `#chart` / `#chart-<engine>:` lines | Array; see [Charts § JSON mirror](charts.md#json-mirror). |
 | `aggregates` | `#%name:` lines | Object: name → per-column array. |
 | `sql` | `#$ddl` / `#$dql` | `{ ddl: [...], dql: [...] }`. |
 | `checksum` | `checksum=` | `"<algo>:<hex>"`. |
@@ -52,6 +53,7 @@ The text form is line-oriented and stringly-typed; JSON has real types and struc
 | **`enum`** | pipe-joined string `a\|b\|c` | array `["a","b","c"]`, typed per `type` | Split/join on `\|`. Values keep the column's type in JSON. |
 | **`unique` / `required`** | `1` / `0` | JSON `true` / `false` | `1` ↔ `true`, `0` ↔ `false`. |
 | **`#%` arity** | one value per physical column | array of same length | `null` entry ↔ empty CSV field ("not applicable"). Array length SHOULD equal the physical column count. |
+| **`#chart`** | compact `key=value` line, or `#chart-<engine>: <payload>` | object: flat `{type, ...channels, ...modifiers}`, or `{"vega": <parsed JSON>}` | One array entry per `#chart` line, file order preserved. See [Charts § JSON mirror](charts.md#json-mirror). |
 | **SQL dialect** | key suffix `#$ddl-postgres-18:` | `{ "dialect": "postgres", "version": "18", "stmt": "…" }` | Split the suffix into `dialect` + optional `version`. No suffix ↔ omitted `dialect`. |
 | **DDL order** | file order | `sql.ddl[]` order | Preserve array order; it is executable order. |
 | **`#@` values** | raw text to end of line | string (or typed where obvious) | `tags` MAY be an array; timestamps stay ISO-8601 strings. Unknown `#@` keys pass through. |

@@ -12,6 +12,7 @@ For a readable, benefits-first tour of the format, see the [guide in `docs/`](..
 | Meta lines (overview) | [meta-lines.md](meta-lines.md) |
 | File metadata (`#@`) | [file-metadata.md](file-metadata.md) |
 | Column schema (`#column`) | [columns.md](columns.md) |
+| Charts (`#chart`) | [charts.md](charts.md) |
 | SQL companions (`#$`) | [sql.md](sql.md) |
 | Aggregations (`#%`) | [aggregations.md](aggregations.md) |
 | Checksum | [checksum.md](checksum.md) |

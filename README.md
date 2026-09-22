@@ -130,28 +130,11 @@ More tools: [excsv.org/tools](https://excsv.org/tools/).
 
 ---
 
-## Specification (by topic)
+## Specification
 
-| Topic | Document |
-| --- | --- |
-| Introduction | [docs/introduction.md](docs/introduction.md) |
-| File structure & sidecar | [docs/file-structure.md](docs/file-structure.md) |
-| Header line (`#!excsv`) | [docs/header.md](docs/header.md) |
-| Meta lines (overview) | [docs/meta-lines.md](docs/meta-lines.md) |
-| File metadata (`#@`) | [docs/file-metadata.md](docs/file-metadata.md) |
-| Column schema (`#column`) | [docs/columns.md](docs/columns.md) |
-| SQL companions (`#$`) | [docs/sql.md](docs/sql.md) |
-| Aggregations (`#%`) | [docs/aggregations.md](docs/aggregations.md) |
-| Checksum | [docs/checksum.md](docs/checksum.md) |
-| ZIP container | [docs/zip.md](docs/zip.md) |
-| Pack container | [docs/pack.md](docs/pack.md) |
-| JSON form (`.excsv.json`) | [docs/json.md](docs/json.md) |
-| Data section | [docs/data-section.md](docs/data-section.md) |
-| Full example | [docs/full-example.md](docs/full-example.md) |
-| Prior art | [docs/prior-art.md](docs/prior-art.md) |
-| License | [docs/license.md](docs/license.md) |
+**[docs/](docs/)** — the guide, topic by topic (types, charts, SQL, checksum, ZIP, pack, JSON form, …), written for people who work with tables. Start with [docs/introduction.md](docs/introduction.md) or see everything in one file at [docs/full-example.md](docs/full-example.md).
 
-The docs above are written for people who work with tables. **Building a tool or parser?** The normative spec — parser rules, validation, and the error-code registry — lives in [docs/implementation/](docs/implementation/).
+**Building a tool or parser?** [docs/implementation/](docs/implementation/) is the normative spec — parser rules (RFC 2119 keywords), validation, and the error-code registry. Same topics, precise instead of friendly; it's the source of truth when the two differ.
 
 ## License
 

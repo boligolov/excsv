@@ -2,17 +2,15 @@
 
 Shared planning for ExCSV tooling. This repository holds the **spec**, the abstract feature catalog, and the **fixture corpus** that all implementations consume. Per-language implementation plans and cookbooks live in their own repositories.
 
-Replaces the old `golang/features.md`, which is implemented but **obsolete**: it predates the `#$` SQL section, the `.excsv.zip` container, and the pack format. Treat that file as historical reference only.
-
 ## What lives here
 
-| Path | Purpose |
-| --- | --- |
-| `README.md`, `docs/` | Normative spec (v0.5) |
-| `plan/01-features.md` | Abstract feature catalog — **source of truth for capabilities** |
-| `plan/02-fixtures.md` | Fixture naming, manifest rules, generation |
-| `fixtures/` | Shared test corpus (`fixtures.yaml` + `plain/`, `zip/`, `pack/`) |
-| `plan/TODO.md` | Consolidated backlog — remaining spec/fixture/impl work + new features |
+| Path | Status | Purpose |
+| --- | --- | --- |
+| `README.md`, `docs/` | v0.5 | Normative spec |
+| `plan/01-features.md` | draft | Abstract feature catalog — **source of truth for capabilities**, format-agnostic capability map with feature IDs (A1…P8) |
+| `plan/02-fixtures.md` | draft | Fixture naming, manifest rules, generation; shared by Go, Python, and cookbook |
+| `fixtures/` | — | Shared test corpus (`fixtures.yaml` + `plain/`, `zip/`, `pack/`) |
+| `plan/TODO.md` | — | Consolidated backlog — remaining spec/fixture/impl work + new features |
 
 ## Implementation repositories
 
@@ -27,13 +25,6 @@ Each implementation repo owns its own plan: package layout, command tree, API su
 ## Sequencing
 
 The spec is implemented as a whole. Go and Python cover plain, sidecar, row-ZIP, and pack (including sectioned) against the same fixture corpus. Cookbook tracks the CLIs, not a format subset.
-
-## Documents (this repo)
-
-| File | Status | Purpose |
-| --- | --- | --- |
-| `01-features.md` | **draft** | Format-agnostic capability map with feature IDs (A1…P8). |
-| `02-fixtures.md` | **draft** | Fixture corpus rules; shared by Go, Python, and cookbook. |
 
 ## Rules
 

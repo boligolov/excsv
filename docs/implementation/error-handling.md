@@ -52,6 +52,17 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | `computed_default_ignored` | WARN | — | `default=` or `required=` set on a `formula=` column; ignored either way. |
 | `computed_stale` | WARN | never | A materialized value may not reflect the current formula output (e.g. its stored inputs changed after caching). |
 
+## Charts
+
+| Code | Severity | Verify | Meaning |
+| --- | --- | --- | --- |
+| `chart_unknown_column` | FAIL | — | A `#chart` channel references a name with no matching `#column name=` in the same table. |
+| `chart_missing_required_channel` | FAIL | — | `type=`'s mark is missing a channel that mark requires (e.g. `bar` without `x`/`y`, `arc` without `theta`). |
+| `chart_vega_invalid_json` | FAIL | — | `#chart-<engine>:` payload does not parse as valid JSON. |
+| `chart_on_manifest` | WARN | — | `#chart` present on a pack manifest (`_manifest.excsv`); ignored — charts are per-table, like `#column`. |
+| `chart_unknown_type` | WARN | — | Unrecognized `type=` value, or unrecognized `#chart-<engine>:` suffix; preserved/ignored. |
+| `chart_unknown_channel` | WARN | — | Unrecognized channel or modifier attribute on a `#chart` line; ignored. |
+
 ## Data section
 
 | Code | Severity | Verify | Meaning |

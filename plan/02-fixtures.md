@@ -1,4 +1,4 @@
-# Step 2 — Test Fixtures
+# Test Fixtures
 
 The shared corpus that drives every implementation's tests. Defined here once, consumed by [excsv-golang](https://github.com/boligolov/excsv-golang), [excsv-python](https://github.com/boligolov/excsv-python), and the [cookbook](https://excsv.org/cookbook/) (lives on the website, not a separate repo). Implementation-agnostic.
 
@@ -49,6 +49,8 @@ If a fixture becomes obsolete: mark it `superseded_by: NNN` in the manifest, do 
 ## Manifest (`fixtures.yaml`)
 
 The manifest is the source of truth. Test runners walk it, not the directory.
+
+The file is a **two-document YAML stream** (`---` separates them): the first document is a header, `{error_kinds: [...]}` — the enum that MUST match `docs/implementation/error-handling.md`; the second is the flat list of fixture entries shown below. Load with `yaml.safe_load_all()` (Python) / `yaml.NewDecoder(...).Decode()` called twice (Go) and take the second document as the manifest proper.
 
 ```yaml
 - id: plain/valid/001_minimal_header_only.excsv

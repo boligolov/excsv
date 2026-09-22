@@ -1,4 +1,4 @@
-# Step 1 — Abstract Feature Catalog
+# Abstract Feature Catalog
 
 Format-agnostic capability map. Independent of Go / Python / CLI surface. Each feature lists its semantic intent and its support across the storage forms.
 
@@ -84,6 +84,7 @@ Core lifecycle: open, parse, materialize, serialize, stream.
 | D5 | Reorder declarations (Mode A) | ✓ | ✓ | ≈ | PF: renumbers the `<index>-` prefix on every shifted column entry. Same single-pass ZIP rewrite cost as D3, multiplied by the number of shifted columns. |
 | D6 | Validate header row matches `#column name=` | ✓ | ✓ | — | RF only; PF has no in-data header row. |
 | D7 | Computed columns (`formula=`): declare, materialize, dematerialize | ✓ | ✓ | ≈ | Requires `header=1` (RF) / name addressing (PF) — no `index=`. PF: virtual costs zero `.col` files; materialize adds one `.col` (or one per section). |
+| D8 | Chart suggestions (`#chart` / `#chart-vega:`): declare, list, validate channels against `#column` | ✓ | ✓ | ≈ | Advisory, like `#%`. PF: per-table only, no manifest-level cross-table chart. See `docs/implementation/charts.md`, `plan/TODO.md` §7. |
 
 ## E. Aggregations (`#%`)
 
@@ -225,6 +226,7 @@ These are pack-only by nature, and the main reason the pack exists.
 | N4 | Schema-only export | ✓ | ✓ | ✓ | PF: emits manifest + each table's header-only file. |
 | N5 | Template generation (column list → empty file) | ✓ | — | ≈ | PF: empty pack with one or more empty tables. |
 | N6 | FK graph visualisation | — | — | ⊕ | |
+| N7 | Render `#chart` suggestions as ASCII/terminal text (`excsv chart`) | ✓ | ✓ | ≈ | Reference renderer target: [asciicharts](https://github.com/boligolov/asciicharts) (MIT, stdlib-only Python) — resolve channels + modifiers into its `{chartType, labels, series}` spec. A renderer MAY support only a subset of marks; unsupported ones degrade, never fail the file. PF: per-table only. See `docs/implementation/charts.md#reference-renderer-asciiterminal`. |
 
 ## O. Cleanup & repair
 
