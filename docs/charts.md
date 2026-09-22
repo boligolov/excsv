@@ -6,10 +6,12 @@
 #column name=category type=string  role=dimension
 #column name=amount   type=decimal role=measure agg=sum unit=USD
 
-#chart type=bar x=category y=amount sort=desc limit=10 title="Top categories by spend"
+#chart type=bar name=top_categories x=category y=amount sort=desc limit=10 title="Top categories by spend"
 ```
 
-You can write as many `#chart` lines as you want, even over the same columns — a bar view and a pie view of the same `category`/`amount` pair are two independent suggestions, not a conflict.
+Every `#chart` line needs two things: `type=` (the mark) and `name=` (a unique id for that line — how you or a tool refer to it, e.g. `excsv chart --name top_categories`). Everything else is optional.
+
+You can write as many `#chart` lines as you want, even over the same columns — a bar view and a pie view of the same `category`/`amount` pair are two independent suggestions, not a conflict. Just give each one a distinct `name=`.
 
 ## The vocabulary
 
@@ -33,7 +35,7 @@ Orientation isn't a separate switch. `x=category y=amount` (dimension on `x`, me
 
 `count()` is a reserved stand-in for "number of rows" wherever a channel expects a column — handy for `y=count()` on a histogram (`type=bar bin=20 x=amount y=count()`) or a plain row count per category.
 
-A few modifiers tune the view without touching the column's own metadata: `title=`, `name=` (so you can address one chart among several), `aggregate=` (override the column's `agg=` just for this chart), `sort=`/`limit=` (top-N), `bin=`, `stack=`, `hole=`.
+A few modifiers tune the view without touching the column's own metadata: `title=`, `aggregate=` (override the column's `agg=` just for this chart), `sort=`/`limit=` (top-N), `bin=`, `stack=`, `hole=`.
 
 ## When the vocabulary isn't enough
 
@@ -49,7 +51,7 @@ Same idea as `#$ddl` vs `#$ddl-mysql`: the common case stays terse, the escape h
 
 A chart hint is only really useful if something can act on it without a browser, a BI tool, or an image — which is exactly the situation ExCSV already targets: a terminal, a CI log, a code review, an LLM's context window. That's what makes `#chart` different from "just render it in Vega-Lite" — it's meant to be rendered as **text**.
 
-[asciicharts](https://github.com/boligolov/asciicharts) is a good match for that: MIT-licensed, pure Python standard library, and it renders bars, lines, scatter, pie, heatmaps, boxplots, histograms, and sparklines as monospace ASCII/ANSI art from a small JSON spec — `{"chartType": ..., "labels": [...], "series": [...]}`. A tool reading `#chart type=bar x=category y=amount` already has everything needed to build that spec (resolve the columns, aggregate per the modifiers) and hand it to something like asciicharts to print straight to the terminal:
+[asciicharts](https://github.com/boligolov/asciicharts) is a good match for that: MIT-licensed, pure Python standard library, and it renders bars, lines, scatter, pie, heatmaps, boxplots, histograms, and sparklines as monospace ASCII/ANSI art from a small JSON spec — `{"chartType": ..., "labels": [...], "series": [...]}`. A tool reading `#chart type=bar name=top_categories x=category y=amount` already has everything needed to build that spec (resolve the columns, aggregate per the modifiers) and hand it to something like asciicharts to print straight to the terminal:
 
 ```
 excsv chart sales.excsv

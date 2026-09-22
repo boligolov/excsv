@@ -240,7 +240,7 @@
       "type": "object",
       "oneOf": [
         {
-          "required": ["type"],
+          "required": ["type", "name"],
           "not": { "required": ["vega"] },
           "properties": {
             "type": {
@@ -249,7 +249,7 @@
               "examples": ["bar", "line", "area", "point", "circle", "arc", "rect", "tick", "boxplot", "text", "sparkline"]
             },
             "title": { "type": "string" },
-            "name": { "type": "string", "description": "Unique identifier for this chart line, for tooling to address it (e.g. `excsv chart --name`)." },
+            "name": { "type": "string", "description": "Required. Unique identifier for this chart line, for tooling to address it (e.g. `excsv chart --name`). Missing = chart_missing_name; duplicate across lines = chart_duplicate_name (last wins)." },
             "x": { "type": "string" },
             "y": { "type": "string" },
             "x2": { "type": "string" },

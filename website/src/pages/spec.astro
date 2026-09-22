@@ -264,17 +264,19 @@ excsv column dematerialize total data.excsv</code></pre>
         <code>#column</code> says what a value <em>is</em>. <code>#chart</code> says how a few of them are
         meant to be looked at — advisory, like everything else here. Skip it and the file is still valid CSV.
       </p>
-      <pre><code><span class="hl-meta">#chart type=bar x=category y=amount sort=desc limit=10 title="Top categories by spend"</span>
-<span class="hl-meta">#chart type=sparkline y=amount title="Amount trend"</span></code></pre>
+      <pre><code><span class="hl-meta">#chart type=bar name=top_categories x=category y=amount sort=desc limit=10 title="Top categories by spend"</span>
+<span class="hl-meta">#chart type=sparkline name=amount_trend y=amount title="Amount trend"</span></code></pre>
       <p>
+        <code>type</code> and <code>name</code> are the only two required attributes on every line.
         <code>type</code> is the mark, borrowed from Vega-Lite: <code>bar</code>, <code>line</code>,
         <code>area</code>, <code>point</code>/<code>circle</code> (scatter, or a one-axis distribution with
         only one channel set), <code>arc</code> (pie — <code>hole=</code> for a donut), <code>rect</code>
         (heatmap), <code>boxplot</code>, <code>tick</code>, <code>text</code>, and <code>sparkline</code> — a
-        compact inline trend with no axes. Every other attribute is a channel that takes a column name:
-        <code>x</code>, <code>y</code>, <code>color</code>, <code>theta</code>, <code>size</code>,
-        <code>detail</code>, <code>tooltip</code>, and a few more for facets and ranges — always a name already
-        declared with <code>#column</code>, never a position.
+        compact inline trend with no axes. <code>name</code> is a unique id for that line, so
+        <code>excsv chart --name top_categories</code> can address one suggestion among several. Every other
+        attribute is a channel that takes a column name: <code>x</code>, <code>y</code>, <code>color</code>,
+        <code>theta</code>, <code>size</code>, <code>detail</code>, <code>tooltip</code>, and a few more for
+        facets and ranges — always a name already declared with <code>#column</code>, never a position.
       </p>
       <p>
         Bar orientation isn't a separate switch — <code>x=category y=amount</code> draws vertical bars,

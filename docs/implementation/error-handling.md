@@ -56,9 +56,12 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 
 | Code | Severity | Verify | Meaning |
 | --- | --- | --- | --- |
+| `chart_missing_type` | FAIL | — | A compact-form `#chart` line lacks `type=`. |
+| `chart_missing_name` | FAIL | — | A compact-form `#chart` line lacks `name=`. |
 | `chart_unknown_column` | FAIL | — | A `#chart` channel references a name with no matching `#column name=` in the same table. |
 | `chart_missing_required_channel` | FAIL | — | `type=`'s mark is missing a channel that mark requires (e.g. `bar` without `x`/`y`, `arc` without `theta`). |
 | `chart_vega_invalid_json` | FAIL | — | `#chart-<engine>:` payload does not parse as valid JSON. |
+| `chart_duplicate_name` | WARN | — | Two `#chart` lines share the same `name=`; last one wins for addressing purposes (same rule as `duplicate_column`). |
 | `chart_on_manifest` | WARN | — | `#chart` present on a pack manifest (`_manifest.excsv`); ignored — charts are per-table, like `#column`. |
 | `chart_unknown_type` | WARN | — | Unrecognized `type=` value, or unrecognized `#chart-<engine>:` suffix; preserved/ignored. |
 | `chart_unknown_channel` | WARN | — | Unrecognized channel or modifier attribute on a `#chart` line; ignored. |

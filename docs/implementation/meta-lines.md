@@ -20,7 +20,7 @@ Six recognized structured kinds plus a human-comment line, by prefix:
 | `## ...`                     | Human comment (ignored by parsers; comment to end of line) | `## TODO: drop legacy status values` |
 | `#@key: value`               | File-level metadata | `#@source: sales_db.orders`              |
 | `#column ...`                | Column annotation   | `#column name=id type=int`               |
-| `#chart ...` / `#chart-<engine>: ...` | Chart suggestion | `#chart type=bar x=category y=amount` |
+| `#chart ...` / `#chart-<engine>: ...` | Chart suggestion | `#chart type=bar name=amount_by_category x=category y=amount` |
 | `#$<verb>[-<dialect>]: ...`  | SQL companion       | `#$ddl-mysql: CREATE TABLE orders (...)` |
 | `#%<name>: ...`              | Aggregation values  | `#%sum: ,, 42.5`                         |
 
