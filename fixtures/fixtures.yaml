@@ -381,7 +381,7 @@ error_kinds:
     profile: sidecar
     header:
       reference: 039_sidecar_checksum_pair.csv
-      checksum: sha256:0b3f39155f0904ac1a986803018c602ca7202e944afd7431ba601276f7b6344b
+      checksum: sha256:5316f5e3592909b93a0eb64875708f7e4f9179b648b4e496352a396b9982b642
     rows: 2
 
 - id: plain/valid/040_checksum_mismatch.excsv

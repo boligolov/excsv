@@ -241,7 +241,7 @@ def col_payload(values: list[str]) -> bytes:
 
 def table_header_text(table: TableBuild) -> str:
     rows = len(table.columns[0]) if table.columns else 0
-    parts = ["#!excsv version=0.4 layout=columnar", f"rows={rows}"]
+    parts = ["#!excsv version=0.5 layout=columnar", f"rows={rows}"]
     if table.section_size:
         parts.append(f"section-size={table.section_size}")
     for key, value in table.header_kv_extra.items():
@@ -303,7 +303,7 @@ def manifest_text(spec: PackBuild, table_payload_sizes: list[int]) -> str:
     table_count = len(spec.tables)
     original_size = sum(table_payload_sizes)
     parts = [
-        "#!excsv version=0.4 layout=pack",
+        "#!excsv version=0.5 layout=pack",
         f"table-count={table_count}",
         f"original-size={original_size}",
     ]
@@ -582,6 +582,7 @@ def make_valid() -> None:
 
 
 def corrupt_entry(entries: list[tuple[str, bytes]], name: str, payload: bytes) -> list[tuple[str, bytes]]:
+    assert any(n == name for n, _ in entries), f"corrupt_entry: no entry named {name!r}"
     return [(n, payload if n == name else p) for n, p in entries]
 
 
@@ -647,7 +648,7 @@ def make_invalid() -> None:
         section_size=2,
     )
     sec_entries, sec_payload = table_entries(sectioned)
-    sec_entries = corrupt_entry(sec_entries, "items/00-id/04.col", b"5\n6\n")
+    sec_entries = corrupt_entry(sec_entries, "items/00-id/4.col", b"5\n6\n")
     manifest = manifest_text(PackBuild(tables=[sectioned]), [sec_payload])
     write_pack(
         PACK_INVALID / "006_section_partition_error.excsv.pack.zip",
@@ -656,7 +657,7 @@ def make_invalid() -> None:
     )
 
     sec_entries, sec_payload = table_entries(sectioned)
-    sec_entries = corrupt_entry(sec_entries, "items/01-name/02.col", b"c\n")
+    sec_entries = corrupt_entry(sec_entries, "items/01-name/2.col", b"c\n")
     manifest = manifest_text(PackBuild(tables=[sectioned]), [sec_payload])
     write_pack(
         PACK_INVALID / "007_section_boundary_mismatch.excsv.pack.zip",
