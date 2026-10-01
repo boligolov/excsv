@@ -5,7 +5,8 @@ import Base from '../layouts/Base.astro';
 <Base title="ExCSV Tools & Libraries" description="CLI tools and libraries that read and write ExCSV.">
   <h1>Tools &amp; Libraries</h1>
   <p class="intro">
-    Implementations of <a href="/spec/">ExCSV</a>. Both implement v0.5; v0.6 notes and links (<code>#note</code>, <code>link=</code>, <code>#link</code>) are in progress.
+    Implementations of <a href="/spec/">ExCSV</a>. Both implement v0.6, including notes and links
+    (<code>#note</code>, <code>link=</code>, <code>#link</code>), and both run the shared fixture corpus.
     Need a quick text ↔ JSON conversion? Use the browser
     <a href="/convert/">converter</a> — nothing leaves your machine.
     This list is curated — if you ship a library or CLI, open an issue on the
@@ -17,9 +18,9 @@ import Base from '../layouts/Base.astro';
       <div class="tool-head">
         <div>
           <h2><a href="https://github.com/boligolov/excsv-golang" target="_blank" rel="noopener">excsv-golang</a></h2>
-          <p class="tool-meta">Go · CLI + library · Reference implementation</p>
+          <p class="tool-meta">Go · CLI + library · Reference implementation · CLI 0.0.6</p>
         </div>
-        <span class="badge">v0.5</span>
+        <span class="badge">v0.6</span>
       </div>
 
       <p>
@@ -33,6 +34,9 @@ import Base from '../layouts/Base.astro';
         <li>Parse, validate, fix, and serialize ExCSV documents</li>
         <li>Header, metadata, rows, and conversion commands</li>
         <li>Computed columns (<code>formula=</code>): materialize / dematerialize</li>
+        <li>Notes and links: <code>note add|list|remove</code>, <code>link set|list|remove|check</code> — unsafe schemes and unresolved anchors reported</li>
+        <li><code>column rename</code> rewrites every reference — <code>formula=</code>, <code>#chart</code>, <code>#note</code>/<code>#link</code>, <code>link=</code> placeholders, pack <code>#fk</code></li>
+        <li>Chart suggestions (<code>#chart</code>, <code>#chart-vega</code>): parse, validate, JSON mirror (library)</li>
         <li>ZIP wrap / unwrap / peek with <code>original-size</code> checks</li>
         <li>Pack <code>create</code> and multi-table <code>table list</code></li>
         <li>Fixture-driven tests against the shared <code>fixtures/</code> corpus</li>
@@ -47,6 +51,8 @@ import Base from '../layouts/Base.astro';
         <h3>Quick start</h3>
         <pre><code>excsv data.excsv validate
 excsv data.excsv info
+excsv data.excsv note add --row 2 --col amount --text "Refund pending"
+excsv data.excsv link check
 excsv data.excsv.zip zip unwrap -o data.excsv
 excsv data.excsv pack create -o data.excsv.pack.zip</code></pre>
       </div>
@@ -64,9 +70,9 @@ excsv data.excsv pack create -o data.excsv.pack.zip</code></pre>
       <div class="tool-head">
         <div>
           <h2><a href="https://github.com/boligolov/excsv-python" target="_blank" rel="noopener">excsv-python</a></h2>
-          <p class="tool-meta">Python 3.10+ · Library only · Alpha</p>
+          <p class="tool-meta">Python 3.10+ · Library only · Alpha · 0.6.0</p>
         </div>
-        <span class="badge">v0.5</span>
+        <span class="badge">v0.6</span>
       </div>
 
       <p>
@@ -75,20 +81,27 @@ excsv data.excsv pack create -o data.excsv.pack.zip</code></pre>
         with matching module layout and error taxonomy. Supports plain
         (<code>.excsv</code>, <code>.ecsv</code>, <code>.extsv</code> sidecars), JSON
         (<code>.excsv.json</code>), row ZIP (<code>.excsv.zip</code>, <code>.ecsv.zip</code>), and
-        pack (<code>.excsv.pack.zip</code>). Pre-1.0 — pin a version and check release notes before upgrading.
+        pack (<code>.excsv.pack.zip</code>). The package version follows the spec: 0.6.0 implements v0.6.
+        Pre-1.0 — pin a version and check release notes before upgrading.
       </p>
 
       <ul class="feature-list">
         <li>Parse, validate, fix, and serialize ExCSV documents</li>
         <li>CSV/TSV import, JSON and CSVW export</li>
         <li>Computed columns (<code>formula=</code>): materialize / dematerialize</li>
+        <li>Chart suggestions (<code>#chart</code>, <code>#chart-vega</code>): checks, add / remove, JSON mirror</li>
+        <li>Notes and links: resolve <code>row=</code>/<code>key=</code> anchors, build each cell's final URL with the scheme check, add notes and links</li>
+        <li><code>rename_column</code> rewrites every by-name reference, sidecar-safe</li>
         <li>Row ZIP and pack containers, with optional AES-256 password support via <code>pyzipper</code></li>
         <li>Fixture-driven tests against the shared <code>fixtures/</code> corpus</li>
       </ul>
 
       <div class="tool-install">
         <h3>Install</h3>
-        <pre><code>git clone https://github.com/boligolov/excsv-python
+        <pre><code>pip install "excsv @ git+https://github.com/boligolov/excsv-python@v0.6.0"
+
+# or, for development:
+git clone https://github.com/boligolov/excsv-python
 cd excsv-python
 pip install -e .            # core library, stdlib only
 pip install -e ".[crypto]"  # + AES-256 zip password support</code></pre>
@@ -100,7 +113,11 @@ pip install -e ".[crypto]"  # + AES-256 zip password support</code></pre>
 
 res = excsv.parse_file("data.excsv", excsv.strict_options())
 doc = res.doc
-print(doc.row_count(), doc.header.delim_name)</code></pre>
+print(doc.row_count(), doc.header.delim_name)
+
+for n in doc.resolve_notes():            # #note lines, in file order
+    print(n.target.value, n.row, n.col_name, n.text)
+print(doc.resolve_links().cell_link(0, "order_id"))   # final URL, or None</code></pre>
       </div>
 
       <p class="tool-links">
@@ -115,6 +132,8 @@ print(doc.row_count(), doc.header.delim_name)</code></pre>
     <h2>Planned</h2>
     <ul>
       <li><strong>DDL generation from schema</strong> — auto-generate <code>CREATE TABLE</code> straight from <code>#column</code> definitions (today's <code>#$ddl:</code> lines are hand-authored). Streaming reads and file diffing are on the same roadmap — see the Go tool's <a href="https://github.com/boligolov/excsv-golang#status" target="_blank" rel="noopener">status table</a>.</li>
+      <li><strong><code>excsv chart</code></strong> — render a file's <code>#chart</code> suggestions as text in the terminal. Both libraries already parse and validate charts; the renderer isn't written yet.</li>
+      <li><strong><code>.xlsx</code> import / export</strong> — notes as Excel comments, links as real hyperlinks (<a href="https://github.com/boligolov/excsv/blob/master/docs/implementation/notes.md#excel-interop" target="_blank" rel="noopener">mapping</a>).</li>
       <li>Curious what's next for the spec itself? The <a href="https://github.com/boligolov/excsv/blob/master/plan/TODO.md" target="_blank" rel="noopener">backlog</a> tracks it. No library at all? See the <a href="/cookbook/">CLI Cookbook</a> for <code>grep</code>/<code>awk</code> one-liners.</li>
     </ul>
   </section>

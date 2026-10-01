@@ -111,12 +111,18 @@ Full-featured sample: [docs/full-example.md](docs/full-example.md).
 
 ## Reference implementation
 
-**[excsv-golang](https://github.com/boligolov/excsv-golang)** — validate, inspect, convert, wrap/unwrap archives.
+**[excsv-golang](https://github.com/boligolov/excsv-golang)** — CLI + library: validate, inspect, convert, wrap/unwrap archives, edit notes and links. Implements v0.6.
 
 ```bash
 go install github.com/boligolov/excsv-golang/cmd/excsv@latest
 excsv data.excsv validate
 excsv data.excsv.zip info
+```
+
+**[excsv-python](https://github.com/boligolov/excsv-python)** — library, same fixture corpus; package 0.6.0 implements v0.6:
+
+```bash
+pip install "excsv @ git+https://github.com/boligolov/excsv-python@v0.6.0"
 ```
 
 More tools: [excsv.org/tools](https://excsv.org/tools/).
