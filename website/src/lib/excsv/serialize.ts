@@ -1,6 +1,7 @@
 import { formatKvValue, serializeKvPairs } from './kv';
 import { resolveDelim, resolveQuote, serializeCsvRow } from './csv';
 import { assignPhysicalIndexes, physicalColumns } from './computed';
+import { formatChartLine } from './charts';
 import { formatLinkLine, formatNoteLine } from './notes';
 import type { Cell, Column, ConvertWarning, ExcsvDocument, SqlStatement } from './types';
 
@@ -60,6 +61,7 @@ export function serializeExcsvText(doc: ExcsvDocument): { text: string; warnings
     }
   }
 
+  for (const chart of doc.charts ?? []) lines.push(formatChartLine(chart));
   for (const note of doc.notes ?? []) lines.push(formatNoteLine(note));
   for (const link of doc.links ?? []) lines.push(formatLinkLine(link));
 

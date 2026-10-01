@@ -134,6 +134,10 @@ The compact form has no explicit "horizontal" switch — orientation and variant
 - Multiple `#chart` lines for the same or overlapping columns are normal — each is an independent suggested view, not a conflict to resolve.
 - A compact-form line without `type=` or without `name=` **MUST fail** (`chart_missing_type` / `chart_missing_name` — see [Required attributes](#required-attributes)). A duplicate `name=` **MUST warn** (`chart_duplicate_name`), last-wins.
 
+### ZIP comment
+
+In a ZIP archive comment, `#chart` lines come after `#$dql` and before `#note` / `#link` — see [ZIP § Priority order](zip.md#priority-order). A truncated comment may therefore list a file's columns and aggregates but not its charts; the inner file is authoritative.
+
 ### Pack scoping
 
 `#chart` **MUST NOT** appear on `_manifest.excsv` (`chart_on_manifest`, WARN, ignored) — the same per-table scoping as `#column`: a `#chart` line lives on a table's own `_header.excsv` and its channels resolve only against that table's columns. A pack-level chart spanning multiple tables (which would need `#fk`-style qualification, e.g. `orders.amount`) is **not designed** in this version — deferred alongside the other pack cross-table items in `plan/TODO.md` §8.

@@ -74,7 +74,8 @@ Writers **MUST** include lines in this priority order, stopping when the next li
 6. `#@comment`, `#@tags`.
 7. Remaining `#@` entries.
 8. All `#$dql` and `#$dql-<dialect>` lines.
-9. All `#note` and `#link` lines (see [Notes and links](notes.md)).
+9. All `#chart` and `#chart-<engine>` lines (preserving file order; see [Charts](charts.md)).
+10. All `#note` and `#link` lines (see [Notes and links](notes.md)).
 
 ### Truncation Marker
 

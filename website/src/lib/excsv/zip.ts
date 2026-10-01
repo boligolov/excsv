@@ -17,6 +17,7 @@ type CommentBucket =
   | 'meta_other'
   | 'dql'
   | 'other'
+  | 'chart'
   | 'notes';
 
 const COMMENT_PRIORITY: CommentBucket[] = [
@@ -29,6 +30,7 @@ const COMMENT_PRIORITY: CommentBucket[] = [
   'meta_other',
   'dql',
   'other',
+  'chart',
   'notes', // #note / #link: lowest priority, first to go when the budget runs out
 ];
 
@@ -165,6 +167,7 @@ function classifyMetaLine(line: string): CommentBucket {
   if (line.startsWith('#$ddl')) return 'ddl';
   if (line.startsWith('#$dql')) return 'dql';
   if (line.startsWith('#%')) return 'agg';
+  if (line.startsWith('#chart')) return 'chart';
   if (line.startsWith('#note') || line.startsWith('#link')) return 'notes';
   if (line.startsWith('#@')) {
     const key = line.slice(2).split(':')[0]?.trim() ?? '';

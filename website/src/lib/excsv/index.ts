@@ -10,6 +10,7 @@ import { readZipPlain, writeZipPlain, isZipBytes, readZipArchiveComment, buildZi
 export type {
   Cell,
   CellLink,
+  Chart,
   Column,
   Note,
   ExcsvDocument,

@@ -143,6 +143,7 @@ async function readTableFromZip(
     meta: headerDoc.meta,
     csv: headerDoc.csv,
     columns: headerDoc.columns,
+    charts: headerDoc.charts,
     notes: headerDoc.notes,
     links: headerDoc.links,
     aggregates: headerDoc.aggregates,
@@ -181,6 +182,9 @@ export async function readPack(
     tables.push(await readTableFromZip(files, spec.dir, spec.name, warnings));
   }
 
+  if (manifest.charts?.length) {
+    warnings.push({ code: 'chart_on_manifest', message: '#chart on the pack manifest is ignored; charts are per-table.' });
+  }
   if (manifest.notes?.length) {
     warnings.push({ code: 'note_on_manifest', message: '#note on the pack manifest is ignored; notes are per-table.' });
   }
@@ -192,6 +196,7 @@ export async function readPack(
   }
 
   manifest.tables = tables;
+  delete manifest.charts;
   delete manifest.notes;
   delete manifest.links;
   delete manifest.columns;
@@ -218,6 +223,7 @@ function tableHeaderText(table: PackTable): string {
     csv: table.csv,
     meta: table.meta,
     columns: table.columns,
+    charts: table.charts,
     notes: table.notes,
     links: table.links,
     aggregates: table.aggregates,
@@ -340,6 +346,7 @@ export function inlineToPack(doc: ExcsvDocument, tableName = 'data'): ExcsvDocum
         meta: doc.meta,
         csv: doc.csv,
         columns: doc.columns,
+        charts: doc.charts,
         notes: doc.notes,
         links: doc.links,
         aggregates: doc.aggregates,
@@ -364,6 +371,7 @@ export function packToInline(doc: ExcsvDocument): ExcsvDocument {
     meta: { ...doc.meta, ...t.meta },
     csv: t.csv,
     columns: t.columns,
+    charts: t.charts,
     notes: t.notes,
     links: t.links,
     aggregates: t.aggregates,

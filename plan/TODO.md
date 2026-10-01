@@ -22,7 +22,7 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗
 | Feature catalog (`01-features.md`) | draft; version-gating (`[v0.6]`/`[later]`) unfinished (§4) |
 | Fixtures | `#index` fixtures pending (§5.5); CI byte-identical zip/pack regen check pending (§3) |
 | Implementation (Go/Python) | full v0.5 spec (plain + zip + pack), not version-gated; `#chart` parser/writer not started (§6); v0.6 `#note`/`link=`/`#link` not started (§7) |
-| Website converter | v0.6: parses/serializes `#note`/`link=`/`#link`, preview renders links and notes; checked by `website/scripts/check-notes-fixtures.mjs` |
+| Website converter | v0.6: parses/serializes `#note`/`link=`/`#link`, preview renders links and notes; checked by `website/scripts/check-fixtures.mjs` |
 
 ---
 
@@ -123,7 +123,7 @@ Spec: [`docs/implementation/charts.md`](../docs/implementation/charts.md) (norma
 
 Remaining:
 
-- 🟡 **Go/Python parser/writer.** Parse `#chart`/`#chart-<engine>:`, validate channels against `#column`, mirror to/from JSON (`charts` array).
+- 🟡 **Go/Python parser/writer.** Parse `#chart`/`#chart-<engine>:`, validate channels against `#column`, mirror to/from JSON (`charts` array). The website library (`website/src/lib/excsv/charts.ts`) already does this and passes fixtures 071–077 / 040–044 — usable as a reference.
 - 🟢 **`excsv chart` CLI.** Reference renderer per `charts.md#reference-renderer-asciiterminal` — resolve channels + modifiers, emit an asciicharts-shaped spec, shell out to or embed asciicharts.
 - 🟢 **Per-channel type override.** Vega-Lite's ability to force a column's encoding type per-channel (e.g. treat an `int` as nominal instead of quantitative) has no compact-form equivalent yet. Not blocking; deferred as an `L6`-style second-tier item. Use `#chart-vega` if needed now.
 - Pack cross-table `#chart` (a chart spanning columns from more than one table, needing `#fk`-style qualification like `orders.amount`) is deferred — see §8.
@@ -140,7 +140,7 @@ Remaining:
 - 🟡 **Writer obligations.** Every row-reordering/removing command (sort, filter, slice) updates `row=` and drops notes/links on removed rows; column rename updates `col=` and `{name}` placeholders.
 - 🟡 **`.xlsx` import/export.** Notes ↔ classic/threaded comments (flattened), links ↔ hyperlink objects; template detection on import (`notes.md#excel-interop`). Never `=HYPERLINK()`.
 - 🟢 **CLI.** `excsv note add|list|rm`, `excsv link check` (list unsafe / unresolved).
-- 🟢 **CI.** Run `website/scripts/check-notes-fixtures.mjs` (`npx tsx`) alongside the generator byte-identity check (§3).
+- 🟢 **CI.** Run `website/scripts/check-fixtures.mjs` (`npx tsx`) alongside the generator byte-identity check (§3).
 
 Deferred: `#link` on a row/column/table (no click target); anchoring by a composite key; multi-line `text=`; structured mentions; threads / resolved state (removed by design — notes are flat).
 

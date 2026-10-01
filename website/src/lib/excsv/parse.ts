@@ -2,8 +2,9 @@ import { parseCsvRow, resolveDelim, resolveQuote, splitLines } from './csv';
 import { parseKvPairs } from './kv';
 import { normalizeDocForJson } from './serialize';
 import { assignPhysicalIndexes, physicalColumns } from './computed';
+import { parseChartLine, validateCharts } from './charts';
 import { noteWarnings, parseLinkLine, parseNoteLine, resolveLinks, resolveNotes } from './notes';
-import type { Cell, CellLink, Column, ConvertWarning, ExcsvDocument, Note, PackTable, SqlStatement } from './types';
+import type { Cell, CellLink, Chart, Column, ConvertWarning, ExcsvDocument, Note, PackTable, SqlStatement } from './types';
 
 const BOOL_ATTRS = new Set(['unique', 'required', 'materialized']);
 const INT_ATTRS = new Set(['len_min', 'len_max', 'index']);
@@ -60,6 +61,7 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
   const dql: SqlStatement[] = [];
   const tables: PackTable[] = [];
   const fk: { from: string; to: string }[] = [];
+  const charts: Chart[] = [];
   const notes: Note[] = [];
   const links: CellLink[] = [];
 
@@ -84,6 +86,12 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
 
     if (line.startsWith('#column')) {
       columns.push(parseColumnLine(line.slice('#column'.length).trim()));
+      continue;
+    }
+
+    if (line.startsWith('#chart ') || line.startsWith('#chart-') || line === '#chart') {
+      const chart = parseChartLine(line.slice('#chart'.length), warnings);
+      if (chart) charts.push(chart);
       continue;
     }
 
@@ -138,6 +146,11 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
   // With header=0, a numeric col= is a column index: a number in the JSON form.
   const colRef = <T extends { col?: string | number }>(x: T): T =>
     !hasHeaderRow && typeof x.col === 'string' && /^\d+$/.test(x.col) ? { ...x, col: Number(x.col) } : x;
+  if (charts.length) {
+    // Channels resolve against every #column, wherever it sits in the meta block.
+    warnings.push(...validateCharts(charts, columns));
+    doc.charts = charts;
+  }
   if (notes.length) doc.notes = notes.map(colRef);
   if (links.length) doc.links = links.map(colRef);
   if (Object.keys(aggregates).length) doc.aggregates = aggregates;

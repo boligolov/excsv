@@ -202,13 +202,15 @@ Retired slots (never reuse): 007, 009, 010, 017, 022, 025, 026, 029, 031, 032 �
 | 050 | `link_row_and_key` (D10) |
 | 051 | `link_malformed` (D10) |
 
-### Zip — valid (001–014, generated)
+### Zip — valid (001–015, generated)
 
 001–010 as before (primary match, `data.excsv`, aux, comment full/truncated, store, bzip2, BOM inner, header=0, zip64).
 
 011–013: comment advisory defects (`zip_comment_not_excsv_prefix`, `zip_comment_not_utf8`, `zip_comment_header_disagree`) — inner file still parses.
 
 014: comment priority — `#note` lines come last in the comment although the inner file lists them before `#%` (D9, D10).
+
+015: comment priority — `#chart` comes after `#%` in the comment, before any `#note` / `#link` (D8).
 
 ### Zip — invalid (generated)
 

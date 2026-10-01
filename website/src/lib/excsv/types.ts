@@ -30,6 +30,9 @@ export interface Column {
   [key: string]: unknown;
 }
 
+/** A `#chart` line: compact form (type, name, channels, modifiers) or `{ vega: <spec> }` from `#chart-vega:`. */
+export type Chart = Record<string, unknown>;
+
 /** A `#note` line. Address fields decide the target: row/key + col = cell, col = column, row/key = row, none = table. */
 export interface Note {
   col?: string | number;
@@ -63,6 +66,7 @@ export interface PackTable {
   meta?: Record<string, unknown>;
   csv?: ExcsvDocument['csv'];
   columns?: Column[];
+  charts?: Chart[];
   notes?: Note[];
   links?: CellLink[];
   aggregates?: Record<string, Cell[]>;
@@ -84,6 +88,7 @@ export interface ExcsvDocument {
   };
   meta?: Record<string, unknown>;
   columns?: Column[];
+  charts?: Chart[];
   notes?: Note[];
   links?: CellLink[];
   aggregates?: Record<string, Cell[]>;

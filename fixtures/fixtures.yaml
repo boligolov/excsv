@@ -1223,6 +1223,15 @@ error_kinds:
     comment:
       ends_with: '#note text="Q1 numbers are preliminary until the audit closes"'   # #note/#link are the lowest comment priority
 
+- id: zip/valid/015_comment_chart_order.excsv.zip
+  exercises: [J3, J5, D8]
+  derived_from: plain/valid/071_chart_bar.excsv   # plus a #%sum line after the chart
+  expect:
+    parse: ok
+    warnings: []
+    comment:
+      ends_with: '#chart type=bar name=top_categories x=category y=amount sort=desc limit=10 title="Top categories by spend"'   # #chart after #%
+
 - id: zip/invalid/001_missing_original_size.excsv.zip
   exercises: [J5]
   expect:

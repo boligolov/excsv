@@ -90,9 +90,11 @@ def comment_rank(line: str) -> int:
         return 7
     if line.startswith("#$dql"):
         return 8
-    if line.startswith(("#note", "#link")):
+    if line.startswith("#chart"):
         return 9
-    return 10
+    if line.startswith(("#note", "#link")):
+        return 10
+    return 11
 
 
 def to_comment_priority(inner_text: str) -> str:
@@ -262,6 +264,17 @@ def make_valid() -> None:
     first_data = next(i for i, line in enumerate(notes_lines) if not line.startswith("#"))
     notes_lines.insert(first_data, "#%sum: ,,1000.50")
     notes_inner = with_original_size(notes_lines)
+    # #chart comes after #% (and #$dql) in the comment, before #note/#link.
+    chart_lines = load_plain("plain/valid/071_chart_bar.excsv")
+    first_data = next(i for i, line in enumerate(chart_lines) if not line.startswith("#"))
+    chart_lines.insert(first_data, "#%sum: ,545.50")
+    chart_inner = with_original_size(chart_lines)
+    write_zip(
+        ZIP_VALID / "015_comment_chart_order.excsv.zip",
+        [("015_comment_chart_order.excsv", chart_inner.encode("utf-8"), zipfile.ZIP_DEFLATED)],
+        to_comment_priority(chart_inner).encode("utf-8"),
+    )
+
     write_zip(
         ZIP_VALID / "014_comment_notes_last.excsv.zip",
         [("014_comment_notes_last.excsv", notes_inner.encode("utf-8"), zipfile.ZIP_DEFLATED)],

@@ -1,9 +1,9 @@
 /**
- * Runs the website's ExCSV library against the #note / link= / #link fixtures
- * (features D9, D10 in fixtures/fixtures.yaml) and checks warnings, error kinds,
- * note resolution and per-cell links.
+ * Runs the website's ExCSV library against the #chart, #note, link= and #link
+ * fixtures (features D8, D9, D10 in fixtures/fixtures.yaml) and checks warnings,
+ * error kinds, charts, note resolution and per-cell links.
  *
- * Run: npx tsx scripts/check-notes-fixtures.mjs
+ * Run: npx tsx scripts/check-fixtures.mjs
  */
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -19,9 +19,9 @@ const { readPack } = await import('../src/lib/excsv/pack.ts');
 const { readZipArchiveComment } = await import('../src/lib/excsv/zip.ts');
 const { resolveNotes, resolveLinks } = await import('../src/lib/excsv/notes.ts');
 
-const ANNOTATION_CODE = /^(note|link)_/;
+const ANNOTATION_CODE = /^(note|link|chart)_/;
 const [, entries] = yaml.loadAll(readFileSync(resolve(fixtures, 'fixtures.yaml'), 'utf8'));
-const targets = entries.filter((e) => e.exercises?.some((x) => x === 'D9' || x === 'D10') || e.id.includes('version_0_5'));
+const targets = entries.filter((e) => e.exercises?.some((x) => ['D8', 'D9', 'D10'].includes(x)) || e.id.includes('version_0_5'));
 
 let failures = 0;
 const check = (cond, id, msg) => {
@@ -89,6 +89,12 @@ for (const entry of targets) {
     }
     if (x.notes.texts) check(same(resolved.map((r) => r.note.text), x.notes.texts), id, 'texts differ');
   }
+  if (x.charts) {
+    const charts = doc.charts ?? [];
+    check(charts.length === x.charts.count, id, `charts.count ${charts.length} != ${x.charts.count}`);
+    if (x.charts.types) check(same(charts.map((c) => c.type), x.charts.types), id, `chart types ${charts.map((c) => c.type)}`);
+    if (x.charts.engines) check(same(charts.map((c) => Object.keys(c).find((k) => k === 'vega')), x.charts.engines), id, 'chart engines differ');
+  }
   if (x.links?.count !== undefined) check((doc.links ?? []).length === x.links.count, id, `links.count ${(doc.links ?? []).length}`);
   if (x.cell_links) {
     const { links } = resolveLinks(doc.links ?? [], ctx);
@@ -106,11 +112,11 @@ for (const entry of targets) {
 {
   const { serializeExcsvJson, serializeExcsvText } = await import('../src/lib/excsv/serialize.ts');
   const { parseJsonInput } = await import('../src/lib/excsv/parse.ts');
-  for (const name of ['079_note_key_anchor', '088_link_cell_override', '083_note_header0_index']) {
+  for (const name of ['079_note_key_anchor', '088_link_cell_override', '083_note_header0_index', '073_chart_all_marks', '074_chart_vega_escape']) {
     const id = `plain/valid/${name}.excsv`;
     const { doc } = parseExcsvText(readFileSync(resolve(fixtures, id), 'utf8'));
     const back = parseExcsvText(serializeExcsvText(parseJsonInput(serializeExcsvJson(doc))).text).doc;
-    check(same(back.notes, doc.notes) && same(back.links, doc.links), id, 'text → JSON → text lost notes/links');
+    check(same(back.notes, doc.notes) && same(back.links, doc.links) && same(back.charts, doc.charts), id, 'text → JSON → text lost charts/notes/links');
   }
 }
 
