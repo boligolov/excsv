@@ -50,46 +50,6 @@ id,customer,amount
   </CodeBlock>
 
   <section class="cb-section">
-    <h2>Read the data</h2>
-    <p class="section-note">The <code>#</code> lines are comments. Drop them and it's a CSV file, full stop.</p>
-
-    <ShellRecipe
-      title="Strip the metadata — get plain CSV"
-      command={`grep -v '^#' orders.excsv`}
-      output={`id,customer,amount
-1,Acme,100.00
-2,Globex,20.50`}
-    >
-      Every ExCSV reader already does this on your behalf. If the file has a UTF-8 BOM, see the <a href="#bom">BOM gotcha</a> below first.
-    </ShellRecipe>
-
-    <ShellRecipe
-      title="Pretty-print as an aligned table"
-      command={`grep -v '^#' orders.excsv | column -t -s,`}
-      output={`id  customer  amount
-1   Acme      100.00
-2   Globex    20.50`}
-    />
-
-    <ShellRecipe
-      title="Pull one column by name"
-      command={`grep -v '^#' orders.excsv | awk -F, -v col=amount 'NR==1{for(i=1;i<=NF;i++) if($i==col) c=i} {print $c}'`}
-      output={`amount
-100.00
-20.50`}
-    >
-      Looks up the position from the header row instead of hard-coding a column index, so it survives reordered columns.
-    </ShellRecipe>
-
-    <ShellRecipe
-      title="Filter rows by a numeric threshold, by column name"
-      command={`grep -v '^#' orders.excsv | awk -F, -v col=amount -v min=50 'NR==1{for(i=1;i<=NF;i++) if($i==col) c=i; print; next} $c+0>min'`}
-      output={`id,customer,amount
-1,Acme,100.00`}
-    />
-  </section>
-
-  <section class="cb-section">
     <h2>Read the header</h2>
     <p class="section-note">The first line carries everything about the file as a whole — version, delimiter, row count, checksum. It's one long line; here's how to make it skimmable.</p>
 
@@ -180,6 +140,46 @@ amount:decimal`}
 #@license: CC-BY-4.0
 #@tool: excsv-cli/0.2.0
 #@tags: sales,Q1`}
+    />
+  </section>
+
+  <section class="cb-section">
+    <h2>Read the data</h2>
+    <p class="section-note">The <code>#</code> lines are comments. Drop them and it's a CSV file, full stop.</p>
+
+    <ShellRecipe
+      title="Strip the metadata — get plain CSV"
+      command={`grep -v '^#' orders.excsv`}
+      output={`id,customer,amount
+1,Acme,100.00
+2,Globex,20.50`}
+    >
+      Every ExCSV reader already does this on your behalf. If the file has a UTF-8 BOM, see the <a href="#bom">BOM gotcha</a> below first.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Pretty-print as an aligned table"
+      command={`grep -v '^#' orders.excsv | column -t -s,`}
+      output={`id  customer  amount
+1   Acme      100.00
+2   Globex    20.50`}
+    />
+
+    <ShellRecipe
+      title="Pull one column by name"
+      command={`grep -v '^#' orders.excsv | awk -F, -v col=amount 'NR==1{for(i=1;i<=NF;i++) if($i==col) c=i} {print $c}'`}
+      output={`amount
+100.00
+20.50`}
+    >
+      Looks up the position from the header row instead of hard-coding a column index, so it survives reordered columns.
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Filter rows by a numeric threshold, by column name"
+      command={`grep -v '^#' orders.excsv | awk -F, -v col=amount -v min=50 'NR==1{for(i=1;i<=NF;i++) if($i==col) c=i; print; next} $c+0>min'`}
+      output={`id,customer,amount
+1,Acme,100.00`}
     />
   </section>
 
