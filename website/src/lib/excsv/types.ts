@@ -25,6 +25,31 @@ export interface Column {
   default?: Scalar;
   formula?: string;
   materialized?: boolean;
+  /** URL template, e.g. `https://crm/orders/{$}` — see docs/implementation/notes.md */
+  link?: string;
+  [key: string]: unknown;
+}
+
+/** A `#chart` line: compact form (type, name, channels, modifiers) or `{ vega: <spec> }` from `#chart-vega:`. */
+export type Chart = Record<string, unknown>;
+
+/** A `#note` line. Address fields decide the target: row/key + col = cell, col = column, row/key = row, none = table. */
+export interface Note {
+  col?: string | number;
+  row?: number;
+  key?: string;
+  text: string;
+  author?: string;
+  created?: string;
+  [key: string]: unknown;
+}
+
+/** A `#link` line: a URL on one cell, overriding the column's link= template. */
+export interface CellLink {
+  col: string | number;
+  row?: number;
+  key?: string;
+  href: string;
   [key: string]: unknown;
 }
 
@@ -41,6 +66,9 @@ export interface PackTable {
   meta?: Record<string, unknown>;
   csv?: ExcsvDocument['csv'];
   columns?: Column[];
+  charts?: Chart[];
+  notes?: Note[];
+  links?: CellLink[];
   aggregates?: Record<string, Cell[]>;
   sql?: { ddl?: SqlStatement[]; dql?: SqlStatement[] };
   checksum?: string;
@@ -60,6 +88,9 @@ export interface ExcsvDocument {
   };
   meta?: Record<string, unknown>;
   columns?: Column[];
+  charts?: Chart[];
+  notes?: Note[];
+  links?: CellLink[];
   aggregates?: Record<string, Cell[]>;
   sql?: { ddl?: SqlStatement[]; dql?: SqlStatement[] };
   checksum?: string;

@@ -1,0 +1,5 @@
+#!excsv version=0.6 header=1 rows=1
+#column name=id type=int link="https://crm.example.com/{missing}/{$}"
+#column name=name type=string link="https://crm.example.com/n/{$"
+id,name
+1,Acme

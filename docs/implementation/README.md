@@ -1,4 +1,4 @@
-﻿# ExCSV v0.5 — Implementation spec (normative)
+﻿# ExCSV v0.6 — Implementation spec (normative)
 
 The precise, normative specification for people **building ExCSV tools** — parsers, writers, validators. Uses RFC 2119 keywords (**MUST** / **SHOULD** / **MAY**), pins parser behaviour, and defines the canonical error-code registry.
 
@@ -13,6 +13,7 @@ For a readable, benefits-first tour of the format, see the [guide in `docs/`](..
 | File metadata (`#@`) | [file-metadata.md](file-metadata.md) |
 | Column schema (`#column`) | [columns.md](columns.md) |
 | Charts (`#chart`) | [charts.md](charts.md) |
+| Notes and links (`#note`, `link=`, `#link`) | [notes.md](notes.md) |
 | SQL companions (`#$`) | [sql.md](sql.md) |
 | Aggregations (`#%`) | [aggregations.md](aggregations.md) |
 | Checksum | [checksum.md](checksum.md) |

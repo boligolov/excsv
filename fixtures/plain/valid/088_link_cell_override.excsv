@@ -1,0 +1,8 @@
+#!excsv version=0.6 header=1 rows=2
+#column name=order_id type=int role=id
+#column name=invoice type=string link="https://billing.example.com/inv/{$}"
+#link key=1043 col=invoice href="https://legacy-billing.example.com/view?id=A-77"
+#link row=0 col=order_id href="https://crm.example.com/special/1042"
+order_id,invoice
+1042,A-75
+1043,A-77

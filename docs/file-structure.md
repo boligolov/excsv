@@ -12,7 +12,7 @@ An ExCSV file reads top to bottom in three parts:
 └─────────────────────────┘
 ```
 
-Everything above the data is optional. Drop the header and it's read as plain comma-separated CSV with a header row — i.e. a normal `.csv`. Add just a `#!excsv version=0.5 rows=0` line and you have the smallest possible ExCSV file (a template with no data yet) — `rows=` is the one header field that's always there once you write a header at all.
+Everything above the data is optional. Drop the header and it's read as plain comma-separated CSV with a header row — i.e. a normal `.csv`. Add just a `#!excsv version=0.6 rows=0` line and you have the smallest possible ExCSV file (a template with no data yet) — `rows=` is the one header field that's always there once you write a header at all.
 
 ## The three shapes
 
@@ -33,7 +33,7 @@ Pair by basename: `sales.excsv` describes `sales.csv`; `sales.extsv` describes `
 `sales.excsv`:
 
 ```
-#!excsv version=0.5 delim=comma quote=double header=1 rows=2 reference=sales.csv
+#!excsv version=0.6 delim=comma quote=double header=1 rows=2 reference=sales.csv
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string
@@ -48,7 +48,7 @@ id,customer,amount
 2,Globex Inc,250.50
 ```
 
-Row count, checksum, and aggregations in the sidecar describe the *referenced* file. You can keep several sidecars describing the same data for different audiences. When you open the plain `sales.csv`, a tool can pick up `sales.excsv` sitting next to it automatically.
+Row count, checksum, aggregations, and [notes](notes.md) in the sidecar describe the *referenced* file — a sidecar is the natural place to review data you aren't allowed to touch. You can keep several sidecars describing the same data for different audiences. When you open the plain `sales.csv`, a tool can pick up `sales.excsv` sitting next to it automatically.
 
 Why bother instead of just editing the CSV? Because a lot of data isn't yours to edit — immutable lakes, files under contract, anything with a hash someone else checks. A sidecar lets you layer types, stats, and SQL onto it without changing a byte.
 

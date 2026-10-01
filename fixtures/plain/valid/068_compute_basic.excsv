@@ -1,4 +1,4 @@
-#!excsv version=0.5 header=1 rows=2
+#!excsv version=0.6 header=1 rows=2
 #column name=price type=decimal unit=USD
 #column name=quantity type=int
 #column name=total type=decimal unit=USD formula="price * quantity"

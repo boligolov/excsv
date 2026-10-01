@@ -1,0 +1,5 @@
+#!excsv version=0.6 header=0 rows=2
+#column index=0 type=int
+#column index=1 type=string link="https://crm.example.com/orders/{0}"
+1042,Acme Corp
+1043,Globex Inc

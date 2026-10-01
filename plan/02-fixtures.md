@@ -59,7 +59,7 @@ The file is a **two-document YAML stream** (`---` separates them): the first doc
     parse: ok
     warnings: []
     header:
-      version: "0.5"
+      version: "0.6"
     rows: 0
     columns: 0
 
@@ -84,7 +84,7 @@ The file is a **two-document YAML stream** (`---` separates them): the first doc
   expect:
     parse: ok
     comment:
-      starts_with: "#!excsv version=0.5"
+      starts_with: "#!excsv version=0.6"
       ends_with: "#@comment-truncated: 1"
 ```
 
@@ -115,7 +115,7 @@ A shared **error kind enum** lives in the manifest header and **MUST** match the
 
 What each category needs, organized by feature domain from `01-features.md`. Counts are minimums; add more as edge cases emerge.
 
-### Plain — valid (001–070)
+### Plain — valid (001–093)
 
 001–039: dialect/header/meta/column/agg/sql/checksum/sidecar happy path. Slots 014, 015, and 033 held CSVW cases and were retired in v0.4; the numbers are not reused.
 
@@ -154,6 +154,23 @@ Warn-only cases live here (not under `invalid/`):
 | 068 | `compute_basic` — virtual `formula=` column (D7) |
 | 069 | `compute_materialized` — `formula=` + `materialized=1`, cached values in the data (D7) |
 | 070 | `compute_case_coalesce` — `formula=` exercising `case when` / `coalesce` / `concat` (D7) |
+| 071–077 | `#chart` — marks, `#chart-vega`, and the `chart_*` WARN codes (D8) |
+| 078 | `#note` on cell / column / row / table (D9) |
+| 079 | `#note key=` via `role=id`; two notes on one cell; `""` in `text=` (D9) |
+| 080 | `key=` via the single `unique=1` column; raw-text match (`007` ≠ `7`) (D9) |
+| 081 | `note_unresolved` — unknown `col`, `row` past the end, unknown `key` (D9) |
+| 082 | `note_unresolved` — two `role=id` columns, no id column (D9) |
+| 083 | `#note` with `header=0`, index `col=` (D9) |
+| 084 | `link=` template with `{$}` and `{other_column}`; null placeholder → no link (D10) |
+| 085 | single-placeholder template is not encoded (`{$}`, `{docs_url}`) (D10) |
+| 086 | percent-encoding (space, `/`, UTF-8, `&`, `=`) and `{{` (D10) |
+| 087 | `{N}` index placeholder with `header=0` (D10) |
+| 088 | `#link` overrides the column template; `#link` on a column without one (D10) |
+| 089 | `link_unknown_column`, `link_template_malformed` (D10) |
+| 090 | `link_unsafe_scheme` — `javascript:`, `file:` shown as text (D10) |
+| 091 | `link_duplicate` (last wins), `link_unresolved` (D10) |
+| 092 | `version=0.5` read with no warning — backward compatibility (B5) |
+| 093 | sidecar pair carrying `#note` / `link=` (A11, D9, D10) |
 
 Still out: `##` round-trip preservation (if a writer opts in); on-demand 100k-row streaming file.
 
@@ -176,12 +193,24 @@ Retired slots (never reuse): 007, 009, 010, 017, 022, 025, 026, 029, 031, 032 �
 | 037 | `formula_index_forbidden` (D7) |
 | 038 | `computed_materialized_mismatch` (D7) |
 | 039 | `formula_requires_header` (D7) |
+| 040–044 | `#chart` FAIL codes (D8) |
+| 045 | `note_missing_text` (D9) |
+| 046 | `note_row_and_key` (D9) |
+| 047 | `note_malformed` (D9) |
+| 048 | `link_missing_href` (D10) |
+| 049 | `link_missing_address` (D10) |
+| 050 | `link_row_and_key` (D10) |
+| 051 | `link_malformed` (D10) |
 
-### Zip — valid (001–013, generated)
+### Zip — valid (001–015, generated)
 
 001–010 as before (primary match, `data.excsv`, aux, comment full/truncated, store, bzip2, BOM inner, header=0, zip64).
 
 011–013: comment advisory defects (`zip_comment_not_excsv_prefix`, `zip_comment_not_utf8`, `zip_comment_header_disagree`) — inner file still parses.
+
+014: comment priority — `#note` lines come last in the comment although the inner file lists them before `#%` (D9, D10).
+
+015: comment priority — `#chart` comes after `#%` in the comment, before any `#note` / `#link` (D8).
 
 ### Zip — invalid (generated)
 
@@ -199,7 +228,7 @@ Retired slots 005, 006 (comment defects moved to valid/).
 
 `row_parser_got_pack` is dispatch, not a zip-file fixture: any `pack/*.excsv.pack.zip` opened with the row parser MUST fail that code.
 
-### Pack — valid (001–012, generated)
+### Pack — valid (001–014, generated)
 
 | ID | Coverage |
 | --- | --- |
@@ -215,6 +244,8 @@ Retired slots 005, 006 (comment defects moved to valid/).
 | 010 | auto-discovery: no manifest |
 | 011 | stale `single-table=` on a two-table pack — ignore, not fatal |
 | 012 | `compute_no_col` — table with a `formula=` column and no matching `.col` file (D7) |
+| 013 | `#note` / `link=` on a table's `_header.excsv` (D9, D10) |
+| 014 | `#note` / `#link` on the manifest → `note_on_manifest`, `link_on_manifest` (D9, D10) |
 
 No `mode=`. No per-table `primary=`.
 

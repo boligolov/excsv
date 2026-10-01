@@ -8,7 +8,7 @@ Still-live reference docs in `plan/` (not backlog):
 
 When an item lands, update the spec/fixtures/reference docs, then remove it from here — this file tracks only what's still open.
 
-Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗ deferred (post-v0.5)
+Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗ deferred (post-v0.6)
 
 **Working rule:** land decisions in the **spec** (`docs/implementation/`) + this file. Fixture corpus is in `fixtures/` and tracks the implementation spec. Further fixture edits only when the spec changes.
 
@@ -18,10 +18,11 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗
 
 | Area | State |
 | --- | --- |
-| Spec (`docs/implementation/`) | v0.5; still open: C10 (§1), L1 (§2), `#index` (§5) |
-| Feature catalog (`01-features.md`) | draft; version-gating (`[v0.5]`/`[later]`) unfinished (§4) |
+| Spec (`docs/implementation/`) | v0.6; still open: C10 (§1), L1 (§2), `#index` (§5) |
+| Feature catalog (`01-features.md`) | draft; version-gating (`[v0.6]`/`[later]`) unfinished (§4) |
 | Fixtures | `#index` fixtures pending (§5.5); CI byte-identical zip/pack regen check pending (§3) |
-| Implementation (Go/Python) | full spec (plain + zip + pack), not version-gated; `#chart` parser/writer not started (§6) |
+| Implementation (Go/Python) | full v0.5 spec (plain + zip + pack), not version-gated; `#chart` parser/writer not started (§6); v0.6 `#note`/`link=`/`#link` not started (§7) |
+| Website converter | v0.6: parses/serializes `#note`/`link=`/`#link`, preview renders links and notes; checked by `website/scripts/check-fixtures.mjs` |
 
 ---
 
@@ -51,11 +52,11 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗
 
 ## 4. Implementation
 
-Go and Python implement the **whole v0.5 spec** in one shot: plain (inline + sidecar), row-ZIP, pack (unsectioned, multi-table, sectioned). No format waves.
+Go and Python implement the **whole v0.6 spec** in one shot: plain (inline + sidecar), row-ZIP, pack (unsectioned, multi-table, sectioned). No format waves.
 
 Cookbook follows the CLIs. Parity is the shared `fixtures/` tree.
 
-`01-features.md` version-gating (`[v0.5]`/`[later]`) finishes once the command tree is drafted.
+`01-features.md` version-gating (`[v0.6]`/`[later]`) finishes once the command tree is drafted.
 
 - 🟡 Go/Python CI hasn't run against the computed-column fixtures (`formula=`/`materialized=`) yet — cross-impl parity is unverified until the next upstream sync.
 
@@ -122,14 +123,30 @@ Spec: [`docs/implementation/charts.md`](../docs/implementation/charts.md) (norma
 
 Remaining:
 
-- 🟡 **Go/Python parser/writer.** Parse `#chart`/`#chart-<engine>:`, validate channels against `#column`, mirror to/from JSON (`charts` array).
+- 🟡 **Go/Python parser/writer.** Parse `#chart`/`#chart-<engine>:`, validate channels against `#column`, mirror to/from JSON (`charts` array). The website library (`website/src/lib/excsv/charts.ts`) already does this and passes fixtures 071–077 / 040–044 — usable as a reference.
 - 🟢 **`excsv chart` CLI.** Reference renderer per `charts.md#reference-renderer-asciiterminal` — resolve channels + modifiers, emit an asciicharts-shaped spec, shell out to or embed asciicharts.
 - 🟢 **Per-channel type override.** Vega-Lite's ability to force a column's encoding type per-channel (e.g. treat an `int` as nominal instead of quantitative) has no compact-form equivalent yet. Not blocking; deferred as an `L6`-style second-tier item. Use `#chart-vega` if needed now.
-- Pack cross-table `#chart` (a chart spanning columns from more than one table, needing `#fk`-style qualification like `orders.amount`) is deferred — see §7.
+- Pack cross-table `#chart` (a chart spanning columns from more than one table, needing `#fk`-style qualification like `orders.amount`) is deferred — see §8.
 
 ---
 
-## 7. Deferred / out-of-scope
+## 7. `#note` / `link=` / `#link` (v0.6)
+
+Spec: [`docs/implementation/notes.md`](../docs/implementation/notes.md) (normative) + [`docs/notes.md`](../docs/notes.md) (guide). Fixtures: plain valid 078–093, invalid 045–051, zip 014, pack 013–014 (D9, D10).
+
+Remaining:
+
+- 🔴 **Go/Python parser/writer.** Parse and validate `#note`/`#link`, `link=` on `#column`; resolve `row=`/`key=` (id column = single `role=id`, else single `unique=1`); template substitution + percent-encoding; scheme check; mirror to/from JSON (`notes`, `links`, `columns[].link`). Pass the fixtures above.
+- 🟡 **Writer obligations.** Every row-reordering/removing command (sort, filter, slice) updates `row=` and drops notes/links on removed rows; column rename updates `col=` and `{name}` placeholders.
+- 🟡 **`.xlsx` import/export.** Notes ↔ classic/threaded comments (flattened), links ↔ hyperlink objects; template detection on import (`notes.md#excel-interop`). Never `=HYPERLINK()`.
+- 🟢 **CLI.** `excsv note add|list|rm`, `excsv link check` (list unsafe / unresolved).
+- 🟢 **CI.** Run `website/scripts/check-fixtures.mjs` (`npx tsx`) alongside the generator byte-identity check (§3).
+
+Deferred: `#link` on a row/column/table (no click target); anchoring by a composite key; multi-line `text=`; structured mentions; threads / resolved state (removed by design — notes are flat).
+
+---
+
+## 8. Deferred / out-of-scope
 
 - F9 pack cross-table DDL ordered by FK; E8 pack cross-table aggregations; M2/M3 pack checksum strategy; L5 per-column `sha256=`; N6 FK-graph viz.
 - Pack cross-table `#chart` — not designed; `#chart` stays strictly per-table for now (§6).

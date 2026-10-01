@@ -1,4 +1,4 @@
-﻿#!excsv version=0.5 null=NA rows=3
+﻿#!excsv version=0.6 null=NA rows=3
 id,email,amount
 1,a@example.com,10.00
 ,,

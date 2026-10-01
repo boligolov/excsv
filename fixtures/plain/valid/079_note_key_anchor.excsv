@@ -1,0 +1,10 @@
+#!excsv version=0.6 header=1 rows=3
+#column name=order_id type=int role=id
+#column name=amount type=decimal
+#note key=1042 col=amount text="Sum doesn't match the invoice"
+#note key=1042 col=amount author=bob@example.com text="Checked: the invoice says ""300.50"", data says 350.50"
+#note key=1001 text="Test order"
+order_id,amount
+1042,350.50
+1001,10.00
+1077,99.90

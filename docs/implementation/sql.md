@@ -106,7 +106,7 @@ This describes DDL a tool **generates on demand** from the current `#column` lis
 **Single dialect via header:**
 
 ```
-#!excsv version=0.5 sql-dialect=mysql
+#!excsv version=0.6 sql-dialect=mysql
 #$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(254) NOT NULL) ENGINE=InnoDB
 #$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)
 #$dql: SELECT * FROM orders WHERE id > 100
@@ -115,7 +115,7 @@ This describes DDL a tool **generates on demand** from the current `#column` lis
 **Multi-dialect side-by-side:**
 
 ```
-#!excsv version=0.5
+#!excsv version=0.6
 #$ddl: CREATE TABLE orders (id INTEGER PRIMARY KEY, amount DECIMAL(8,2))
 #$ddl-mysql: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, amount DECIMAL(8,2)) ENGINE=InnoDB
 #$ddl-postgres: CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, amount NUMERIC(8,2))

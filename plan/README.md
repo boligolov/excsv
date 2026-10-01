@@ -6,7 +6,7 @@ Shared planning for ExCSV tooling. This repository holds the **spec**, the abstr
 
 | Path | Status | Purpose |
 | --- | --- | --- |
-| `README.md`, `docs/` | v0.5 | Normative spec |
+| `README.md`, `docs/` | v0.6 | Normative spec |
 | `plan/01-features.md` | draft | Abstract feature catalog — **source of truth for capabilities**, format-agnostic capability map with feature IDs (A1…P8) |
 | `plan/02-fixtures.md` | draft | Fixture naming, manifest rules, generation; shared by Go, Python, and cookbook |
 | `fixtures/` | — | Shared test corpus (`fixtures.yaml` + `plain/`, `zip/`, `pack/`) |

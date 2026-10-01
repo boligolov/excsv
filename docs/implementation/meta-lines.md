@@ -9,11 +9,11 @@ Meta lines appear after the header line and before the data section.
 - Parsing of meta lines **MUST** stop at the first non-`#` line.
 - Lines starting with `##` are **human comments** — they carry no structured meaning and **MUST** be ignored by parsers. Writers **MUST NOT** emit `##` as part of any structured field; it is reserved for free-form notes ("comment to end of line").
 - Other unrecognized `#` lines **MUST** be ignored.
-- Recommended order: `#@` metadata first, then `#column`, then `#chart`, then `#$` SQL, then `#%` aggregations. Order within each group does not matter, except where stated (e.g. `#$ddl` execution order). Parsers **MUST** accept any order. `##` comments **MAY** appear anywhere in the meta block.
+- Recommended order: `#@` metadata first, then `#column`, then `#chart`, then `#note`/`#link`, then `#$` SQL, then `#%` aggregations. Order within each group does not matter, except where stated (e.g. `#$ddl` execution order). Parsers **MUST** accept any order. `##` comments **MAY** appear anywhere in the meta block.
 
 ## Types of Meta Lines
 
-Six recognized structured kinds plus a human-comment line, by prefix:
+Eight recognized structured kinds plus a human-comment line, by prefix:
 
 | Prefix                       | Purpose             | Example                                  |
 | ---------------------------- | ------------------- | ---------------------------------------- |
@@ -21,10 +21,12 @@ Six recognized structured kinds plus a human-comment line, by prefix:
 | `#@key: value`               | File-level metadata | `#@source: sales_db.orders`              |
 | `#column ...`                | Column annotation   | `#column name=id type=int`               |
 | `#chart ...` / `#chart-<engine>: ...` | Chart suggestion | `#chart type=bar name=amount_by_category x=category y=amount` |
+| `#note ...`                 | Note on a cell, row, column, or table | `#note row=2 col=amount text="Refund pending"` |
+| `#link ...`                 | Link on one cell | `#link row=2 col=invoice href="https://example.com/inv/77"` |
 | `#$<verb>[-<dialect>]: ...`  | SQL companion       | `#$ddl-mysql: CREATE TABLE orders (...)` |
 | `#%<name>: ...`              | Aggregation values  | `#%sum: ,, 42.5`                         |
 
-See dedicated pages: [File metadata](file-metadata.md), [Columns](columns.md), [Charts](charts.md), [SQL](sql.md), [Aggregations](aggregations.md).
+See dedicated pages: [File metadata](file-metadata.md), [Columns](columns.md), [Charts](charts.md), [Notes and links](notes.md), [SQL](sql.md), [Aggregations](aggregations.md).
 
 ### Pack manifest only
 

@@ -100,7 +100,7 @@ A column MAY carry `default` while its data still contains nulls; a validator SH
 | -------- | ----------- | ------------------------------- |
 | `unique` | MAY         | `1` = all values must be unique |
 
-`unique=1` is a descriptive uniqueness hint, not an enforced constraint. ExCSV has no primary-key / foreign-key construct in the descriptive layer: express keys, composite keys, and referential constraints in the SQL layer as ordered `#$ddl` statements (`ALTER TABLE … ADD CONSTRAINT …`). See [SQL companions › Keys & constraints](sql.md#keys--constraints).
+`unique=1` is a descriptive uniqueness hint, not an enforced constraint. A single `role=id` or `unique=1` column also serves as the anchor for `key=` on [`#note` / `#link`](notes.md#the-id-column). ExCSV has no primary-key / foreign-key construct in the descriptive layer: express keys, composite keys, and referential constraints in the SQL layer as ordered `#$ddl` statements (`ALTER TABLE … ADD CONSTRAINT …`). See [SQL companions › Keys & constraints](sql.md#keys--constraints).
 
 ### Semantics
 
@@ -111,6 +111,7 @@ A column MAY carry `default` while its data still contains nulls; a validator SH
 | `separator` | MAY         | Sub-field separator within the value         |
 | `role`      | MAY         | Analytical role: `id`, `dimension`, `measure`, `time` (see [Analytical role](#analytical-role)) |
 | `agg`       | MAY         | Default aggregation hint for `role=measure`: `sum`, `avg`, `min`, `max`, `none` |
+| `link`      | MAY         | URL template that makes each value a link, e.g. `link="https://crm.example.com/orders/{$}"` (see [Notes and links](notes.md#link-on-column)) |
 
 ### Positional
 

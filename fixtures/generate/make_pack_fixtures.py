@@ -15,7 +15,7 @@ PACK_VALID = FIXTURES / "pack" / "valid"
 PACK_INVALID = FIXTURES / "pack" / "invalid"
 
 FIXED_DT = (2026, 1, 1, 0, 0, 0)
-META_PREFIXES = ("#!", "#@", "#column", "#%", "#$", "##")
+META_PREFIXES = ("#!", "#@", "#column", "#chart", "#note", "#link", "#%", "#$", "##")
 
 
 @dataclass
@@ -241,7 +241,7 @@ def col_payload(values: list[str]) -> bytes:
 
 def table_header_text(table: TableBuild) -> str:
     rows = len(table.columns[0]) if table.columns else 0
-    parts = ["#!excsv version=0.5 layout=columnar", f"rows={rows}"]
+    parts = ["#!excsv version=0.6 layout=columnar", f"rows={rows}"]
     if table.section_size:
         parts.append(f"section-size={table.section_size}")
     for key, value in table.header_kv_extra.items():
@@ -303,7 +303,7 @@ def manifest_text(spec: PackBuild, table_payload_sizes: list[int]) -> str:
     table_count = len(spec.tables)
     original_size = sum(table_payload_sizes)
     parts = [
-        "#!excsv version=0.5 layout=pack",
+        "#!excsv version=0.6 layout=pack",
         f"table-count={table_count}",
         f"original-size={original_size}",
     ]
@@ -577,6 +577,32 @@ def make_valid() -> None:
             tables=[computed_orders],
             single_table="orders",
             pack_meta=["#@pack-name: compute-no-col"],
+        ),
+    )
+
+    notes_table = manual_table(
+        "orders",
+        [
+            '#column name=id type=int role=id link="https://crm.example.com/orders/{$}"',
+            "#column name=amount type=decimal",
+            '#note key=2 col=amount text="Refund pending"',
+        ],
+        [("id", ["1", "2"]), ("amount", ["10.00", "20.50"])],
+    )
+    build_pack(
+        PACK_VALID / "013_notes_links_per_table.excsv.pack.zip",
+        PackBuild(tables=[notes_table], single_table="orders", pack_meta=["#@pack-name: notes-per-table"]),
+    )
+    build_pack(
+        PACK_VALID / "014_note_on_manifest_warn.excsv.pack.zip",
+        PackBuild(
+            tables=[notes_table],
+            single_table="orders",
+            pack_meta=[
+                "#@pack-name: notes-on-manifest",
+                '#note text="Manifest notes are ignored: notes are per-table"',
+                '#link row=0 col=id href="https://example.com"',
+            ],
         ),
     )
 

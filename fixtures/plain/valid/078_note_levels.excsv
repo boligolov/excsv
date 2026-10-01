@@ -1,0 +1,12 @@
+#!excsv version=0.6 header=1 rows=3
+#column name=id type=int
+#column name=status type=string
+#column name=amount type=decimal
+#note row=1 col=amount author=alex@example.com created=2026-03-24T12:00:00Z text="Refund pending, see ticket 1234"
+#note col=status text="Legacy values were mapped from the old CRM"
+#note row=0 text="Test order, exclude from the report"
+#note text="Q1 numbers are preliminary until the audit closes"
+id,status,amount
+1,completed,500.00
+2,completed,300.50
+3,pending,200.00

@@ -3,7 +3,7 @@
 The first line, when present, names the CSV dialect and a few facts about the file. It starts with `#!excsv` and always carries `version` and `rows`:
 
 ```
-#!excsv version=0.5 delim=comma header=1 rows=2
+#!excsv version=0.6 delim=comma header=1 rows=2
 ```
 
 Everything else is `key=value`, separated by spaces. Values with spaces go in double quotes (`"like this"`); a literal double quote inside is written `""`. Leave out any field you don't need — sensible defaults fill in.
@@ -12,7 +12,7 @@ Everything else is `key=value`, separated by spaces. Values with spaces go in do
 
 | Field | Usual? | What it says |
 | --- | --- | --- |
-| `version` | always | Format version (`0.5`) |
+| `version` | always | Format version (`0.6`) |
 | `rows` | always | How many data rows there are (excluding the header). A stub with no data yet writes `rows=0` |
 | `delim` | common | The delimiter. A name (`comma`, `tab`, `pipe`, `semicolon`) or a literal like `::`. Default: `comma` |
 | `quote` | common | The quote character. `none`, `double`, `single`, or a literal. Default: `none` |

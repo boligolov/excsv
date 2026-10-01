@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://excsv.org/schema/excsv-0.5.schema.json",
+  "$id": "https://excsv.org/schema/excsv-0.6.schema.json",
   "title": "ExCSV JSON form (.excsv.json)",
-  "description": "The JSON form of an ExCSV document, carried in a .excsv.json file (media type application/excsv+json). Carries the same vocabulary as the text form (#!excsv header, #@ metadata, #column schema, #% aggregates, #$ SQL) so the two round-trip losslessly. The CSV text form stays canonical; the JSON form is for JSON-native contexts (APIs, config, LLM structured output).",
+  "description": "The JSON form of an ExCSV document, carried in a .excsv.json file (media type application/excsv+json). Carries the same vocabulary as the text form (#!excsv header, #@ metadata, #column schema, #chart, #note/#link, #% aggregates, #$ SQL) so the two round-trip losslessly. The CSV text form stays canonical; the JSON form is for JSON-native contexts (APIs, config, LLM structured output).",
   "type": "object",
   "required": ["excsv"],
   "additionalProperties": false,
@@ -63,6 +63,16 @@
       "description": "Chart suggestions (#chart / #chart-<engine> lines). Advisory — every channel MUST reference a name present in `columns`. See docs/implementation/charts.md.",
       "type": "array",
       "items": { "$ref": "#/$defs/chart" }
+    },
+    "notes": {
+      "description": "Notes (#note lines) on a cell, row, column, or the table. Advisory; file order preserved. See docs/implementation/notes.md.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/note" }
+    },
+    "links": {
+      "description": "One-off cell links (#link lines). Advisory; file order preserved. See docs/implementation/notes.md.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/link" }
     },
     "aggregates": {
       "description": "Pre-computed aggregates (#% lines). Each key is an aggregation name; each value is an array with one entry per physical column (null = not applicable / not computed). The array length should equal the number of physical columns.",
@@ -197,6 +207,7 @@
         },
         "order": { "type": "string", "enum": ["none", "asc", "desc"] },
         "separator": { "type": "string", "description": "Sub-field separator inside a single cell." },
+        "link": { "type": "string", "description": "URL template making each non-null value a link: {$} = this cell, {name} = another column in the row, {N} = column index (header=0), {{ = literal {. See docs/implementation/notes.md." },
         "enum": {
           "description": "Closed set of allowed non-null values (typed per `type`). In the text form this is a pipe-separated string; in JSON it is an array.",
           "type": "array",
@@ -289,6 +300,56 @@
         }
       ]
     },
+    "anchor": {
+      "description": "Address shared by #note and #link. row and key are mutually exclusive.",
+      "type": "object",
+      "properties": {
+        "col": {
+          "oneOf": [{ "type": "string" }, { "type": "integer", "minimum": 0 }],
+          "description": "Column: a name, or a zero-based index when header=0."
+        },
+        "row": { "type": "integer", "minimum": 0, "description": "Zero-based data row, not counting the header row." },
+        "key": { "type": "string", "description": "Raw value of the row's id column (role=id, else unique=1)." }
+      },
+      "not": { "required": ["row", "key"] }
+    },
+    "note": {
+      "description": "One #note line. Which address fields are present decides the target: row/key + col = cell, col = column, row/key = row, none = table.",
+      "type": "object",
+      "required": ["text"],
+      "allOf": [{ "$ref": "#/$defs/anchor" }],
+      "properties": {
+        "col": true,
+        "row": true,
+        "key": true,
+        "text": { "type": "string", "description": "The note. Plain single-line text." },
+        "author": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" }
+      },
+      "patternProperties": {
+        "^x-": { "description": "Custom, tool-specific attribute." }
+      },
+      "additionalProperties": false
+    },
+    "link": {
+      "description": "One #link line: a URL on a single cell, overriding the column's link= template.",
+      "type": "object",
+      "required": ["col", "href"],
+      "allOf": [
+        { "$ref": "#/$defs/anchor" },
+        { "anyOf": [{ "required": ["row"] }, { "required": ["key"] }] }
+      ],
+      "properties": {
+        "col": true,
+        "row": true,
+        "key": true,
+        "href": { "type": "string", "description": "The URL. Rendered as a link only for http, https, mailto." }
+      },
+      "patternProperties": {
+        "^x-": { "description": "Custom, tool-specific attribute." }
+      },
+      "additionalProperties": false
+    },
     "statement": {
       "description": "A single SQL statement, optionally tagged by dialect and version.",
       "type": "object",
@@ -330,6 +391,14 @@
         "charts": {
           "type": "array",
           "items": { "$ref": "#/$defs/chart" }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/note" }
+        },
+        "links": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/link" }
         },
         "aggregates": {
           "type": "object",

@@ -23,7 +23,7 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | `header_malformed_kv` | FAIL | — | Malformed `key=value` token in the header. |
 | `header_unclosed_quote` | FAIL | — | Unterminated quoted value in the header. |
 | `header_invalid_value` | FAIL | — | Value invalid for its field (e.g. `header=2`). |
-| `unknown_version` | WARN | — | `version=` present but not implemented by this parser; read best-effort. |
+| `unknown_version` | WARN | — | `version=` present but not known to this parser (e.g. newer than it implements); read best-effort. Earlier versions are read without warning — see [Header § Version compatibility](header.md#version-compatibility). |
 
 ## Columns
 
@@ -65,6 +65,26 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | `chart_on_manifest` | WARN | — | `#chart` present on a pack manifest (`_manifest.excsv`); ignored — charts are per-table, like `#column`. |
 | `chart_unknown_type` | WARN | — | Unrecognized `type=` value, or unrecognized `#chart-<engine>:` suffix; preserved/ignored. |
 | `chart_unknown_channel` | WARN | — | Unrecognized channel or modifier attribute on a `#chart` line; ignored. |
+
+## Notes and links
+
+| Code | Severity | Verify | Meaning |
+| --- | --- | --- | --- |
+| `note_malformed` | FAIL | — | A `#note` line does not tokenize as `key=value` pairs. |
+| `note_missing_text` | FAIL | — | A `#note` line lacks `text=`. |
+| `note_row_and_key` | FAIL | — | A `#note` line sets both `row=` and `key=`. |
+| `link_malformed` | FAIL | — | A `#link` line does not tokenize as `key=value` pairs. |
+| `link_missing_href` | FAIL | — | A `#link` line lacks `href=`. |
+| `link_missing_address` | FAIL | — | A `#link` line lacks `col=`, or lacks both `row=` and `key=`. |
+| `link_row_and_key` | FAIL | — | A `#link` line sets both `row=` and `key=`. |
+| `note_unresolved` | WARN | never | A `#note` address does not resolve: unknown `col=`, `row=` past the end, no row with that `key=`, or no id column. Preserved on round-trip. |
+| `link_unresolved` | WARN | never | A `#link` address does not resolve (same cases as `note_unresolved`). Preserved on round-trip. |
+| `link_duplicate` | WARN | — | Two `#link` lines resolve to the same cell; the last one wins. |
+| `note_on_manifest` | WARN | — | `#note` on a pack manifest (`_manifest.excsv`); ignored — notes are per-table. |
+| `link_on_manifest` | WARN | — | `#link` on a pack manifest (`_manifest.excsv`); ignored — links are per-table. |
+| `link_unknown_column` | WARN | — | A `link=` placeholder names no stored or materialized column in the same table; the column is shown without links. |
+| `link_template_malformed` | WARN | — | A `link=` template has an unterminated `{`; the column is shown without links. |
+| `link_unsafe_scheme` | WARN | never | A resolved link's scheme is not `http`, `https` or `mailto`; shown as plain text. |
 
 ## Data section
 

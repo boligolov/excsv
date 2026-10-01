@@ -1,4 +1,4 @@
-#!excsv version=0.5 header=1 rows=2
+#!excsv version=0.6 header=1 rows=2
 #column name=first_name type=string
 #column name=nickname type=string
 #column name=amount type=decimal unit=USD

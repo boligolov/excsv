@@ -1,4 +1,4 @@
-﻿# ExCSV v0.5 — Specification
+﻿# ExCSV v0.6 — Specification
 
 **Extended Comma-Separated Values — CSV that describes itself.**
 
@@ -6,7 +6,7 @@ You open a CSV export and lose the afternoon: which column is the amount, is `01
 
 | | |
 | --- | --- |
-| **Version** | 0.5 |
+| **Version** | 0.6 |
 | **Status** | Draft / Experimental |
 | **File extensions** | `.excsv`, `.extsv` (plain — inline or sidecar); `.excsv.json` (JSON form); `.excsv.zip`, `.extsv.zip` (row ZIP); `.excsv.pack.zip`, `.extsv.pack.zip` (columnar pack) |
 | **MIME types** | `text/excsv` (plain); `application/excsv+json` (JSON); `application/excsv+zip` (row ZIP); `application/excsv-pack+zip` (pack) |
@@ -29,7 +29,7 @@ Same `#!excsv` header and `#column` / `#%` / `#$` / `#@` vocabulary everywhere �
 Metadata rides at the top of the file, above the rows. One artifact, still a valid CSV.
 
 ```
-#!excsv version=0.5 header=1 rows=2 sql-dialect=postgres
+#!excsv version=0.6 header=1 rows=2 sql-dialect=postgres
 #@grain: one row per order
 #column name=id type=int role=id
 #column name=amount type=decimal unit=USD role=measure agg=sum
@@ -48,7 +48,7 @@ id,amount
 Leave `data.csv` byte-for-byte. Drop a `data.excsv` beside it: header + meta only, plus `reference=data.csv`. No rows are copied.
 
 ```
-#!excsv version=0.5 header=1 rows=48213 reference=data.csv
+#!excsv version=0.6 header=1 rows=48213 reference=data.csv
 #@source: vendor-nightly-dump
 #column name=customer_id type=long role=id
 #column name=revenue type=decimal unit=USD role=measure agg=sum
@@ -79,7 +79,7 @@ sales.excsv.pack.zip
 
 ```json
 {
-  "excsv": "0.5",
+  "excsv": "0.6",
   "meta": { "grain": "one row per order" },
   "columns": [
     { "index": 0, "name": "id", "type": "int", "role": "id" },
@@ -123,10 +123,9 @@ More tools: [excsv.org/tools](https://excsv.org/tools/).
 
 ## What's new
 
-- **0.5 — Computed (virtual) columns.** `#column formula=` derives a column from others instead of storing it; `materialized=1` caches the values as an ordinary column, reversibly (`excsv column materialize` / `dematerialize`). Zero storage cost until you choose to pay for it — biggest payoff in [pack](docs/pack.md), where a virtual column costs zero `.col` files. See [docs/columns.md](docs/columns.md#computed-columns).
-- **0.4 — JSON form promoted, CSVW dropped.** The JSON serialization is now a first-class shape with its own extension `.excsv.json` and media type `application/excsv+json` ([docs/json.md](docs/json.md), [schema/excsv.schema.json](schema/excsv.schema.json)). Embedded W3C CSVW (`csvw=`, `schema=`, `#csvw:`) is **removed** — those header keys and the `#csvw` line are now ordinary unknown fields that parsers ignore.
-- **0.3 — Pack.** `.excsv.pack.zip` / `.extsv.pack.zip`: manifest + per-table columnar `.col` files. [docs/pack.md](docs/pack.md).
-- **0.2 — SQL companions** (`#$` DDL/DQL + `sql-dialect=`), **ZIP container** (`.excsv.zip` with `original-size` + in-comment summary, optional password), **human comments** (`##`), and the **sidecar** profile (`reference=` → sibling `.csv`/`.tsv`).
+- **0.6 — Notes and links.** `#note` pins a remark to a cell, row, column, or the whole table — anchored by position (`row=`) or by the row's id (`key=`), so it survives sorting. `link=` on `#column` turns every value into a link via a URL template (`link="https://crm/orders/{$}"`); `#link` covers one-off cells. Both live above the data and never change it, and both work in a sidecar — review a file you aren't allowed to touch. See [docs/notes.md](docs/notes.md).
+
+Earlier versions: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

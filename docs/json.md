@@ -6,7 +6,7 @@ It's not a summary or an export — it's the same vocabulary with the `#` stripp
 
 ```json
 {
-  "excsv": "0.5",
+  "excsv": "0.6",
   "csv": { "delim": "comma", "quote": "double", "header": true },
   "meta": { "source": "sales_db.orders", "grain": "one row per order" },
   "columns": [
@@ -23,7 +23,7 @@ It's not a summary or an export — it's the same vocabulary with the `#` stripp
 The same file as text:
 
 ```
-#!excsv version=0.5 delim=comma quote=double header=1 rows=2
+#!excsv version=0.6 delim=comma quote=double header=1 rows=2
 #@source: sales_db.orders
 #@grain: one row per order
 #column name=id type=int role=id
@@ -44,7 +44,7 @@ id,amount
 
 ## Round-trip
 
-The CSV text form is still canonical. A tool can go text → JSON → text and get the same document back: same columns, same values, same metadata. Only free-text `##` human comments are dropped, because they carry no structured meaning.
+The CSV text form is still canonical. A tool can go text → JSON → text and get the same document back: same columns, same values, same metadata. Only free-text `##` human comments are dropped, because they carry no structured meaning. Cell notes are different: `#note` and `#link` lines become `notes` and `links` arrays and survive the round-trip — see [Notes and links](notes.md).
 
 Delimiter, quote character, and encoding live under `csv`. Reading JSON doesn't need them — the cells are already parsed — but they're what lets a writer regenerate the exact CSV text. Omit the whole `csv` object if you're just exchanging data.
 

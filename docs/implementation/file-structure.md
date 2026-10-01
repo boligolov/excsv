@@ -12,9 +12,9 @@ An ExCSV file **MUST** consist of, in order:
 └─────────────────────────┘
 ```
 
-An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=none`, `header=1`, `encoding=UTF-8`) — the same defaults as an explicit `#!excsv version=0.5` with no other fields. See [Header § Quote Values](header.md#quote-values).
+An ExCSV document **MAY** omit the header line. If the header line is missing, the document **MUST** be interpreted as a minimal ExCSV document with default parameters (`delim=comma`, `quote=none`, `header=1`, `encoding=UTF-8`) — the same defaults as an explicit `#!excsv version=0.6` with no other fields. See [Header § Quote Values](header.md#quote-values).
 
-The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.5 rows=0` (a **header-only stub** with no data and no `reference=`). `rows=` is **MUST** whenever a header line is present — see [Header](header.md#header-fields).
+The smallest valid ExCSV file is an empty file, or a single header line: `#!excsv version=0.6 rows=0` (a **header-only stub** with no data and no `reference=`). `rows=` is **MUST** whenever a header line is present — see [Header](header.md#header-fields).
 
 ## Document profiles (plain)
 
@@ -54,7 +54,7 @@ Plain `.excsv` and `.extsv` files **MAY** be **inline** (header + meta + data) o
 **Example** — `sales.excsv`:
 
 ```
-#!excsv version=0.5 delim=comma quote=double header=1 rows=2 reference=sales.csv
+#!excsv version=0.6 delim=comma quote=double header=1 rows=2 reference=sales.csv
 #@source: sales_db.orders
 #column name=id type=int
 #column name=customer type=string

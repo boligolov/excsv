@@ -8,8 +8,8 @@ Format-agnostic capability map. Independent of Go / Python / CLI surface. Each f
 | --- | --- | --- | --- |
 | **plain** | `.excsv`, `.ecsv` | row-oriented text | Backward-compatible with CSV/TSV. Inline (header+meta+data) or **sidecar** (meta only, `reference=` → sibling `.csv`/`.tsv`; `.extsv` for TSV). |
 | **zip** | `.excsv.zip`, `.ecsv.zip` | row-oriented text, Deflate-wrapped | Container of exactly one plain file. ZIP comment summary. |
-| **pack** | `.excsv.pack.zip`, `.ecsv.pack.zip` | columnar, multi-table (optional `single-table=`) | ZIP archive of `_manifest.excsv` + per-table directories of `.col` files. In v0.5 spec. |
-| **json** | `.excsv.json` | JSON object | Alternative serialization of any of the above (`layout=` inline/sidecar/pack), validated by `schema/excsv.schema.json`. Bijective with the text form. In v0.5 spec. |
+| **pack** | `.excsv.pack.zip`, `.ecsv.pack.zip` | columnar, multi-table (optional `single-table=`) | ZIP archive of `_manifest.excsv` + per-table directories of `.col` files. In v0.6 spec. |
+| **json** | `.excsv.json` | JSON object | Alternative serialization of any of the above (`layout=` inline/sidecar/pack), validated by `schema/excsv.schema.json`. Bijective with the text form. In v0.6 spec. |
 
 `plain` and `zip` are the **row family** (RF). `pack` is the **pack family** (PF). `json` is a serialization, not a container: it crosses both families.
 
@@ -26,7 +26,7 @@ Mode A on a pack still touches `_manifest.excsv` and each table's `_header.excsv
 - `≈` supported but with format-specific semantics (notes column)
 - `⊕` pack-only by nature (multi-table, columnar)
 - `—` not applicable / explicitly out of scope
-- `↗` planned but later (post-v0.5 in this catalog's case)
+- `↗` planned but later (post-v0.6 in this catalog's case)
 
 ---
 
@@ -84,7 +84,9 @@ Core lifecycle: open, parse, materialize, serialize, stream.
 | D5 | Reorder declarations (Mode A) | ✓ | ✓ | ≈ | PF: renumbers the `<index>-` prefix on every shifted column entry. Same single-pass ZIP rewrite cost as D3, multiplied by the number of shifted columns. |
 | D6 | Validate header row matches `#column name=` | ✓ | ✓ | — | RF only; PF has no in-data header row. |
 | D7 | Computed columns (`formula=`): declare, materialize, dematerialize | ✓ | ✓ | ≈ | Requires `header=1` (RF) / name addressing (PF) — no `index=`. PF: virtual costs zero `.col` files; materialize adds one `.col` (or one per section). |
-| D8 | Chart suggestions (`#chart` / `#chart-vega:`): declare, list, validate channels against `#column` | ✓ | ✓ | ≈ | Advisory, like `#%`. PF: per-table only, no manifest-level cross-table chart. See `docs/implementation/charts.md`, `plan/TODO.md` §7. |
+| D8 | Chart suggestions (`#chart` / `#chart-vega:`): declare, list, validate channels against `#column` | ✓ | ✓ | ≈ | Advisory, like `#%`. PF: per-table only, no manifest-level cross-table chart. See `docs/implementation/charts.md`, `plan/TODO.md` §8. |
+| D9 | Notes (`#note`): add, list, remove; resolve `row=` / `key=` anchors; keep anchors in sync when rows are reordered or removed | ✓ | ✓ | ≈ | Advisory, never data. PF: per-table `_header.excsv` only. See `docs/implementation/notes.md`. |
+| D10 | Links (`link=` template on `#column`, `#link` on one cell): resolve, scheme-check, render; export as `.xlsx` hyperlinks | ✓ | ✓ | ≈ | Scheme check after substitution; never emit `=HYPERLINK()`. See `docs/implementation/notes.md#safety`. |
 
 ## E. Aggregations (`#%`)
 
@@ -124,7 +126,7 @@ Core lifecycle: open, parse, materialize, serialize, stream.
 | G5 | Random-access cell read | ≈ | ≈ | ✓ | PF sectioned: O(section-size). RF: linear. |
 | G6 | Full table iteration | ✓ | ✓ | ✓ | |
 | G7 | Multi-column projection | ≈ | ≈ | ✓ | PF: reads only N entries. RF: full row decode then drop. |
-| G9 | Sparse byte-offset index (`#index stride=`) | ✓ | ✓ | — | Fenceposts for parallel scan (offsets only, not id lookup). PF: section ZIP entries already are the windows. See `plan/TODO.md` §6. |
+| G9 | Sparse byte-offset index (`#index stride=`) | ✓ | ✓ | — | Fenceposts for parallel scan (offsets only, not id lookup). PF: section ZIP entries already are the windows. See `plan/TODO.md` §5. |
 
 ## H. Data transformation
 

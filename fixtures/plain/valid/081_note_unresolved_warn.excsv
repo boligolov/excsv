@@ -1,0 +1,9 @@
+#!excsv version=0.6 header=1 rows=2
+#column name=id type=int role=id
+#column name=amount type=decimal
+#note col=missing text="Column is gone"
+#note row=5 col=amount text="Row past the end"
+#note key=999 text="No row with this id"
+id,amount
+1,10.00
+2,20.00

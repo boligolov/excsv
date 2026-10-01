@@ -1,6 +1,8 @@
 import { formatKvValue, serializeKvPairs } from './kv';
 import { resolveDelim, resolveQuote, serializeCsvRow } from './csv';
 import { assignPhysicalIndexes, physicalColumns } from './computed';
+import { formatChartLine } from './charts';
+import { formatLinkLine, formatNoteLine } from './notes';
 import type { Cell, Column, ConvertWarning, ExcsvDocument, SqlStatement } from './types';
 
 export function normalizeDocForJson(doc: ExcsvDocument): ExcsvDocument {
@@ -58,6 +60,10 @@ export function serializeExcsvText(doc: ExcsvDocument): { text: string; warnings
       lines.push(formatColumnLine(col, csv.header === false));
     }
   }
+
+  for (const chart of doc.charts ?? []) lines.push(formatChartLine(chart));
+  for (const note of doc.notes ?? []) lines.push(formatNoteLine(note));
+  for (const link of doc.links ?? []) lines.push(formatLinkLine(link));
 
   if (doc.sql?.ddl) {
     for (const stmt of doc.sql.ddl) {
