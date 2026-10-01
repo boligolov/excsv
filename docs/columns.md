@@ -55,6 +55,7 @@ This is the answer to "is `01720` a number or a ZIP code" and "is that a float o
 | `agg` | For a measure, how it should be aggregated: `sum`, `avg`, `min`, `max`, `none` |
 | `order` | Whether the data is sorted: `none`, `asc`, `desc` |
 | `separator` | If a cell packs several values, the character between them |
+| `link` | Makes every value a link: `link="https://crm.example.com/orders/{$}"` — see [Notes and links](notes.md#links) |
 
 ### Allowed values and shape
 

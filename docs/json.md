@@ -44,7 +44,7 @@ id,amount
 
 ## Round-trip
 
-The CSV text form is still canonical. A tool can go text → JSON → text and get the same document back: same columns, same values, same metadata. Only free-text `##` human comments are dropped, because they carry no structured meaning.
+The CSV text form is still canonical. A tool can go text → JSON → text and get the same document back: same columns, same values, same metadata. Only free-text `##` human comments are dropped, because they carry no structured meaning. Cell notes are different: `#note` and `#link` lines become `notes` and `links` arrays and survive the round-trip — see [Notes and links](notes.md).
 
 Delimiter, quote character, and encoding live under `csv`. Reading JSON doesn't need them — the cells are already parsed — but they're what lets a writer regenerate the exact CSV text. Omit the whole `csv` object if you're just exchanging data.
 

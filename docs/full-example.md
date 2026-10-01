@@ -10,7 +10,7 @@
 #@license: CC-BY-4.0
 #@tool: excsv-cli/0.2.0
 #@tags: sales,Q1,2026,demo
-#column name=id type=int unique=1 title="Order ID" description="Auto-incremented order identifier"
+#column name=id type=int unique=1 title="Order ID" description="Auto-incremented order identifier" link="https://crm.example.com/orders/{$}"
 #column name=customer type=string required=1 len_min=1 len_max=100 title="Customer Name"
 #column name=email type=string required=1 len_max=254 pattern=^[^@]+@[^@]+$
 #column name=amount type=decimal format=0.00 unit=USD min=0 max=999999.99 default=0.00 order=desc
@@ -18,6 +18,9 @@
 #column name=tags type=string separator=| title="Order Tags"
 #column name=created_at type=datetime title="Created At" description="UTC timestamp of order creation"
 #column name=note type=string x-ui-widget=textarea
+#note key=2 col=status author=alex@example.com created=2026-03-24T12:00:00Z text="Bank confirmed the payment, the statement is just late"
+#note col=email text="Addresses imported from the old CRM were never validated"
+#link key=3 col=customer href="https://initech.example.com"
 #$ddl: CREATE TABLE orders (id INT PRIMARY KEY AUTO_INCREMENT, customer VARCHAR(100) NOT NULL, email VARCHAR(254) NOT NULL, amount DECIMAL(8,2) DEFAULT 0.00, status VARCHAR(20) DEFAULT 'pending', tags TEXT, created_at TIMESTAMP, note TEXT) ENGINE=InnoDB
 #$ddl: CREATE UNIQUE INDEX orders_email_uq ON orders(email)
 #$ddl: CREATE INDEX orders_status_idx ON orders(status)
