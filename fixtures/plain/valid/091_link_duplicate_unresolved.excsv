@@ -1,0 +1,9 @@
+#!excsv version=0.6 header=1 rows=2
+#column name=id type=int role=id
+#column name=doc type=string
+#link row=0 col=doc href="https://example.com/first"
+#link key=1 col=doc href="https://example.com/second"
+#link row=9 col=doc href="https://example.com/nowhere"
+id,doc
+1,spec
+2,notes

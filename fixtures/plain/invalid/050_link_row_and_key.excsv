@@ -1,0 +1,5 @@
+#!excsv version=0.6 header=1 rows=1
+#column name=id type=int role=id
+#link row=0 key=1 col=id href="https://example.com"
+id
+1

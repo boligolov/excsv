@@ -1,0 +1,6 @@
+#!excsv version=0.6 delim=comma header=1 rows=3 reference=093_sidecar_notes.csv
+#@source: vendor_feed.orders
+#column name=order_id type=int role=id link="https://vendor.example.com/o/{$}"
+#column name=amount type=decimal
+#note key=502 col=amount author=reviewer@example.com text="Doesn't match the vendor statement"
+#note col=amount text="Amounts include VAT"

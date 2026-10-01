@@ -72,6 +72,34 @@ def to_comment_truncated(inner_text: str) -> str:
     return "\n".join(keep)
 
 
+def comment_rank(line: str) -> int:
+    """ZIP comment priority (docs/implementation/zip.md#priority-order); lower = earlier."""
+    if line.startswith("#!"):
+        return 1
+    if re.match(r"#@(source|author|created|exported|license|tool):", line):
+        return 2
+    if line.startswith("#column"):
+        return 3
+    if line.startswith("#$ddl"):
+        return 4
+    if line.startswith("#%"):
+        return 5
+    if re.match(r"#@(comment|tags):", line):
+        return 6
+    if line.startswith("#@"):
+        return 7
+    if line.startswith("#$dql"):
+        return 8
+    if line.startswith(("#note", "#link")):
+        return 9
+    return 10
+
+
+def to_comment_priority(inner_text: str) -> str:
+    # Stable sort keeps file order within each priority group.
+    return "\n".join(sorted(to_comment_full(inner_text).splitlines(), key=comment_rank))
+
+
 def zip_info(name: str, compress_type: int) -> zipfile.ZipInfo:
     zi = zipfile.ZipInfo(filename=name, date_time=FIXED_DT)
     zi.compress_type = compress_type
@@ -226,6 +254,18 @@ def make_valid() -> None:
         ZIP_VALID / "013_comment_header_disagree.excsv.zip",
         [("013_comment_header_disagree.excsv", canonical.encode("utf-8"), zipfile.ZIP_DEFLATED)],
         disagree.encode("utf-8"),
+    )
+
+    # #note/#link have the lowest comment priority: the inner file lists them before
+    # #%sum, the comment lists them after it.
+    notes_lines = load_plain("plain/valid/078_note_levels.excsv")
+    first_data = next(i for i, line in enumerate(notes_lines) if not line.startswith("#"))
+    notes_lines.insert(first_data, "#%sum: ,,1000.50")
+    notes_inner = with_original_size(notes_lines)
+    write_zip(
+        ZIP_VALID / "014_comment_notes_last.excsv.zip",
+        [("014_comment_notes_last.excsv", notes_inner.encode("utf-8"), zipfile.ZIP_DEFLATED)],
+        to_comment_priority(notes_inner).encode("utf-8"),
     )
 
 

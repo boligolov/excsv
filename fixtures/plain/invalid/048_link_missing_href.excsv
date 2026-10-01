@@ -1,0 +1,5 @@
+#!excsv version=0.6 header=1 rows=1
+#column name=a type=string
+#link row=0 col=a
+a
+x

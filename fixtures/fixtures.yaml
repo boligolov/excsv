@@ -37,6 +37,23 @@ error_kinds:
   - chart_on_manifest
   - chart_unknown_type
   - chart_unknown_channel
+  # Notes and links
+  - note_malformed
+  - note_missing_text
+  - note_row_and_key
+  - note_unresolved
+  - note_on_manifest
+  - link_malformed
+  - link_missing_href
+  - link_missing_address
+  - link_row_and_key
+  - link_unresolved
+  - link_duplicate
+  - link_on_manifest
+  - link_unknown_column
+  - link_template_malformed
+  - link_unsafe_scheme
+
   # Data section
   - data_row_arity_mismatch
   - quote_none_delimiter_in_value
@@ -676,6 +693,173 @@ error_kinds:
       count: 2
       types: [bar, arc]
 
+- id: plain/valid/078_note_levels.excsv
+  exercises: [D9]
+  expect:
+    parse: ok
+    warnings: []
+    rows: 3
+    notes:
+      count: 4
+      targets: [cell, column, row, table]
+      resolved_rows: [1, null, 0, null]
+
+- id: plain/valid/079_note_key_anchor.excsv
+  exercises: [D9]
+  expect:
+    parse: ok
+    warnings: []
+    notes:
+      count: 3
+      targets: [cell, cell, row]
+      resolved_rows: [0, 0, 1]
+      texts: ["Sum doesn't match the invoice", 'Checked: the invoice says "300.50", data says 350.50', "Test order"]
+
+- id: plain/valid/080_note_key_unique_fallback.excsv
+  exercises: [D9]
+  expect:
+    parse: ok
+    warnings: []
+    notes:
+      count: 1
+      resolved_rows: [0]   # raw-text match: key=007 is row 0, not the "7" row
+
+- id: plain/valid/081_note_unresolved_warn.excsv
+  exercises: [D9, P7]
+  expect:
+    parse: ok
+    warnings: [note_unresolved]
+    notes:
+      count: 3        # unresolved notes are kept, not dropped
+      resolved_rows: [null, null, null]
+
+- id: plain/valid/082_note_key_no_id_column.excsv
+  exercises: [D9]
+  expect:
+    parse: ok
+    warnings: [note_unresolved]
+    notes:
+      count: 1
+
+- id: plain/valid/083_note_header0_index.excsv
+  exercises: [D9]
+  expect:
+    parse: ok
+    warnings: []
+    notes:
+      count: 1
+      targets: [cell]
+      resolved_rows: [1]
+
+- id: plain/valid/084_link_template.excsv
+  exercises: [D10]
+  expect:
+    parse: ok
+    warnings: []
+    cell_links:
+      "0,order_id": "https://crm.example.com/orders/1042"
+      "0,customer": "https://crm.example.com/c/17"
+      "1,customer": null   # customer_id is null
+      "2,customer": "https://crm.example.com/c/23"
+
+- id: plain/valid/085_link_value_is_url.excsv
+  exercises: [D10]
+  expect:
+    parse: ok
+    warnings: []
+    cell_links:
+      "0,homepage": "https://acme.example.com/a?b=c&d=e"   # single-placeholder template: not encoded
+      "1,homepage": null
+      "0,title": "https://docs.example.com/x"
+      "0,name": null
+
+- id: plain/valid/086_link_encoding_and_escape.excsv
+  exercises: [D10]
+  expect:
+    parse: ok
+    warnings: []
+    cell_links:
+      "0,query": "https://search.example.com/?q=hello%20world%2Fx&lit={raw}"
+      "1,query": "https://search.example.com/?q=caf%C3%A9&lit={raw}"
+      "2,query": "https://search.example.com/?q=a%26b%3Dc&lit={raw}"
+
+- id: plain/valid/087_link_header0_index.excsv
+  exercises: [D10]
+  expect:
+    parse: ok
+    warnings: []
+    cell_links:
+      "0,1": "https://crm.example.com/orders/1042"
+      "1,1": "https://crm.example.com/orders/1043"
+
+- id: plain/valid/088_link_cell_override.excsv
+  exercises: [D10]
+  expect:
+    parse: ok
+    warnings: []
+    links:
+      count: 2
+    cell_links:
+      "0,invoice": "https://billing.example.com/inv/A-75"
+      "1,invoice": "https://legacy-billing.example.com/view?id=A-77"   # #link overrides the template
+      "0,order_id": "https://crm.example.com/special/1042"
+      "1,order_id": null
+
+- id: plain/valid/089_link_template_warns.excsv
+  exercises: [D10, P7]
+  expect:
+    parse: ok
+    warnings: [link_unknown_column, link_template_malformed]
+    cell_links:
+      "0,id": null
+      "0,name": null
+
+- id: plain/valid/090_link_unsafe_scheme.excsv
+  exercises: [D10]
+  expect:
+    parse: ok
+    warnings: [link_unsafe_scheme]
+    cell_links:
+      "0,url": "https://example.com"
+      "1,url": null   # javascript: shown as plain text
+      "2,url": null   # file: shown as plain text
+      "3,url": "mailto:ops@example.com"
+
+- id: plain/valid/091_link_duplicate_unresolved.excsv
+  exercises: [D10]
+  expect:
+    parse: ok
+    warnings: [link_duplicate, link_unresolved]
+    links:
+      count: 3        # unresolved line is kept
+    cell_links:
+      "0,doc": "https://example.com/second"   # last wins
+      "1,doc": null
+
+- id: plain/valid/092_version_0_5_compat.excsv
+  exercises: [B5]
+  expect:
+    parse: ok
+    warnings: []      # an earlier version is read without unknown_version
+    header:
+      version: "0.5"
+    rows: 2
+
+- id: plain/valid/093_sidecar_notes.excsv
+  exercises: [A11, D9, D10]
+  data_sibling: plain/valid/093_sidecar_notes.csv
+  expect:
+    parse: ok
+    warnings: []
+    profile: sidecar
+    rows: 3
+    notes:
+      count: 2
+      targets: [cell, column]
+      resolved_rows: [1, null]
+    cell_links:
+      "2,order_id": "https://vendor.example.com/o/503"
+
 # ---------------------------------------------------------------------------
 # plain / invalid  (FAIL only. Retired NNN: 007, 009, 010, 017, 022, 025, 026, 029, 031, 032)
 # ---------------------------------------------------------------------------
@@ -886,6 +1070,48 @@ error_kinds:
     parse: fail
     error_kind: chart_missing_type
 
+- id: plain/invalid/045_note_missing_text.excsv
+  exercises: [D9]
+  expect:
+    parse: fail
+    error_kind: note_missing_text
+
+- id: plain/invalid/046_note_row_and_key.excsv
+  exercises: [D9]
+  expect:
+    parse: fail
+    error_kind: note_row_and_key
+
+- id: plain/invalid/047_note_malformed.excsv
+  exercises: [D9]
+  expect:
+    parse: fail
+    error_kind: note_malformed
+
+- id: plain/invalid/048_link_missing_href.excsv
+  exercises: [D10]
+  expect:
+    parse: fail
+    error_kind: link_missing_href
+
+- id: plain/invalid/049_link_missing_address.excsv
+  exercises: [D10]
+  expect:
+    parse: fail
+    error_kind: link_missing_address
+
+- id: plain/invalid/050_link_row_and_key.excsv
+  exercises: [D10]
+  expect:
+    parse: fail
+    error_kind: link_row_and_key
+
+- id: plain/invalid/051_link_malformed.excsv
+  exercises: [D10]
+  expect:
+    parse: fail
+    error_kind: link_malformed
+
 # ---------------------------------------------------------------------------
 # zip — generated by fixtures/generate/make_zip_fixtures.py
 # Retired invalid NNN: 005, 006 (comment defects → valid/011, 012)
@@ -987,6 +1213,15 @@ error_kinds:
   expect:
     parse: ok
     warnings: [zip_comment_header_disagree]
+
+- id: zip/valid/014_comment_notes_last.excsv.zip
+  exercises: [J3, J5, D9, D10]
+  derived_from: plain/valid/078_note_levels.excsv   # plus a #%sum line after the notes, so priority reordering is observable
+  expect:
+    parse: ok
+    warnings: []
+    comment:
+      ends_with: '#note text="Q1 numbers are preliminary until the audit closes"'   # #note/#link are the lowest comment priority
 
 - id: zip/invalid/001_missing_original_size.excsv.zip
   exercises: [J5]
@@ -1154,6 +1389,28 @@ error_kinds:
       columns: 2
     computed:
       virtual: [total]
+
+- id: pack/valid/013_notes_links_per_table.excsv.pack.zip
+  exercises: [D9, D10]
+  expect:
+    parse: ok
+    warnings: []
+    tables: 1
+    table:
+      name: orders
+      rows: 2
+    notes:
+      count: 1
+      resolved_rows: [1]
+    cell_links:
+      "0,id": "https://crm.example.com/orders/1"
+
+- id: pack/valid/014_note_on_manifest_warn.excsv.pack.zip
+  exercises: [D9, D10]
+  expect:
+    parse: ok
+    warnings: [note_on_manifest, link_on_manifest]
+    tables: 1
 
 - id: pack/invalid/001_manifest_missing_layout.excsv.pack.zip
   exercises: [K12]

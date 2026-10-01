@@ -1,0 +1,8 @@
+#!excsv version=0.6 header=1 rows=2
+#column name=name type=string
+#column name=homepage type=string link="{$}"
+#column name=docs_url type=string
+#column name=title type=string link="{docs_url}"
+name,homepage,docs_url,title
+Acme,https://acme.example.com/a?b=c&d=e,https://docs.example.com/x,Guide
+Globex,,https://docs.example.com/g,Manual

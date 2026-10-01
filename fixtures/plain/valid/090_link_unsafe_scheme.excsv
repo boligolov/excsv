@@ -1,0 +1,8 @@
+#!excsv version=0.6 header=1 rows=4
+#column name=label type=string
+#column name=url type=string link="{$}"
+label,url
+ok,https://example.com
+bad,javascript:alert(1)
+file,file:///etc/passwd
+mail,mailto:ops@example.com

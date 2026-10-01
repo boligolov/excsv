@@ -15,7 +15,7 @@ PACK_VALID = FIXTURES / "pack" / "valid"
 PACK_INVALID = FIXTURES / "pack" / "invalid"
 
 FIXED_DT = (2026, 1, 1, 0, 0, 0)
-META_PREFIXES = ("#!", "#@", "#column", "#%", "#$", "##")
+META_PREFIXES = ("#!", "#@", "#column", "#chart", "#note", "#link", "#%", "#$", "##")
 
 
 @dataclass
@@ -577,6 +577,32 @@ def make_valid() -> None:
             tables=[computed_orders],
             single_table="orders",
             pack_meta=["#@pack-name: compute-no-col"],
+        ),
+    )
+
+    notes_table = manual_table(
+        "orders",
+        [
+            '#column name=id type=int role=id link="https://crm.example.com/orders/{$}"',
+            "#column name=amount type=decimal",
+            '#note key=2 col=amount text="Refund pending"',
+        ],
+        [("id", ["1", "2"]), ("amount", ["10.00", "20.50"])],
+    )
+    build_pack(
+        PACK_VALID / "013_notes_links_per_table.excsv.pack.zip",
+        PackBuild(tables=[notes_table], single_table="orders", pack_meta=["#@pack-name: notes-per-table"]),
+    )
+    build_pack(
+        PACK_VALID / "014_note_on_manifest_warn.excsv.pack.zip",
+        PackBuild(
+            tables=[notes_table],
+            single_table="orders",
+            pack_meta=[
+                "#@pack-name: notes-on-manifest",
+                '#note text="Manifest notes are ignored: notes are per-table"',
+                '#link row=0 col=id href="https://example.com"',
+            ],
         ),
     )
 

@@ -1,0 +1,6 @@
+#!excsv version=0.6 header=1 rows=1
+#column name=a type=int role=id
+#column name=b type=int role=id
+#note key=1 text="Two role=id columns, so key= cannot resolve"
+a,b
+1,2

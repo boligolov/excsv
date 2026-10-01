@@ -1,0 +1,7 @@
+#!excsv version=0.6 header=1 rows=2
+#column name=sku type=string unique=1
+#column name=qty type=int
+#note key=007 col=qty text="Recount scheduled"
+sku,qty
+007,5
+7,12

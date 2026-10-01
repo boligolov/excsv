@@ -1,0 +1,8 @@
+#!excsv version=0.6 header=1 rows=3
+#column name=order_id type=int role=id link="https://crm.example.com/orders/{$}"
+#column name=customer_id type=int
+#column name=customer type=string link="https://crm.example.com/c/{customer_id}"
+order_id,customer_id,customer
+1042,17,Acme Corp
+1043,,Globex Inc
+1044,23,Initech
