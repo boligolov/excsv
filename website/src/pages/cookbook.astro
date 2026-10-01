@@ -21,7 +21,7 @@ import ShellRecipe from '../components/ShellRecipe.astro';
   </p>
 
   <CodeBlock title="orders.excsv" description="Inline ExCSV — the sample every recipe in the first sections runs against.">
-{`#!excsv version=0.5 rows=2 schema=excsv sql-dialect=mysql
+{`#!excsv version=0.6 rows=2 schema=excsv sql-dialect=mysql
 #@author: author@example.com
 #@source: sales_db.orders
 #@created: 2026-01-01T00:00:00Z
@@ -97,7 +97,7 @@ id,customer,amount
       title="Print the header, one attribute per line"
       command={`head -1 orders.excsv | tr ' ' '\\n'`}
       output={`#!excsv
-version=0.5
+version=0.6
 rows=2
 schema=excsv
 sql-dialect=mysql`}
@@ -184,7 +184,7 @@ amount:decimal`}
   </section>
 
   <CodeBlock title="sales.excsv" description="A second sample — adds #@grain and per-column role= / agg= hints for the next two recipes.">
-{`#!excsv version=0.5 header=1 rows=4
+{`#!excsv version=0.6 header=1 rows=4
 #@source: sales_db.orders
 #@grain: one row per order
 #column name=order_id type=long unique=1 role=id
@@ -220,7 +220,7 @@ order_id,status,amount,balance,created_at
   </section>
 
   <CodeBlock title="notes.excsv" description="Human comment lines (##) mixed in with machine metadata.">
-{`#!excsv version=0.5 rows=1
+{`#!excsv version=0.6 rows=1
 ## this is a human note
 #@source: demo
 ## comment between meta kinds
@@ -247,9 +247,9 @@ another human note`}
     <div id="bom">
       <ShellRecipe
         title="The BOM gotcha"
-        command={`printf '\\xef\\xbb\\xbf#!excsv version=0.5 rows=1\\n#column name=id type=int\\nid\\n1\\n' > bom.excsv
+        command={`printf '\\xef\\xbb\\xbf#!excsv version=0.6 rows=1\\n#column name=id type=int\\nid\\n1\\n' > bom.excsv
 grep -v '^#' bom.excsv`}
-        output={`#!excsv version=0.5 rows=1
+        output={`#!excsv version=0.6 rows=1
 id
 1`}
       >
@@ -289,7 +289,7 @@ clickhouse`}
 
   <CodeBlock title="report.excsv (sidecar) + report.csv" description="The sidecar profile: metadata in one file, the untouched original in another.">
 {`# report.excsv
-#!excsv version=0.5 delim=comma header=1 rows=2 reference=report.csv
+#!excsv version=0.6 delim=comma header=1 rows=2 reference=report.csv
 #@source: fixtures_db.orders
 #column name=id type=int
 #column name=customer type=string
@@ -321,7 +321,7 @@ id,customer,amount
   </section>
 
   <CodeBlock title="signed.excsv" description="A minimal file carrying an integrity checksum.">
-{`#!excsv version=0.5 checksum=sha256:7cde7fb64fd82bd152710cf238e017b9ab46c0592483edc067ba4f6c75fac108 rows=1
+{`#!excsv version=0.6 checksum=sha256:7cde7fb64fd82bd152710cf238e017b9ab46c0592483edc067ba4f6c75fac108 rows=1
 id
 1`}
   </CodeBlock>
@@ -350,7 +350,7 @@ id
       title="Peek the schema and stats"
       command={`zipinfo -z orders.excsv.zip`}
       output={`Archive:  orders.excsv.zip
-#!excsv version=0.5 rows=2 schema=excsv sql-dialect=mysql
+#!excsv version=0.6 rows=2 schema=excsv sql-dialect=mysql
 #@author: author@example.com
 #@source: sales_db.orders
 #@created: 2026-01-01T00:00:00Z

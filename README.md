@@ -1,4 +1,4 @@
-﻿# ExCSV v0.5 — Specification
+﻿# ExCSV v0.6 — Specification
 
 **Extended Comma-Separated Values — CSV that describes itself.**
 
@@ -6,7 +6,7 @@ You open a CSV export and lose the afternoon: which column is the amount, is `01
 
 | | |
 | --- | --- |
-| **Version** | 0.5 |
+| **Version** | 0.6 |
 | **Status** | Draft / Experimental |
 | **File extensions** | `.excsv`, `.extsv` (plain — inline or sidecar); `.excsv.json` (JSON form); `.excsv.zip`, `.extsv.zip` (row ZIP); `.excsv.pack.zip`, `.extsv.pack.zip` (columnar pack) |
 | **MIME types** | `text/excsv` (plain); `application/excsv+json` (JSON); `application/excsv+zip` (row ZIP); `application/excsv-pack+zip` (pack) |
@@ -29,7 +29,7 @@ Same `#!excsv` header and `#column` / `#%` / `#$` / `#@` vocabulary everywhere �
 Metadata rides at the top of the file, above the rows. One artifact, still a valid CSV.
 
 ```
-#!excsv version=0.5 header=1 rows=2 sql-dialect=postgres
+#!excsv version=0.6 header=1 rows=2 sql-dialect=postgres
 #@grain: one row per order
 #column name=id type=int role=id
 #column name=amount type=decimal unit=USD role=measure agg=sum
@@ -48,7 +48,7 @@ id,amount
 Leave `data.csv` byte-for-byte. Drop a `data.excsv` beside it: header + meta only, plus `reference=data.csv`. No rows are copied.
 
 ```
-#!excsv version=0.5 header=1 rows=48213 reference=data.csv
+#!excsv version=0.6 header=1 rows=48213 reference=data.csv
 #@source: vendor-nightly-dump
 #column name=customer_id type=long role=id
 #column name=revenue type=decimal unit=USD role=measure agg=sum
@@ -79,7 +79,7 @@ sales.excsv.pack.zip
 
 ```json
 {
-  "excsv": "0.5",
+  "excsv": "0.6",
   "meta": { "grain": "one row per order" },
   "columns": [
     { "index": 0, "name": "id", "type": "int", "role": "id" },

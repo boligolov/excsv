@@ -1,4 +1,4 @@
-#!excsv version=0.5 header=1 rows=3
+#!excsv version=0.6 header=1 rows=3
 #column name=category type=string  role=dimension
 #column name=amount   type=decimal role=measure agg=sum unit=USD
 #chart type=arc name=spend_by_category theta=amount color=category title="Spend by category"

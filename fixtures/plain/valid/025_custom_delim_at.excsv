@@ -1,4 +1,4 @@
-﻿#!excsv version=0.5 delim=@ rows=2
+﻿#!excsv version=0.6 delim=@ rows=2
 id@name
 1@Alice
 2@Bob

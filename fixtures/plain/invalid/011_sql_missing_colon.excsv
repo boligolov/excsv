@@ -1,4 +1,4 @@
-﻿#!excsv version=0.5
+﻿#!excsv version=0.6
 #$ddl CREATE TABLE t (id INT)
 id
 1

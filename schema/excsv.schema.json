@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://excsv.org/schema/excsv-0.5.schema.json",
+  "$id": "https://excsv.org/schema/excsv-0.6.schema.json",
   "title": "ExCSV JSON form (.excsv.json)",
   "description": "The JSON form of an ExCSV document, carried in a .excsv.json file (media type application/excsv+json). Carries the same vocabulary as the text form (#!excsv header, #@ metadata, #column schema, #% aggregates, #$ SQL) so the two round-trip losslessly. The CSV text form stays canonical; the JSON form is for JSON-native contexts (APIs, config, LLM structured output).",
   "type": "object",

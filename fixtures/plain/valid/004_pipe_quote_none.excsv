@@ -1,4 +1,4 @@
-﻿#!excsv version=0.5 delim=pipe quote=none rows=2
+﻿#!excsv version=0.6 delim=pipe quote=none rows=2
 id|status
 1|ok
 2|pending

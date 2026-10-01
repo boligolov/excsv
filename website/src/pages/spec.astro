@@ -41,7 +41,7 @@ import CodeBlock from '../components/CodeBlock.astro';
       </p>
 
       <CodeBlock title="sales.excsv" description="Types, grain, a total, and the rows — one artifact.">
-{`#!excsv version=0.5 delim=comma header=1 rows=3
+{`#!excsv version=0.6 delim=comma header=1 rows=3
 #@source: sales_db.orders
 #@grain: one row per order
 #column name=order_id type=int role=id
@@ -68,7 +68,7 @@ order_id,status,amount,created_at
         <code>#!excsv</code> names the dialect so nobody has to sniff it.
         Leave out what you don't need — defaults fill in (comma, UTF-8, first row is a header).
       </p>
-      <pre><code><span class="hl-meta">#!excsv version=0.5 delim=comma header=1 rows=18432 null=NA</span></code></pre>
+      <pre><code><span class="hl-meta">#!excsv version=0.6 delim=comma header=1 rows=18432 null=NA</span></code></pre>
 
       <div class="table-wrap">
         <table>
@@ -304,7 +304,7 @@ excsv column dematerialize total data.excsv</code></pre>
         Recreating a table from a CSV usually means retyping the schema.
         Here the <code>CREATE TABLE</code> (and the <code>SELECT</code> that produced the dump) sit in the file.
       </p>
-      <pre><code><span class="hl-meta">#!excsv version=0.5 sql-dialect=postgres</span>
+      <pre><code><span class="hl-meta">#!excsv version=0.6 sql-dialect=postgres</span>
 <span class="hl-meta">#$ddl: CREATE TABLE orders (id BIGINT PRIMARY KEY, amount NUMERIC(8,2))</span>
 <span class="hl-meta">#$dql: SELECT id, amount FROM sales.orders WHERE exported_at &gt; '2026-01-01'</span></code></pre>
       <p>
@@ -375,12 +375,12 @@ excsv column dematerialize total data.excsv</code></pre>
       <p>
         Same content — columns, types, aggregates, SQL — in a file of its own,
         <code>sales.excsv.json</code>, for when you're already in JSON: an API, a config, a prompt.
-        There's a <a href="/schema/excsv-0.5.schema.json">JSON Schema</a> to validate against,
+        There's a <a href="/schema/excsv-0.6.schema.json">JSON Schema</a> to validate against,
         or to constrain a model's output to. CSV → JSON → CSV doesn't lose anything.
         Money stays a string so it doesn't become a float.
       </p>
       <pre><code>{`{
-  "excsv": "0.5",
+  "excsv": "0.6",
   "meta": { "grain": "one row per order" },
   "columns": [
     { "index": 0, "name": "amount", "type": "decimal", "unit": "USD", "role": "measure", "agg": "sum" }

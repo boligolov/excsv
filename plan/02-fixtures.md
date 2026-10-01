@@ -59,7 +59,7 @@ The file is a **two-document YAML stream** (`---` separates them): the first doc
     parse: ok
     warnings: []
     header:
-      version: "0.5"
+      version: "0.6"
     rows: 0
     columns: 0
 
@@ -84,7 +84,7 @@ The file is a **two-document YAML stream** (`---` separates them): the first doc
   expect:
     parse: ok
     comment:
-      starts_with: "#!excsv version=0.5"
+      starts_with: "#!excsv version=0.6"
       ends_with: "#@comment-truncated: 1"
 ```
 

@@ -8,8 +8,8 @@ Format-agnostic capability map. Independent of Go / Python / CLI surface. Each f
 | --- | --- | --- | --- |
 | **plain** | `.excsv`, `.ecsv` | row-oriented text | Backward-compatible with CSV/TSV. Inline (header+meta+data) or **sidecar** (meta only, `reference=` → sibling `.csv`/`.tsv`; `.extsv` for TSV). |
 | **zip** | `.excsv.zip`, `.ecsv.zip` | row-oriented text, Deflate-wrapped | Container of exactly one plain file. ZIP comment summary. |
-| **pack** | `.excsv.pack.zip`, `.ecsv.pack.zip` | columnar, multi-table (optional `single-table=`) | ZIP archive of `_manifest.excsv` + per-table directories of `.col` files. In v0.5 spec. |
-| **json** | `.excsv.json` | JSON object | Alternative serialization of any of the above (`layout=` inline/sidecar/pack), validated by `schema/excsv.schema.json`. Bijective with the text form. In v0.5 spec. |
+| **pack** | `.excsv.pack.zip`, `.ecsv.pack.zip` | columnar, multi-table (optional `single-table=`) | ZIP archive of `_manifest.excsv` + per-table directories of `.col` files. In v0.6 spec. |
+| **json** | `.excsv.json` | JSON object | Alternative serialization of any of the above (`layout=` inline/sidecar/pack), validated by `schema/excsv.schema.json`. Bijective with the text form. In v0.6 spec. |
 
 `plain` and `zip` are the **row family** (RF). `pack` is the **pack family** (PF). `json` is a serialization, not a container: it crosses both families.
 
@@ -26,7 +26,7 @@ Mode A on a pack still touches `_manifest.excsv` and each table's `_header.excsv
 - `≈` supported but with format-specific semantics (notes column)
 - `⊕` pack-only by nature (multi-table, columnar)
 - `—` not applicable / explicitly out of scope
-- `↗` planned but later (post-v0.5 in this catalog's case)
+- `↗` planned but later (post-v0.6 in this catalog's case)
 
 ---
 

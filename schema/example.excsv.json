@@ -1,5 +1,5 @@
 {
-  "excsv": "0.5",
+  "excsv": "0.6",
   "csv": { "delim": "comma", "quote": "double", "header": true, "encoding": "UTF-8" },
   "meta": {
     "author": "author@example.com",

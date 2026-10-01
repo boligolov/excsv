@@ -8,7 +8,7 @@ Still-live reference docs in `plan/` (not backlog):
 
 When an item lands, update the spec/fixtures/reference docs, then remove it from here — this file tracks only what's still open.
 
-Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗ deferred (post-v0.5)
+Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗ deferred (post-v0.6)
 
 **Working rule:** land decisions in the **spec** (`docs/implementation/`) + this file. Fixture corpus is in `fixtures/` and tracks the implementation spec. Further fixture edits only when the spec changes.
 
@@ -18,8 +18,8 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗
 
 | Area | State |
 | --- | --- |
-| Spec (`docs/implementation/`) | v0.5; still open: C10 (§1), L1 (§2), `#index` (§5) |
-| Feature catalog (`01-features.md`) | draft; version-gating (`[v0.5]`/`[later]`) unfinished (§4) |
+| Spec (`docs/implementation/`) | v0.6; still open: C10 (§1), L1 (§2), `#index` (§5) |
+| Feature catalog (`01-features.md`) | draft; version-gating (`[v0.6]`/`[later]`) unfinished (§4) |
 | Fixtures | `#index` fixtures pending (§5.5); CI byte-identical zip/pack regen check pending (§3) |
 | Implementation (Go/Python) | full spec (plain + zip + pack), not version-gated; `#chart` parser/writer not started (§6) |
 
@@ -51,11 +51,11 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗
 
 ## 4. Implementation
 
-Go and Python implement the **whole v0.5 spec** in one shot: plain (inline + sidecar), row-ZIP, pack (unsectioned, multi-table, sectioned). No format waves.
+Go and Python implement the **whole v0.6 spec** in one shot: plain (inline + sidecar), row-ZIP, pack (unsectioned, multi-table, sectioned). No format waves.
 
 Cookbook follows the CLIs. Parity is the shared `fixtures/` tree.
 
-`01-features.md` version-gating (`[v0.5]`/`[later]`) finishes once the command tree is drafted.
+`01-features.md` version-gating (`[v0.6]`/`[later]`) finishes once the command tree is drafted.
 
 - 🟡 Go/Python CI hasn't run against the computed-column fixtures (`formula=`/`materialized=`) yet — cross-impl parity is unverified until the next upstream sync.
 

@@ -1,4 +1,4 @@
-﻿#!excsv version=0.5
+﻿#!excsv version=0.6
 #column name=id type=int required
 id
 1

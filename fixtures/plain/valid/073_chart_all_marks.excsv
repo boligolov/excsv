@@ -1,4 +1,4 @@
-#!excsv version=0.5 header=1 rows=5
+#!excsv version=0.6 header=1 rows=5
 #column name=category type=string  role=dimension
 #column name=amount   type=decimal role=measure agg=sum unit=USD
 #column name=discount type=decimal role=measure agg=avg
