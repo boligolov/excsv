@@ -21,7 +21,7 @@ Legend: 🔴 blocker · 🟡 should · 🟢 nice-to-have · ⛔ do-not-do · ↗
 | Spec (`docs/implementation/`) | v0.6; still open: C10 (§1), L1 (§2), `#index` (§5) |
 | Feature catalog (`01-features.md`) | draft; version-gating (`[v0.6]`/`[later]`) unfinished (§4) |
 | Fixtures | `#index` fixtures pending (§5.5); CI byte-identical zip/pack regen check pending (§3) |
-| Implementation (Go/Python) | full v0.5 spec (plain + zip + pack), not version-gated; `#chart` parser/writer not started (§6); v0.6 `#note`/`link=`/`#link` not started (§7) |
+| Implementation (Go/Python) | full v0.6 spec — Go CLI 0.0.6, Python 0.6.0; both pass the whole fixture corpus with no skips. Open: `excsv chart` renderer (§6), `.xlsx` interop (§7) |
 | Website converter | v0.6: parses/serializes `#note`/`link=`/`#link`, preview renders links and notes; checked by `website/scripts/check-fixtures.mjs` |
 
 ---
@@ -58,7 +58,7 @@ Cookbook follows the CLIs. Parity is the shared `fixtures/` tree.
 
 `01-features.md` version-gating (`[v0.6]`/`[later]`) finishes once the command tree is drafted.
 
-- 🟡 Go/Python CI hasn't run against the computed-column fixtures (`formula=`/`materialized=`) yet — cross-impl parity is unverified until the next upstream sync.
+- ✅ Go and Python CI run the full corpus, computed columns included; both `UpstreamFixtureBugs` lists are empty.
 
 ---
 
@@ -123,7 +123,7 @@ Spec: [`docs/implementation/charts.md`](../docs/implementation/charts.md) (norma
 
 Remaining:
 
-- 🟡 **Go/Python parser/writer.** Parse `#chart`/`#chart-<engine>:`, validate channels against `#column`, mirror to/from JSON (`charts` array). The website library (`website/src/lib/excsv/charts.ts`) already does this and passes fixtures 071–077 / 040–044 — usable as a reference.
+- ✅ **Go/Python parser/writer.** Done in both libraries (parse, validate, JSON `charts`), as in the website's `charts.ts`.
 - 🟢 **`excsv chart` CLI.** Reference renderer per `charts.md#reference-renderer-asciiterminal` — resolve channels + modifiers, emit an asciicharts-shaped spec, shell out to or embed asciicharts.
 - 🟢 **Per-channel type override.** Vega-Lite's ability to force a column's encoding type per-channel (e.g. treat an `int` as nominal instead of quantitative) has no compact-form equivalent yet. Not blocking; deferred as an `L6`-style second-tier item. Use `#chart-vega` if needed now.
 - Pack cross-table `#chart` (a chart spanning columns from more than one table, needing `#fk`-style qualification like `orders.amount`) is deferred — see §8.
@@ -136,10 +136,10 @@ Spec: [`docs/implementation/notes.md`](../docs/implementation/notes.md) (normati
 
 Remaining:
 
-- 🔴 **Go/Python parser/writer.** Parse and validate `#note`/`#link`, `link=` on `#column`; resolve `row=`/`key=` (id column = single `role=id`, else single `unique=1`); template substitution + percent-encoding; scheme check; mirror to/from JSON (`notes`, `links`, `columns[].link`). Pass the fixtures above.
-- 🟡 **Writer obligations.** Every row-reordering/removing command (sort, filter, slice) updates `row=` and drops notes/links on removed rows; column rename updates `col=` and `{name}` placeholders.
+- ✅ **Go/Python parser/writer.** Done in both (Go CLI 0.0.6, Python 0.6.0); fixtures above pass.
+- 🟡 **Writer obligations.** Done: sort keeps `row=` in sync, column rename updates `col=` and `{name}` placeholders (both). Still to confirm: filter/slice commands drop notes/links whose row was removed.
 - 🟡 **`.xlsx` import/export.** Notes ↔ classic/threaded comments (flattened), links ↔ hyperlink objects; template detection on import (`notes.md#excel-interop`). Never `=HYPERLINK()`.
-- 🟢 **CLI.** `excsv note add|list|rm`, `excsv link check` (list unsafe / unresolved).
+- ✅ **CLI.** Go: `note add|list|remove`, `link set|list|remove|check`. Python is library-only.
 - 🟢 **CI.** Run `website/scripts/check-fixtures.mjs` (`npx tsx`) alongside the generator byte-identity check (§3).
 
 Deferred: `#link` on a row/column/table (no click target); anchoring by a composite key; multi-line `text=`; structured mentions; threads / resolved state (removed by design — notes are flat).

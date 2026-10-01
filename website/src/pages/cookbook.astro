@@ -50,6 +50,29 @@ id,customer,amount
   </CodeBlock>
 
   <section class="cb-section">
+    <h2>Read the header</h2>
+    <p class="section-note">The first line carries everything about the file as a whole — version, delimiter, row count, checksum. It's one long line; here's how to make it skimmable.</p>
+
+    <ShellRecipe
+      title="Print the header, one attribute per line"
+      command={`head -1 orders.excsv | tr ' ' '\\n'`}
+      output={`#!excsv
+version=0.6
+rows=2
+schema=excsv
+sql-dialect=mysql`}
+    >
+      Turns a long <code>key=value key=value …</code> line into a scannable list. (A quoted value with a space inside — rare — would get split too; check for <code>"</code> before relying on this in a script.)
+    </ShellRecipe>
+
+    <ShellRecipe
+      title="Row count"
+      command={`grep -v '^#' orders.excsv | tail -n +2 | wc -l`}
+      output={`2`}
+    />
+  </section>
+
+  <section class="cb-section">
     <h2>Read the data</h2>
     <p class="section-note">The <code>#</code> lines are comments. Drop them and it's a CSV file, full stop.</p>
 
@@ -86,29 +109,6 @@ id,customer,amount
       command={`grep -v '^#' orders.excsv | awk -F, -v col=amount -v min=50 'NR==1{for(i=1;i<=NF;i++) if($i==col) c=i; print; next} $c+0>min'`}
       output={`id,customer,amount
 1,Acme,100.00`}
-    />
-  </section>
-
-  <section class="cb-section">
-    <h2>Read the header</h2>
-    <p class="section-note">The first line carries everything about the file as a whole — version, delimiter, row count, checksum. It's one long line; here's how to make it skimmable.</p>
-
-    <ShellRecipe
-      title="Print the header, one attribute per line"
-      command={`head -1 orders.excsv | tr ' ' '\\n'`}
-      output={`#!excsv
-version=0.6
-rows=2
-schema=excsv
-sql-dialect=mysql`}
-    >
-      Turns a long <code>key=value key=value …</code> line into a scannable list. (A quoted value with a space inside — rare — would get split too; check for <code>"</code> before relying on this in a script.)
-    </ShellRecipe>
-
-    <ShellRecipe
-      title="Row count"
-      command={`grep -v '^#' orders.excsv | tail -n +2 | wc -l`}
-      output={`2`}
     />
   </section>
 
