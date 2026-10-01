@@ -136,7 +136,7 @@ The compact form has no explicit "horizontal" switch — orientation and variant
 
 ### Pack scoping
 
-`#chart` **MUST NOT** appear on `_manifest.excsv` (`chart_on_manifest`, WARN, ignored) — the same per-table scoping as `#column`: a `#chart` line lives on a table's own `_header.excsv` and its channels resolve only against that table's columns. A pack-level chart spanning multiple tables (which would need `#fk`-style qualification, e.g. `orders.amount`) is **not designed** in this version — deferred alongside the other pack cross-table items in `plan/TODO.md` §7.
+`#chart` **MUST NOT** appear on `_manifest.excsv` (`chart_on_manifest`, WARN, ignored) — the same per-table scoping as `#column`: a `#chart` line lives on a table's own `_header.excsv` and its channels resolve only against that table's columns. A pack-level chart spanning multiple tables (which would need `#fk`-style qualification, e.g. `orders.amount`) is **not designed** in this version — deferred alongside the other pack cross-table items in `plan/TODO.md` §8.
 
 ## Reference renderer (ASCII/terminal)
 

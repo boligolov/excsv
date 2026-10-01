@@ -78,14 +78,14 @@ Single-table example:
 - `columns` — physical column count = non-virtual `#column` lines in that table's `_header.excsv` (stored + `materialized=1`). Virtual [computed columns](columns.md#computed-columns-formula) (`formula=` without `materialized=1`) have no `.col` and are excluded.
 - `original-size` — uncompressed sum of `.col` / section `.col` bytes under `dir/` (excludes `_header.excsv`).
 
-Never use `#table` / `#fk` in table `_header.excsv` or plain / row-ZIP files.
+Never use `#table` / `#fk` in table `_header.excsv` or plain / row-ZIP files. Conversely, per-table lines — `#column`, `#chart`, `#note`, `#link` — belong on the table's `_header.excsv`, never on the manifest.
 
 ### Manifest header fields
 
 | Field | Requirement | Description |
 | --- | --- | --- |
 | `layout` | **MUST** | `pack` |
-| `version` | **MUST** | `0.6` for pack archives |
+| `version` | **MUST** | `0.6` for pack archives (earlier versions are read as usual — see [Header § Version compatibility](header.md#version-compatibility)) |
 | `original-size` | **MUST** | Sum of all `#table` `original-size=` values |
 | `single-table` | MAY | Default table name while one `#table` exists |
 | `table-count` | MAY | Must equal `#table` count if present |

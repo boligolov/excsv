@@ -26,7 +26,7 @@ If present, the header line **MUST** be line 1, **MUST** begin with `#!excsv`, a
 
 | Field           | Requirement                | Description                                                                                                                          |
 | --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `version`       | **MUST**                   | Format version (`0.6`)                                                                                                               |
+| `version`       | **MUST**                   | Format version (`0.6`). See [Version compatibility](#version-compatibility)                                                          |
 | `delim`         | SHOULD                     | Delimiter — a known name **or** a literal character/sequence (see below). Default: `comma`                                            |
 | `quote`         | SHOULD                     | Quote — a known name **or** a literal character (see below). Default: `none`                                                          |
 | `header`        | SHOULD                     | `1` if the first data row is a header row, `0` otherwise. Default: `1`                                                                |
@@ -81,3 +81,14 @@ The `quote` field accepts either a **well-known name** or a **literal character*
 Any value that is not a well-known name **MUST** be treated as the literal quote character.
 
 - Parsers **MUST** first check against the well-known name table; if no match, treat the value as a literal.
+
+## Version compatibility
+
+Each version is a superset of the previous one: a file valid under `0.5` is valid under `0.6` with the same meaning. A parser that implements version `X` **MUST** read files declaring any earlier version without warning. Only a `version=` the parser does not know is `unknown_version` (WARN, read best-effort).
+
+| Version | Adds |
+| --- | --- |
+| `0.6` | [`#note`, `link=`, `#link`](notes.md) |
+| `0.5` | Baseline of this specification |
+
+Writers **SHOULD** declare the version they implement. A writer **MAY** declare an earlier version when the file uses nothing newer.

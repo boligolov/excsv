@@ -27,6 +27,8 @@ The two forms are a **bijection**: any conforming ExCSV text document maps to ex
 | `meta` | `#@key: value` | Object; known keys + any custom. |
 | `columns` | `#column` lines | Array; each entry **MUST** include `index` (position in `data[row]`). |
 | `charts` | `#chart` / `#chart-<engine>:` lines | Array; see [Charts § JSON mirror](charts.md#json-mirror). |
+| `notes` | `#note` lines | Array; see [Notes and links § JSON mirror](notes.md#json-mirror). |
+| `links` | `#link` lines | Array; see [Notes and links § JSON mirror](notes.md#json-mirror). |
 | `aggregates` | `#%name:` lines | Object: name → per-column array. |
 | `sql` | `#$ddl` / `#$dql` | `{ ddl: [...], dql: [...] }`. |
 | `checksum` | `checksum=` | `"<algo>:<hex>"`. |
@@ -54,6 +56,7 @@ The text form is line-oriented and stringly-typed; JSON has real types and struc
 | **`unique` / `required`** | `1` / `0` | JSON `true` / `false` | `1` ↔ `true`, `0` ↔ `false`. |
 | **`#%` arity** | one value per physical column | array of same length | `null` entry ↔ empty CSV field ("not applicable"). Array length SHOULD equal the physical column count. |
 | **`#chart`** | compact `key=value` line, or `#chart-<engine>: <payload>` | object: flat `{type, ...channels, ...modifiers}`, or `{"vega": <parsed JSON>}` | One array entry per `#chart` line, file order preserved. See [Charts § JSON mirror](charts.md#json-mirror). |
+| **`#note` / `#link`** | `key=value` line | flat object; `row` integer, `col` string or integer, `key` string | One array entry per line, file order preserved. `link=` on `#column` ↔ `link` on the column object. See [Notes and links § JSON mirror](notes.md#json-mirror). |
 | **SQL dialect** | key suffix `#$ddl-postgres-18:` | `{ "dialect": "postgres", "version": "18", "stmt": "…" }` | Split the suffix into `dialect` + optional `version`. No suffix ↔ omitted `dialect`. |
 | **DDL order** | file order | `sql.ddl[]` order | Preserve array order; it is executable order. |
 | **`#@` values** | raw text to end of line | string (or typed where obvious) | `tags` MAY be an array; timestamps stay ISO-8601 strings. Unknown `#@` keys pass through. |
@@ -68,7 +71,7 @@ The text form is line-oriented and stringly-typed; JSON has real types and struc
 
 ## Pack (multi-table)
 
-A pack maps to `layout: "pack"` with a `tables` array; root-level `columns`/`data`/`sql`/`aggregates`/`reference` are unused. Each entry mirrors a single-table document (`columns`, `aggregates`, `sql`, `rows`, `data`, plus `name`). `#fk` lines become the root `fk` array.
+A pack maps to `layout: "pack"` with a `tables` array; root-level `columns`/`data`/`sql`/`aggregates`/`reference` are unused. Each entry mirrors a single-table document (`columns`, `charts`, `notes`, `links`, `aggregates`, `sql`, `rows`, `data`, plus `name`). `#fk` lines become the root `fk` array.
 
 ```json
 {
