@@ -1,14 +1,17 @@
-import { convert, convertFormat, detectFormat, detectFormatAsync, formatLabel } from './convert-format';
+import { convert, convertFormat, detectFormat, detectFormatAsync, formatLabel, inspectDocument } from './convert-format';
+import { isSafeUrl, resolveLinks, resolveNotes } from './notes';
 import { detectInputFormat, parseExcsvText, parseJsonInput } from './parse';
 import { isPlainCsvText, parsePlainCsv } from './parse-plain-csv';
 import { serializeExcsvJson, serializeExcsvText, serializeDataCsv } from './serialize';
-import { mergeSidecar, splitToSidecar } from './sidecar';
+import { mergeSidecar, outputBaseName, sidecarBaseName, splitToSidecar } from './sidecar';
 import { readPack, writePack, inlineToPack, packToInline } from './pack';
 import { readZipPlain, writeZipPlain, isZipBytes, readZipArchiveComment, buildZipArchiveComment } from './zip';
 
 export type {
   Cell,
+  CellLink,
   Column,
+  Note,
   ExcsvDocument,
   ConvertWarning,
   ExcsvFormat,
@@ -24,6 +27,10 @@ export {
   detectFormat,
   detectFormatAsync,
   formatLabel,
+  inspectDocument,
+  resolveNotes,
+  resolveLinks,
+  isSafeUrl,
   detectInputFormat,
   parseExcsvText,
   parseJsonInput,
@@ -54,10 +61,12 @@ export const SAMPLE_CSV = `id,customer,amount
 export const SAMPLE_TEXT = `#!excsv version=0.6 delim=comma header=1 rows=3
 #@source: sales_db.orders
 #@grain: one row per order
-#column name=order_id type=int role=id
+#column name=order_id type=int role=id link="https://crm.example.com/orders/{$}"
 #column name=status type=string role=dimension enum=pending|completed|cancelled
 #column name=amount type=decimal unit=USD role=measure agg=sum
 #column name=created_at type=datetime role=time
+#note key=2 col=amount author=alex@example.com text="Partial refund pending, see ticket 1234"
+#note col=status text="pending = payment not yet confirmed by the bank"
 #%sum: ,,1050.50,
 #$ddl-postgres: CREATE TABLE orders (order_id INTEGER, status TEXT, amount NUMERIC(10,2), created_at TIMESTAMPTZ)
 order_id,status,amount,created_at
@@ -72,10 +81,14 @@ export const SAMPLE_JSON = `{
   "csv": { "delim": "comma", "header": true },
   "meta": { "grain": "one row per order", "source": "sales_db.orders" },
   "columns": [
-    { "index": 0, "name": "order_id", "type": "int", "role": "id" },
+    { "index": 0, "name": "order_id", "type": "int", "role": "id", "link": "https://crm.example.com/orders/{$}" },
     { "index": 1, "name": "status", "type": "string", "role": "dimension", "enum": ["pending", "completed", "cancelled"] },
     { "index": 2, "name": "amount", "type": "decimal", "unit": "USD", "role": "measure", "agg": "sum" },
     { "index": 3, "name": "created_at", "type": "datetime", "role": "time" }
+  ],
+  "notes": [
+    { "key": "2", "col": "amount", "author": "alex@example.com", "text": "Partial refund pending, see ticket 1234" },
+    { "col": "status", "text": "pending = payment not yet confirmed by the bank" }
   ],
   "aggregates": { "sum": [null, null, "1050.50", null] },
   "rows": 3,

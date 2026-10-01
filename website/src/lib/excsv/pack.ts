@@ -1,5 +1,5 @@
 import { strFromU8, strToU8 } from 'fflate';
-import { parseCell, parseExcsvText } from './parse';
+import { annotationWarnings, parseCell, parseExcsvText } from './parse';
 import { parseKvPairs } from './kv';
 import { serializeExcsvText } from './serialize';
 import { physicalColumns } from './computed';
@@ -143,6 +143,8 @@ async function readTableFromZip(
     meta: headerDoc.meta,
     csv: headerDoc.csv,
     columns: headerDoc.columns,
+    notes: headerDoc.notes,
+    links: headerDoc.links,
     aggregates: headerDoc.aggregates,
     sql: headerDoc.sql,
     checksum: headerDoc.checksum,
@@ -179,7 +181,19 @@ export async function readPack(
     tables.push(await readTableFromZip(files, spec.dir, spec.name, warnings));
   }
 
+  if (manifest.notes?.length) {
+    warnings.push({ code: 'note_on_manifest', message: '#note on the pack manifest is ignored; notes are per-table.' });
+  }
+  if (manifest.links?.length) {
+    warnings.push({ code: 'link_on_manifest', message: '#link on the pack manifest is ignored; links are per-table.' });
+  }
+  for (const t of tables) {
+    warnings.push(...annotationWarnings({ excsv: manifest.excsv, csv: t.csv, columns: t.columns, notes: t.notes, links: t.links, data: t.data }));
+  }
+
   manifest.tables = tables;
+  delete manifest.notes;
+  delete manifest.links;
   delete manifest.columns;
   delete manifest.data;
   delete manifest.aggregates;
@@ -204,6 +218,8 @@ function tableHeaderText(table: PackTable): string {
     csv: table.csv,
     meta: table.meta,
     columns: table.columns,
+    notes: table.notes,
+    links: table.links,
     aggregates: table.aggregates,
     sql: table.sql,
     checksum: table.checksum,
@@ -324,6 +340,8 @@ export function inlineToPack(doc: ExcsvDocument, tableName = 'data'): ExcsvDocum
         meta: doc.meta,
         csv: doc.csv,
         columns: doc.columns,
+        notes: doc.notes,
+        links: doc.links,
         aggregates: doc.aggregates,
         sql: doc.sql,
         checksum: doc.checksum,
@@ -346,6 +364,8 @@ export function packToInline(doc: ExcsvDocument): ExcsvDocument {
     meta: { ...doc.meta, ...t.meta },
     csv: t.csv,
     columns: t.columns,
+    notes: t.notes,
+    links: t.links,
     aggregates: t.aggregates,
     sql: t.sql,
     checksum: t.checksum,

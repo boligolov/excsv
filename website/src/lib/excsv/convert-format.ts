@@ -87,6 +87,11 @@ async function loadDocument(input: ConvertInput): Promise<{ doc: ExcsvDocument; 
   return { doc, warnings: [...warnings, ...w] };
 }
 
+/** Parse any supported input into a document (for previews), without converting it. */
+export async function inspectDocument(input: ConvertInput): Promise<{ doc: ExcsvDocument; warnings: ConvertWarning[] }> {
+  return loadDocument(input);
+}
+
 function normalizeForTarget(doc: ExcsvDocument, target: ExcsvFormat): ExcsvDocument {
   if (target === 'pack') return inlineToPack(doc);
   if (target === 'plain' && doc.layout === 'pack') return packToInline(doc);

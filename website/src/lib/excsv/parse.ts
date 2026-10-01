@@ -2,7 +2,8 @@ import { parseCsvRow, resolveDelim, resolveQuote, splitLines } from './csv';
 import { parseKvPairs } from './kv';
 import { normalizeDocForJson } from './serialize';
 import { assignPhysicalIndexes, physicalColumns } from './computed';
-import type { Cell, Column, ConvertWarning, ExcsvDocument, PackTable, SqlStatement } from './types';
+import { noteWarnings, parseLinkLine, parseNoteLine, resolveLinks, resolveNotes } from './notes';
+import type { Cell, CellLink, Column, ConvertWarning, ExcsvDocument, Note, PackTable, SqlStatement } from './types';
 
 const BOOL_ATTRS = new Set(['unique', 'required', 'materialized']);
 const INT_ATTRS = new Set(['len_min', 'len_max', 'index']);
@@ -59,6 +60,8 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
   const dql: SqlStatement[] = [];
   const tables: PackTable[] = [];
   const fk: { from: string; to: string }[] = [];
+  const notes: Note[] = [];
+  const links: CellLink[] = [];
 
   const dataLines: string[] = [];
 
@@ -81,6 +84,16 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
 
     if (line.startsWith('#column')) {
       columns.push(parseColumnLine(line.slice('#column'.length).trim()));
+      continue;
+    }
+
+    if (line.startsWith('#note ') || line === '#note') {
+      notes.push(parseNoteLine(line.slice('#note'.length).trim()));
+      continue;
+    }
+
+    if (line.startsWith('#link ') || line === '#link') {
+      links.push(parseLinkLine(line.slice('#link'.length).trim()));
       continue;
     }
 
@@ -122,6 +135,11 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
 
   if (Object.keys(meta).length) doc.meta = meta;
   if (columns.length) doc.columns = assignPhysicalIndexes(columns);
+  // With header=0, a numeric col= is a column index: a number in the JSON form.
+  const colRef = <T extends { col?: string | number }>(x: T): T =>
+    !hasHeaderRow && typeof x.col === 'string' && /^\d+$/.test(x.col) ? { ...x, col: Number(x.col) } : x;
+  if (notes.length) doc.notes = notes.map(colRef);
+  if (links.length) doc.links = links.map(colRef);
   if (Object.keys(aggregates).length) doc.aggregates = aggregates;
   if (ddl.length || dql.length) doc.sql = { ...(ddl.length && { ddl }), ...(dql.length && { dql }) };
   if (tables.length) doc.tables = tables;
@@ -154,7 +172,15 @@ export function parseExcsvText(text: string): { doc: ExcsvDocument; warnings: Co
   if (doc.rows === undefined) doc.rows = doc.data.length;
   if (!doc.layout && doc.data.length >= 0) doc.layout = 'inline';
 
+  warnings.push(...annotationWarnings(doc));
   return { doc, warnings };
+}
+
+/** note_unresolved / link_* warnings for a document whose data is loaded. */
+export function annotationWarnings(doc: ExcsvDocument): ConvertWarning[] {
+  if (!doc.notes?.length && !doc.links?.length && !doc.columns?.some((c) => c.link)) return [];
+  const ctx = { columns: doc.columns ?? [], data: doc.data ?? [], header0: doc.csv?.header === false };
+  return [...noteWarnings(resolveNotes(doc.notes ?? [], ctx)), ...resolveLinks(doc.links ?? [], ctx).warnings];
 }
 
 function headerToCsv(pairs: Record<string, string>): NonNullable<ExcsvDocument['csv']> {

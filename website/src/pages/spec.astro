@@ -23,6 +23,7 @@ import CodeBlock from '../components/CodeBlock.astro';
       <a href="#grain">Grain</a>
       <a href="#aggregations">Aggregations</a>
       <a href="#charts">Charts</a>
+      <a href="#notes">Notes &amp; links</a>
       <a href="#sql">SQL</a>
       <a href="#open">Open it</a>
       <a href="#formats">Formats</a>
@@ -40,7 +41,7 @@ import CodeBlock from '../components/CodeBlock.astro';
         every CSV reader already skips. The data does not change. ExCSV only describes it.
       </p>
 
-      <CodeBlock title="sales.excsv" description="Types, grain, a total, and the rows — one artifact.">
+      <CodeBlock title="sales.excsv" description="Types, grain, a total, a note, and the rows — one artifact.">
 {`#!excsv version=0.6 delim=comma header=1 rows=3
 #@source: sales_db.orders
 #@grain: one row per order
@@ -48,6 +49,7 @@ import CodeBlock from '../components/CodeBlock.astro';
 #column name=status type=string role=dimension enum=pending|completed|cancelled
 #column name=amount type=decimal unit=USD role=measure agg=sum
 #column name=created_at type=datetime role=time
+#note key=2 col=amount text="Partial refund pending"
 #%sum: ,,1050.50,
 #$ddl-postgres: CREATE TABLE orders (order_id INTEGER, status TEXT, amount NUMERIC(10,2), created_at TIMESTAMPTZ)
 order_id,status,amount,created_at
@@ -295,6 +297,43 @@ excsv column dematerialize total data.excsv</code></pre>
         (MIT, stdlib-only Python) renders bars, lines, scatter, pie, heatmaps, boxplots, histograms, and
         sparklines as monospace text from a small JSON spec — a direct target for a reference
         <code>excsv chart</code> command, so the same file you already <code>grep</code> can draw its own chart.
+      </p>
+    </section>
+
+    <section class="block" id="notes">
+      <h2>Notes and links — context on the cell</h2>
+      <p>
+        A spreadsheet lets you pin a remark to one cell: <em>refund pending</em>, <em>test order, exclude</em>.
+        In a CSV that remark ends up in a chat thread that drifts away from the data. <code>#note</code> puts it
+        back in the file — on a cell, a row, a column, or the whole table. Like every other <code>#</code> line,
+        it describes the data and never changes it.
+      </p>
+      <pre><code><span class="hl-meta">#column name=order_id type=int role=id</span>
+<span class="hl-meta">#note key=1042 col=amount author=alex@example.com text="Refund pending, see ticket 1234"</span>
+<span class="hl-meta">#note col=email text="Addresses from the old CRM were never validated"</span>
+<span class="hl-meta">#note text="Q1 numbers are preliminary until the audit closes"</span></code></pre>
+      <p>
+        <code>row=</code> points at a position; <code>key=</code> points at the row whose id is
+        <code>1042</code>, so the note stays on the right order after you sort or slice the file in pandas.
+        Several notes can share a cell. They aren't data: they don't touch aggregates or the checksum, and
+        they survive conversion to JSON as a <code>notes</code> array. Put them in a
+        <a href="/variants/#sidecar">sidecar</a> to review a file you're not allowed to modify.
+      </p>
+      <p>
+        Most links in a spreadsheet follow a pattern — every order id opens its page in the CRM. That's a
+        template on the column, not a formula in every cell:
+      </p>
+      <pre><code><span class="hl-meta">#column name=order_id type=int role=id link="https://crm.example.com/orders/&#123;$&#125;"</span>
+<span class="hl-meta">#column name=customer type=string link="https://crm.example.com/c/&#123;customer_id&#125;"</span>
+<span class="hl-meta">#column name=homepage type=string link="&#123;$&#125;"</span>
+<span class="hl-meta">#link key=1043 col=invoice href="https://legacy-billing.example.com/view?id=A-77"</span></code></pre>
+      <p>
+        <code>&#123;$&#125;</code> is the cell itself, <code>&#123;customer_id&#125;</code> another column in the
+        same row; values are URL-encoded, unless the template is a single placeholder — then the value
+        <em>is</em> the URL. <code>#link</code> covers the one cell that doesn't fit the pattern. A link from an
+        untrusted file stays untrusted: only <code>http</code>, <code>https</code> and <code>mailto</code> are
+        ever clickable, and an export to Excel writes real hyperlinks, never <code>=HYPERLINK()</code> formulas.
+        Try it in the <a href="/convert/">converter</a> — the preview shows links and notes in place.
       </p>
     </section>
 

@@ -1,4 +1,4 @@
-import { parseCsvDataSection, parseExcsvText } from './parse';
+import { annotationWarnings, parseCsvDataSection, parseExcsvText } from './parse';
 import { serializeDataCsv, serializeExcsvText } from './serialize';
 import type { ConvertWarning, ExcsvDocument } from './types';
 
@@ -17,6 +17,7 @@ export function mergeSidecar(
   doc.rows = doc.data.length;
   doc.layout = 'inline';
   delete doc.reference;
+  warnings.push(...annotationWarnings(doc));
   return { doc, warnings };
 }
 

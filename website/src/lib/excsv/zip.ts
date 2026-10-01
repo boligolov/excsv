@@ -16,7 +16,8 @@ type CommentBucket =
   | 'meta_comment_tags'
   | 'meta_other'
   | 'dql'
-  | 'other';
+  | 'other'
+  | 'notes';
 
 const COMMENT_PRIORITY: CommentBucket[] = [
   'header',
@@ -28,6 +29,7 @@ const COMMENT_PRIORITY: CommentBucket[] = [
   'meta_other',
   'dql',
   'other',
+  'notes', // #note / #link: lowest priority, first to go when the budget runs out
 ];
 
 const PRIORITY_META_KEYS = new Set(['source', 'author', 'created', 'exported', 'license', 'tool']);
@@ -163,6 +165,7 @@ function classifyMetaLine(line: string): CommentBucket {
   if (line.startsWith('#$ddl')) return 'ddl';
   if (line.startsWith('#$dql')) return 'dql';
   if (line.startsWith('#%')) return 'agg';
+  if (line.startsWith('#note') || line.startsWith('#link')) return 'notes';
   if (line.startsWith('#@')) {
     const key = line.slice(2).split(':')[0]?.trim() ?? '';
     if (PRIORITY_META_KEYS.has(key)) return 'meta_priority';
