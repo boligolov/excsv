@@ -1,35 +1,40 @@
+import { execFileSync } from 'node:child_process';
 import { defineConfig } from 'astro/config';
 
 import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 
+const site = 'https://excsv.org';
+
+// lastmod = date of the last commit touching the page's source file, so it only
+// moves when the page does. Left out when git has no answer (e.g. no history).
+function lastmod(url) {
+  const path = url.slice(site.length).replace(/^\/|\/$/g, '');
+  const candidates = path ? [`src/pages/${path}.astro`, `src/pages/${path}/index.astro`] : ['src/pages/index.astro'];
+  try {
+    return execFileSync('git', ['log', '-1', '--format=%cI', '--', ...candidates], { encoding: 'utf8' }).trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const priority = {
+  [`${site}/`]: 1.0,
+  [`${site}/spec/`]: 0.9,
+  [`${site}/examples/`]: 0.8,
+  [`${site}/tools/`]: 0.7,
+};
+
 export default defineConfig({
-  site: 'https://excsv.org',
+  site,
   output: 'static',
   adapter: cloudflare(),
   integrations: [
     sitemap({
       changefreq: 'monthly',
-      lastmod: new Date(),
-      filter: (page) => !/\/variants\/(plain|sidecar|zip|pack)\/?$/.test(page),
-      customPages: [
-        'https://excsv.org/',
-        'https://excsv.org/variants/',
-        'https://excsv.org/spec/',
-        'https://excsv.org/examples/',
-        'https://excsv.org/tools/',
-      ],
       serialize(item) {
-        if (item.url === 'https://excsv.org/') {
-          item.priority = 1.0;
-          item.changefreq = 'monthly';
-        } else if (item.url === 'https://excsv.org/spec/') {
-          item.priority = 0.9;
-        } else if (item.url === 'https://excsv.org/examples/') {
-          item.priority = 0.8;
-        } else if (item.url === 'https://excsv.org/tools/') {
-          item.priority = 0.7;
-        }
+        item.lastmod = lastmod(item.url);
+        if (item.url in priority) item.priority = priority[item.url];
         return item;
       },
     }),

@@ -1,0 +1,10 @@
+/variants/plain /variants/#plain 301
+/variants/plain/ /variants/#plain 301
+/variants/sidecar /variants/#sidecar 301
+/variants/sidecar/ /variants/#sidecar 301
+/variants/zip /variants/#zip 301
+/variants/zip/ /variants/#zip 301
+/variants/pack /variants/#pack 301
+/variants/pack/ /variants/#pack 301
+/variants/json /variants/#json 301
+/variants/json/ /variants/#json 301
