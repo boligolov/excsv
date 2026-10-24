@@ -70,9 +70,9 @@ id,customer,amount                                                              
 
 Matching `#column` lines to physical columns:
 
-- **`header=1`**: match each `#column` to the header cell equal to its `title=`, or to its `name=` when it has no title. Header cells with no `#column` line are untyped.
+- **`header=1`**: by order. The first `#column` line describes the first header cell, the second `#column` the second cell, and so on. Its `title=` (or `name=` when there is no title) must equal that cell. If it doesn't, the file is inconsistent (`column_name_header_mismatch`, a warning): tools still apply the line to the cell at its position, so don't trust that column's type or role, and tell the user. Header cells past the last `#column` line are untyped.
 - **`header=0`**: match by `index=`.
-- **Virtual computed columns** (`formula=` without `materialized=1`) don't match any position.
+- **Virtual computed columns** (`formula=` without `materialized=1`) don't take a position. Skip them when counting.
 
 ## Formula grammar (`formula=`)
 
