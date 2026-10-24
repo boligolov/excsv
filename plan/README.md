@@ -18,7 +18,7 @@ Shared planning for ExCSV tooling. This repository holds the **spec**, the abstr
 | --- | --- | --- |
 | **Go** | [excsv-golang](https://github.com/boligolov/excsv-golang) | Primary CLI/library. Reference behaviour and performance. |
 | **Python** | [excsv-python](https://github.com/boligolov/excsv-python) | Idiomatic API; parity-tested against Go on `fixtures/`. |
-| **Cookbook** | [excsv.org/cookbook](https://excsv.org/cookbook/) | `grep`/`awk`/`cut` one-liners for reading ExCSV with no library at all. Lives on the website, not a separate repo. |
+| **Cookbook** | [excsv.dev/cookbook](https://excsv.dev/cookbook/) | `grep`/`awk`/`cut` one-liners for reading ExCSV with no library at all. Lives on the website, not a separate repo. |
 
 Each implementation repo owns its own plan: package layout, command tree, API surface. They **read** `plan/01-features.md` and **test against** `fixtures/` — symlink, junction, submodule, or vendored copy; no duplication of fixture files inside impl repos.
 

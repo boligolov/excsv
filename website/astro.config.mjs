@@ -4,7 +4,7 @@ import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 
-const site = 'https://excsv.org';
+const site = 'https://excsv.dev';
 
 // lastmod = date of the last commit touching the page's source file, so it only
 // moves when the page does. Left out when git has no answer (e.g. no history).

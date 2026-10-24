@@ -17,6 +17,7 @@ import Base from '../layouts/Base.astro';
       <div class="cta-row">
         <a href="/examples/" class="btn btn-primary">See examples</a>
         <a href="/variants/" class="btn btn-secondary">Formats</a>
+        <a href="/tools/#agent-skill" class="btn btn-secondary">Agent skill</a>
       </div>
       <p class="version-tag">v0.6 — Draft</p>
     </div>
@@ -133,6 +134,20 @@ date,event,count
 <span class="hl-meta">#column name=status type=string role=dimension enum=pending|completed|cancelled</span>
 <span class="hl-meta">#column name=amount type=decimal unit=USD role=measure agg=sum</span>
 <span class="hl-meta">#%sum: ,,1050.50</span></code></pre>
+    <div class="skill-cta">
+      <div>
+        <h3>Agent skill</h3>
+        <p>
+          Teach Claude Code, Codex or Cursor to read ExCSV meta first: answer from <code>#%</code> and
+          <code>#@grain</code>, load rows in the declared dialect, never sum an id or a balance.
+          One <code>SKILL.md</code>, no dependencies.
+        </p>
+      </div>
+      <div class="cta-row">
+        <a href="/skills/excsv.zip" class="btn btn-primary" download>Download skill</a>
+        <a href="/tools/#agent-skill" class="btn btn-secondary">How to install</a>
+      </div>
+    </div>
   </section>
 
   <section class="block inspired">
@@ -163,6 +178,7 @@ date,event,count
     align-items: center;
     padding: 2.5rem 0 3.25rem;
   }
+  .hero > * { min-width: 0; }
   .hero h1 {
     font-size: 2.5rem;
     margin-top: 0;
@@ -297,6 +313,31 @@ date,event,count
     margin: 1.25rem 0 0;
   }
 
+  .skill-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    margin-top: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--color-accent);
+    border-radius: 12px;
+    background: var(--color-card-bg);
+  }
+  .skill-cta h3 {
+    margin: 0 0 0.35rem;
+  }
+  .skill-cta p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+  .skill-cta .cta-row {
+    flex-shrink: 0;
+    margin-top: 0;
+  }
+
   .inspired {
     padding-top: 1.75rem;
     border-top: 1px solid var(--color-border);
@@ -348,6 +389,10 @@ date,event,count
     .hero h1 { font-size: 1.8rem; }
     .cards-3,
     .cards-2 { grid-template-columns: 1fr; }
+    .skill-cta {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
 
   @media (max-width: 560px) {

@@ -294,4 +294,4 @@ This catalog feeds downstream work:
 - **`02-fixtures.md`** — shared test-fixture corpus: every feature above gets at least one success and (where applicable) one failure fixture. Drives parity between Go and Python.
 - **[excsv-golang](https://github.com/boligolov/excsv-golang)** — map each feature to packages / commands; tests walk the fixture corpus.
 - **[excsv-python](https://github.com/boligolov/excsv-python)** — mirror of the Go plan; parity tests run against the **same** fixture corpus.
-- **[Cookbook](https://excsv.org/cookbook/)** — terminal recipes for common workflows, on the website rather than a separate repo.
+- **[Cookbook](https://excsv.dev/cookbook/)** — terminal recipes for common workflows, on the website rather than a separate repo.

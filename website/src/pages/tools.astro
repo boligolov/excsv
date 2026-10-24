@@ -126,6 +126,47 @@ print(doc.resolve_links().cell_link(0, "order_id"))   # final URL, or None</code
         <a href="https://github.com/boligolov/excsv-python#quick-start" target="_blank" rel="noopener">Usage docs</a>
       </p>
     </article>
+
+    <article class="tool-card" id="agent-skill">
+      <div class="tool-head">
+        <div>
+          <h2><a href="/skills/excsv.zip" download>Agent skill</a></h2>
+          <p class="tool-meta">Claude Code, Codex, Cursor, … · Instructions only · No dependencies</p>
+        </div>
+        <span class="badge">v0.6</span>
+      </div>
+
+      <p>
+        A <code>SKILL.md</code> that teaches a coding agent to read ExCSV meta first: answer from
+        <code>rows=</code>, <code>#%</code>, <code>#@grain</code> and <code>#column</code> before touching rows,
+        load the data in the declared dialect, and respect <code>role=</code>/<code>agg=</code>,
+        computed columns and notes.
+      </p>
+
+      <ul class="feature-list">
+        <li>Loads rows correctly with pandas or DuckDB: <code>quote=none</code>, nulls, <code>#</code> inside values, leading zeros</li>
+        <li>Knows that <code>#%</code> values are positional and that virtual <code>formula=</code> columns have no data</li>
+        <li>Never sums an id or a balance across time, and weights ratios</li>
+        <li>Covers sidecars, row ZIP, pack and the JSON form, plus rules for writing and editing files</li>
+      </ul>
+
+      <div class="tool-install">
+        <h3>Install</h3>
+        <pre><code>curl -LO https://excsv.dev/skills/excsv.zip
+unzip excsv.zip -d ~/.claude/skills/     # or your agent's skills folder
+
+# or
+npx skills add boligolov/excsv</code></pre>
+      </div>
+
+      <p class="tool-links">
+        <a href="/skills/excsv.zip" download>Download .zip</a>
+        ·
+        <a href="/skills/excsv/SKILL.md">SKILL.md</a>
+        ·
+        <a href="https://github.com/boligolov/excsv/tree/master/skills/excsv" target="_blank" rel="noopener">GitHub</a>
+      </p>
+    </article>
   </section>
 
   <section class="coming-soon">

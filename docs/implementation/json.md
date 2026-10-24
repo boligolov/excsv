@@ -6,7 +6,7 @@ ExCSV defines a second serialization of the same document, for contexts that are
 | --- | --- |
 | **File extension** | `.excsv.json` |
 | **Media type** | `application/excsv+json` |
-| **Schema** | [`schema/excsv.schema.json`](../../schema/excsv.schema.json) — JSON Schema draft 2020-12, `$id` `https://excsv.org/schema/excsv-0.6.schema.json` |
+| **Schema** | [`schema/excsv.schema.json`](../../schema/excsv.schema.json) — JSON Schema draft 2020-12, `$id` `https://excsv.dev/schema/excsv-0.6.schema.json` |
 | **Example** | [`schema/example.excsv.json`](../../schema/example.excsv.json) |
 
 - A JSON-form document **MUST** be a single JSON object conforming to the schema above, encoded in UTF-8.
