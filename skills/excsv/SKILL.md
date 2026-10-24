@@ -19,7 +19,7 @@ An ExCSV file is a plain CSV that carries its own documentation: a `#!excsv` hea
    - **`.excsv.zip`**: `unzip -z FILE` prints the archive comment, which mirrors the meta block. If it ends with `#@comment-truncated: 1`, read the inner file instead: `unzip -p FILE | sed '1s/^\xEF\xBB\xBF//; /^#/!q'`.
    - **`.excsv.pack.zip`, `.excsv.json`**: see [references/containers.md](references/containers.md).
 
-   With `header=1`, `#column` lines map to the header cells **by order** (the *n*-th `#column` describes the *n*-th cell, skipping virtual `formula=` columns), and each `name=` must equal its cell. A name that disagrees with its cell means the metadata is inconsistent: say so. For the syntax of each line kind, see [references/format.md](references/format.md). The step is done when you can state the shape (inline or sidecar), `rows=`, the dialect, what one row is (`#@grain`), and the **position**, name, type, unit and role of every column.
+   For the syntax of each line kind, see [references/format.md](references/format.md). The step is done when you can state the shape (inline or sidecar), `rows=`, the dialect, what one row is (`#@grain`), and the **position**, name, type, unit and role of every column.
 
 2. **Answer from the meta block when it holds the answer:**
 

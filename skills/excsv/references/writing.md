@@ -29,7 +29,7 @@ Rules a writer must follow:
 - **The header line comes first, and `rows=` is required.** `rows=` counts data rows, not the header row, and must equal the real count.
 - **Spell out the dialect** (`delim=`, `quote=`, `header=`). If any value contains the delimiter or a quote, use `quote=double` and quote that value, doubling any inner `"`. Every value stays on one line: replace embedded newlines with spaces. If a row's first field starts with `#`, quote it.
 - **Use the recommended meta order**: `#@` → `#column` → `#chart` → `#note`/`#link` → `#$` → `#%`. Readers accept any order.
-- **Write a `#column name=` for every column, in header-row order, each matching its header cell** (or set `title=` to the header cell). Readers map `#column` lines to columns by order, not by name. Give it a `type=`, and add `unit=`, `role=` and `agg=` where they apply. Write `#@grain` whenever the row unit isn't obvious. These are the attributes that stop the reader guessing.
+- **Write a `#column name=` for every column, matching the header cell** (or set `title=` to the header cell). Give it a `type=`, and add `unit=`, `role=` and `agg=` where they apply. Write `#@grain` whenever the row unit isn't obvious. These are the attributes that stop the reader guessing.
 - **Names** have no spaces (`[A-Za-z_][A-Za-z0-9_-]*`). Quote any attribute value that contains spaces: `title="Order ID"`. Write `##` only for free-form comments, never inside a structured line.
 - **Compute `#%` values from the rows you write**, one value per physical column, with nulls excluded. Leave a position empty when an aggregation doesn't apply (`sum` of a string column). Never estimate a value.
 - **`checksum=` is optional.** If you include it, it is the `sha256:` of everything from the header row to the end of the file, with line endings as LF: `tail -n +$((n_meta+1)) f.excsv | tr -d '\r' | sha256sum`.
@@ -43,7 +43,7 @@ Every rewrite keeps the declarations true:
 - **Rows added or removed** → update `rows=`, recompute each `#%` value, and recompute `checksum=` if one is present.
 - **Rows reordered, filtered or sliced** → renumber every `row=` in `#note`/`#link`, and drop lines whose row is gone. `key=` lines need no change.
 - **Column renamed** → update the header cell, the `#column name=`, every `formula=`, `#chart` channel and `#note`/`#link` `col=`, and every `{old}` in `link=` templates. Fix `#$` SQL by hand.
-- **Column added, removed or moved** → update the header row, every data row, the `#column` line at the same position, every `#%` line (one value per position), `columns=` if declared, and `checksum=`.
+- **Column added or removed** → update the header row, every data row, every `#%` line (one value per position), `columns=` if declared, and `checksum=`.
 - **Only meta lines changed** (a note, an attribute) → the checksum is unaffected, because it never covers meta lines.
 - **Unknown `#` lines and unknown attributes** → keep them unchanged on rewrite.
 - **Sidecar** → you may edit the sidecar freely. Never edit its referenced file. To add a materialized column to sidecar data, write a new inline file.
