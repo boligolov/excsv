@@ -17,9 +17,10 @@ An ExCSV file is a plain CSV that carries its own documentation: a `#!excsv` hea
 
    - **Sidecar** (`reference=` in the header): the sidecar is all meta. Rows live in the referenced CSV, and its first line is the header row. The sidecar's dialect (`delim=`, `quote=`, `null=`) describes that CSV. A `sales.csv` with a `sales.excsv` (or `.extsv`) beside it is a sidecar pair, so read the sidecar first.
    - **`.excsv.zip`**: `unzip -z FILE` prints the archive comment, which mirrors the meta block. If it ends with `#@comment-truncated: 1`, read the inner file instead: `unzip -p FILE | sed '1s/^\xEF\xBB\xBF//; /^#/!q'`.
-   - **`.excsv.pack.zip`, `.excsv.json`**: see [references/containers.md](references/containers.md).
+   - **`.excsv.json`** (or any JSON object with an `"excsv"` key): `jq 'del(.data)' FILE` prints everything except the rows. Nothing in step 3 applies: there's no dialect, `null` is null, and each column's `index` is its position in a `data` row. See [references/containers.md](references/containers.md).
+   - **`.excsv.pack.zip`**: see [references/containers.md](references/containers.md).
 
-   For the syntax of each line kind, see [references/format.md](references/format.md). The step is done when you can state the shape (inline or sidecar), `rows=`, the dialect, what one row is (`#@grain`), and the **position**, name, type, unit and role of every column.
+   With `header=1`, each `#column` finds its header cell **by name** (`title=` when set, else `name=`). The order of the `#column` lines means nothing. A `#column` whose name is in no header cell describes no column, so say the metadata is inconsistent. For the syntax of each line kind, see [references/format.md](references/format.md). The step is done when you can state the shape (inline or sidecar), `rows=`, the dialect, what one row is (`#@grain`), and the **position**, name, type, unit and role of every column.
 
 2. **Answer from the meta block when it holds the answer:**
 

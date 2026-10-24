@@ -860,6 +860,17 @@ error_kinds:
     cell_links:
       "2,order_id": "https://vendor.example.com/o/503"
 
+- id: plain/valid/094_column_order_by_name.excsv
+  exercises: [D1, D6, D10]
+  expect:
+    parse: ok
+    warnings: []   # #column lines bind to header cells by name; line order is irrelevant
+    rows: 2
+    cell_links:
+      "0,order_id": "https://shop.example.com/orders/1042"
+      "0,customer": null
+      "0,amount": null
+
 # ---------------------------------------------------------------------------
 # plain / invalid  (FAIL only. Retired NNN: 007, 009, 010, 017, 022, 025, 026, 029, 031, 032)
 # ---------------------------------------------------------------------------

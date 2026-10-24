@@ -15,6 +15,7 @@ Each version is a superset of the previous one: a file valid under an earlier ve
 - **ZIP comment** — the priority list now names `#chart` (after `#$dql`); `#note`/`#link` come last.
 - **Error codes** — `note_malformed`, `note_missing_text`, `note_row_and_key`, `note_unresolved`, `note_on_manifest`, `link_malformed`, `link_missing_href`, `link_missing_address`, `link_row_and_key`, `link_unresolved`, `link_duplicate`, `link_on_manifest`, `link_unknown_column`, `link_template_malformed`, `link_unsafe_scheme`.
 - **Versioning** — a parser **MUST** read files declaring an earlier version without `unknown_version`.
+- **Clarified: `#column` binds by name.** With `header=1`, each `#column` binds to the header cell equal to its `title=`/`name=`; the order of `#column` lines is irrelevant and **MUST NOT** be used for binding. `column_name_header_mismatch` / `column_title_header_mismatch` now mean "no header cell has this name". Fixture `094_column_order_by_name`.
 
 ## Earlier versions
 

@@ -27,8 +27,11 @@ Column annotations are **OPTIONAL**. A file without any `#column` lines is valid
 **When `header=1`:**
 
 - A data header row **MUST** exist as the first row of the data section.
-- If `title` is present, the header cell **MUST** match `title`. Otherwise it **MUST** match `name`.
-- Missing or extra columns **MUST** be treated as a validation error.
+- Each stored or materialized `#column` binds **by name** to the header cell equal to its `title` if present, otherwise to its `name`. The line's position in the meta block carries no meaning: `#column` lines **MAY** appear in any order relative to the header row. Implementations **MUST NOT** bind by line order.
+- A header cell that no `#column` binds to has no schema (partial coverage, see above).
+- A `#column` whose `title` (or `name`, when it has no `title`) matches no header cell **MUST** warn — `column_title_header_mismatch` or `column_name_header_mismatch` — and describes no data: its type and constraints are not applied to any cell.
+- If the header row holds the same text in more than one cell, a `#column` binds to the first of them.
+- Virtual computed columns bind to no cell (see [Computed columns](#computed-columns-formula)).
 
 **When `header=0`:**
 
