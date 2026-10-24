@@ -153,7 +153,8 @@ print(doc.resolve_links().cell_link(0, "order_id"))   # final URL, or None</code
       <div class="tool-install">
         <h3>Install</h3>
         <pre><code>curl -LO https://excsv.dev/skills/excsv.zip
-unzip excsv.zip -d ~/.claude/skills/     # or your agent's skills folder
+mkdir -p ~/.claude/skills               # or your agent's skills folder
+unzip excsv.zip -d ~/.claude/skills/
 
 # or
 npx skills add boligolov/excsv</code></pre>
