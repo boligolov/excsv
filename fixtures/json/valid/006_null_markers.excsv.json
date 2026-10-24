@@ -1,0 +1,7 @@
+{
+  "excsv": "0.6",
+  "csv": {"null": ["NA", "n/a"]},
+  "columns": [{"index": 0, "name": "id", "type": "int"}, {"index": 1, "name": "email"}],
+  "rows": 2,
+  "data": [[1, null], [2, "bo@example.com"]]
+}

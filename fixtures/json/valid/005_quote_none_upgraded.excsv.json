@@ -1,0 +1,7 @@
+{
+  "excsv": "0.6",
+  "csv": {"delim": "comma", "quote": "none"},
+  "columns": [{"index": 0, "name": "label"}, {"index": 1, "name": "value"}],
+  "rows": 2,
+  "data": [["#tag", "x"], ["a,b", "y"]]
+}

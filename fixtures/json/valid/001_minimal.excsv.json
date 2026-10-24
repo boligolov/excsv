@@ -1,0 +1,9 @@
+{
+  "excsv": "0.6",
+  "columns": [
+    {"index": 0, "name": "id", "type": "int"},
+    {"index": 1, "name": "name"}
+  ],
+  "rows": 2,
+  "data": [[1, "Ada"], [2, "Linus"]]
+}

@@ -1,0 +1,10 @@
+{
+  "excsv": "0.6",
+  "columns": [
+    {"index": 2, "name": "amount", "type": "decimal", "unit": "USD"},
+    {"index": 0, "name": "id", "type": "int"},
+    {"index": 1, "name": "customer"}
+  ],
+  "rows": 2,
+  "data": [[1, "Acme", "500.00"], [2, "Globex", "250.50"]]
+}

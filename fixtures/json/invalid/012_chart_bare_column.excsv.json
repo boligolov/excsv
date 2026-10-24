@@ -1,0 +1,1 @@
+{"excsv": "0.6", "columns": [{"index": 0, "name": "category"}, {"index": 1, "name": "amount", "type": "decimal"}], "charts": [{"type": "bar", "name": "c", "x": "category", "y": "amount"}], "rows": 1, "data": [["widgets", "1.00"]]}

@@ -1,0 +1,5 @@
+#!excsv version=0.6 null=NA rows=2
+#column name=id type=int
+id,email
+1,NA
+2,bo@example.com

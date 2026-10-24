@@ -1,0 +1,4 @@
+#!excsv version=0.6 rows=2 reference=015_sidecar.csv
+#column name=id type=int
+#column name=amount type=decimal
+#%sum: ,,750.50

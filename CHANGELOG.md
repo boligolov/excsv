@@ -17,6 +17,7 @@ Each version is a superset of the previous one: a file valid under an earlier ve
 - **Versioning** — a parser **MUST** read files declaring an earlier version without `unknown_version`.
 - **Clarified: `#column` binds by name.** With `header=1`, each `#column` binds to the header cell equal to its `title=`/`name=`; the order of `#column` lines is irrelevant and **MUST NOT** be used for binding. `column_name_header_mismatch` / `column_title_header_mismatch` now mean "no header cell has this name". Fixture `094_column_order_by_name`.
 - **Clarified: JSON `columns[]` covers every physical column.** Text → JSON takes `index` from the header cell a `#column` binds to (not line order), and a column with no `#column` becomes a bare `{ "index", "name" }` object, so header names survive text → JSON → text.
+- **Fixtures: JSON form.** `fixtures/json/` — 16 valid documents, each with a plain twin named by the new manifest field `equivalent_to` (runners compare the two JSON exports), and 12 invalid ones: `json_malformed` for JSON-only defects, the text code otherwise. A bare column object is an undeclared column, so a `#chart` channel naming it fails with `chart_unknown_column`.
 
 ## Earlier versions
 

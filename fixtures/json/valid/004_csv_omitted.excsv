@@ -1,0 +1,4 @@
+#!excsv version=0.6 delim=comma quote=none rows=1
+#column name=qty type=int
+sku,qty
+A-1,3

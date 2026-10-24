@@ -1,0 +1,10 @@
+{
+  "excsv": "0.6",
+  "columns": [{"index": 0, "name": "id", "type": "int"}],
+  "sql": {
+    "ddl": [{"dialect": "postgres", "version": "17", "stmt": "CREATE TABLE t (id INTEGER)"}],
+    "dql": [{"stmt": "SELECT id FROM t"}]
+  },
+  "rows": 1,
+  "data": [[1]]
+}

@@ -1,0 +1,7 @@
+{
+  "excsv": "0.6",
+  "csv": {"header": false},
+  "columns": [{"index": 0, "type": "int"}, {"index": 1}],
+  "rows": 2,
+  "data": [[1, "a"], [2, "b"]]
+}

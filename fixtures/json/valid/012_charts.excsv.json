@@ -1,0 +1,10 @@
+{
+  "excsv": "0.6",
+  "columns": [{"index": 0, "name": "category", "type": "string"}, {"index": 1, "name": "amount", "type": "decimal"}],
+  "charts": [
+    {"type": "bar", "name": "by_category", "x": "category", "y": "amount"},
+    {"vega": {"mark": "arc", "encoding": {"theta": {"field": "amount", "type": "quantitative"}}}}
+  ],
+  "rows": 2,
+  "data": [["widgets", "120.00"], ["gadgets", "300.50"]]
+}
