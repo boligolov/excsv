@@ -123,7 +123,7 @@ Read [references/writing.md](references/writing.md) before you create, convert, 
 
 These tools are optional. Everything above works without them.
 
-- [excsv-golang](https://github.com/boligolov/excsv-golang) CLI: `excsv FILE info`, `excsv FILE validate --with-data` (recomputes `rows=`, `checksum=`, `#%`, cell types), `excsv FILE data print --select a,b --limit 20`, `excsv FILE export json`.
-- [excsv-python](https://github.com/boligolov/excsv-python) library: `excsv.parse_file(path, excsv.strict_options())`.
+- [excsv-golang](https://github.com/boligolov/excsv-golang) CLI: `excsv FILE info`, `excsv FILE validate --with-data` (recomputes `rows=`, `checksum=`, `#%`, cell types), `excsv FILE data print --select a,b --limit 20`, `excsv FILE export json`. Since 0.0.7 every command also reads `.excsv.json`, and `excsv data.excsv.json convert -o data.excsv` writes the plain form.
+- [excsv-python](https://github.com/boligolov/excsv-python) library: `excsv.parse_file(path, excsv.strict_options())`, which reads `.excsv.json` too since 0.6.1; `doc.serialize_canonical()` returns the plain form.
 
 The normative spec is at [github.com/boligolov/excsv](https://github.com/boligolov/excsv), in `docs/implementation/`.

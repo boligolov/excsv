@@ -10,7 +10,7 @@ Produce files that every CSV tool can still read, and keep every declaration tru
 | The CSV already exists and must not change (vendor dump, checksummed file, someone else's file) | **sidecar**: a `same-name.excsv` beside `same-name.csv`, with `reference=same-name.csv` and no rows. Never write into the referenced file. |
 | The consumer is code (an API, a frontend, a pipeline), or you return the table as a structured response | **JSON form** `.excsv.json`: real types, no quoting or escaping (see [Writing the JSON form](#writing-the-json-form)) |
 
-The plain text form is canonical: the best for storage, for people, and for pasting into a prompt (about half the tokens of the JSON form). The JSON form is the safest to emit, because there is no dialect to get wrong. Neither reference implementation converts JSON back to plain yet, so pick the form the consumer needs.
+The plain text form is canonical: the best for storage, for people, and for pasting into a prompt (about half the tokens of the JSON form). The JSON form is the safest to emit, because there is no dialect to get wrong. The two forms convert both ways without loss. To build a large plain file, you can emit the JSON form, validate it against the schema, and convert it: `excsv data.excsv.json convert -o data.excsv` (excsv-golang 0.0.7+), or in Python `excsv.parse_file("data.excsv.json", opts).doc.serialize_canonical()` (excsv-python 0.6.1+). The other way: `excsv data.excsv export json`.
 
 ## A minimal correct inline file
 

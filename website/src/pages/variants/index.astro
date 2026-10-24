@@ -68,7 +68,7 @@ import CodeBlock from '../../components/CodeBlock.astro';
           <tr>
             <td>A table you produce</td>
             <td><a href="#plain">Plain</a></td>
-            <td>One artifact. Diff it, email it, <code>pd.read_csv(..., comment="#")</code>.</td>
+            <td>One artifact. Diff it, email it, <code>pd.read_csv(..., skiprows=n)</code>.</td>
           </tr>
           <tr>
             <td>A CSV you must not change</td>
@@ -104,7 +104,7 @@ import CodeBlock from '../../components/CodeBlock.astro';
       </p>
       <p>
         Every CSV reader that ignores <code>#</code> comments already reads the data.
-        pandas: <code>pd.read_csv("sales.excsv", comment="#")</code>.
+        pandas: <code>pd.read_csv("sales.excsv", skiprows=n)</code>, where <code>n</code> is the number of <code>#</code> lines.
         <code>grep</code> / <code>awk</code> / <code>cut</code> work on the rows as usual.
       </p>
 
@@ -182,7 +182,7 @@ id,customer,amount
       <p>
         Wrap a plain file as <code>sales.excsv.zip</code> (or <code>.extsv.zip</code>).
         Inside: the same inline ExCSV. Outside: a normal ZIP that anything can open.
-        pandas will take it with <code>pd.read_csv("sales.excsv.zip", comment="#")</code>.
+        pandas will take it with <code>pd.read_csv("sales.excsv.zip", skiprows=n)</code>.
       </p>
       <p>
         The trick is the ZIP comment. It repeats the header, columns, and <code>#%</code> aggregations,
