@@ -26,7 +26,7 @@ The smallest valid ExCSV file is an empty file, or a single header line: `#!excs
 
 All three profiles have an equivalent JSON serialization — see [JSON form](json.md) for `.excsv.json`.
 
-See also the [storage forms overview](https://excsv.org/variants/) on the project website.
+See also the [storage forms overview](https://excsv.dev/variants/) on the project website.
 
 ## Sidecar (detached metadata)
 

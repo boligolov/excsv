@@ -29,7 +29,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" v
   <text x="80" y="306" font-family="${sans}" font-size="30" fill="#6b7280">Types, units, stats, and SQL travel with the rows.</text>
   <rect x="80" y="350" width="1040" height="216" rx="12" fill="#f5f5f7" stroke="#e5e7eb"/>
   ${code.map(([line, meta], i) => `<text x="108" y="${392 + i * 30}" font-family="${mono}" font-size="23" fill="${meta ? '#217346' : '#1a1a1a'}" xml:space="preserve">${line}</text>`).join('\n  ')}
-  <text x="1120" y="134" text-anchor="end" font-family="${sans}" font-weight="500" font-size="28" fill="#6b7280">excsv.org</text>
+  <text x="1120" y="134" text-anchor="end" font-family="${sans}" font-weight="500" font-size="28" fill="#6b7280">excsv.dev</text>
 </svg>`;
 
 await sharp(Buffer.from(svg)).png().toFile(out);

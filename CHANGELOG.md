@@ -11,7 +11,7 @@ Each version is a superset of the previous one: a file valid under an earlier ve
 - **`link=` on `#column`** — URL template: `{$}` (this cell), `{name}` (another column in the row), `{N}` (index, `header=0`), `{{` (literal `{`). Values are percent-encoded, except in a template that is a single placeholder (`link="{$}"` — the value is the URL).
 - **`#link`** — a URL on one cell, overriding the column's template.
 - **Safety** — only `http`/`https`/`mailto` render as links, checked after substitution; `.xlsx` export writes hyperlink objects, never `=HYPERLINK()`.
-- **JSON form** — `notes` and `links` arrays (root and per pack table), `link` on column objects. Schema `$id` is now `https://excsv.org/schema/excsv-0.6.schema.json`.
+- **JSON form** — `notes` and `links` arrays (root and per pack table), `link` on column objects. Schema `$id` is now `https://excsv.dev/schema/excsv-0.6.schema.json`.
 - **ZIP comment** — the priority list now names `#chart` (after `#$dql`); `#note`/`#link` come last.
 - **Error codes** — `note_malformed`, `note_missing_text`, `note_row_and_key`, `note_unresolved`, `note_on_manifest`, `link_malformed`, `link_missing_href`, `link_missing_address`, `link_row_and_key`, `link_unresolved`, `link_duplicate`, `link_on_manifest`, `link_unknown_column`, `link_template_malformed`, `link_unsafe_scheme`.
 - **Versioning** — a parser **MUST** read files declaring an earlier version without `unknown_version`.

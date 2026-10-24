@@ -5,9 +5,10 @@
   "private": true,
   "scripts": {
     "sync-schema": "node scripts/sync-schema.mjs",
-    "predev": "node scripts/sync-schema.mjs",
+    "sync-skill": "node scripts/sync-skill.mjs",
+    "predev": "node scripts/sync-schema.mjs && node scripts/sync-skill.mjs",
     "dev": "astro dev",
-    "prebuild": "node scripts/sync-schema.mjs",
+    "prebuild": "node scripts/sync-schema.mjs && node scripts/sync-skill.mjs",
     "build": "astro build",
     "preview": "npm run build && wrangler dev",
     "generate-types": "wrangler types",

@@ -1,6 +1,6 @@
 # Test Fixtures
 
-The shared corpus that drives every implementation's tests. Defined here once, consumed by [excsv-golang](https://github.com/boligolov/excsv-golang), [excsv-python](https://github.com/boligolov/excsv-python), and the [cookbook](https://excsv.org/cookbook/) (lives on the website, not a separate repo). Implementation-agnostic.
+The shared corpus that drives every implementation's tests. Defined here once, consumed by [excsv-golang](https://github.com/boligolov/excsv-golang), [excsv-python](https://github.com/boligolov/excsv-python), and the [cookbook](https://excsv.dev/cookbook/) (lives on the website, not a separate repo). Implementation-agnostic.
 
 ## Purpose
 

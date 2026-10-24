@@ -125,7 +125,19 @@ excsv data.excsv.zip info
 pip install "excsv @ git+https://github.com/boligolov/excsv-python@v0.6.0"
 ```
 
-More tools: [excsv.org/tools](https://excsv.org/tools/).
+More tools: [excsv.dev/tools](https://excsv.dev/tools/).
+
+## Agent skill
+
+**[skills/excsv](skills/excsv/SKILL.md)** teaches a coding agent (Claude Code, Codex, Cursor, …) to read ExCSV meta-first: answer from `rows=`, `#%`, `#@grain` and `#column` before touching rows, load the data in the declared dialect, and respect `role=`/`agg=`, virtual computed columns and notes. Instructions only — no dependencies.
+
+```bash
+curl -LO https://excsv.dev/skills/excsv.zip && unzip excsv.zip -d ~/.claude/skills/
+# or
+npx skills add boligolov/excsv
+```
+
+Download: [excsv.dev/skills/excsv.zip](https://excsv.dev/skills/excsv.zip) · details on [excsv.dev/tools](https://excsv.dev/tools/#agent-skill).
 
 ## What's new
 
