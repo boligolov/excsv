@@ -144,6 +144,12 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | `sidecar_reference_not_found` | WARN | never | Referenced file missing on open/load; parse succeeds, handle degrades to read-only/metadata-only. |
 | `extsv_delim_mismatch` | WARN | — | `.extsv` file (inline or sidecar) declares `delim` other than `tab`. |
 
+## JSON form
+
+| Code | Severity | Verify | Meaning |
+| --- | --- | --- | --- |
+| `json_malformed` | FAIL | — | A `.excsv.json` document is not valid JSON or breaks the JSON form: a member of the wrong type, a physical column without `index` or with a duplicate one, a column without `name` while `csv.header` is true, a non-scalar cell, or a cell containing a line break (text rows are single-line). Everything else is checked on the equivalent text document, with the text-form codes. |
+
 ## ZIP container (row form)
 
 | Code | Severity | Verify | Meaning |

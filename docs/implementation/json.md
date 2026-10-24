@@ -63,6 +63,10 @@ The text form is line-oriented and stringly-typed; JSON has real types and struc
 | **`##` comments** | human comments | *(dropped)* | Free-text `##` lines carry no structured meaning and are **not** represented in JSON. This is the one intentional non-round-trip. |
 | **Unknown keys** | unrecognized `#!excsv` key or `#` line | *(dropped)* | The schema is closed at the root, so unknown header keys and unrecognized `#` lines have no JSON slot. `meta` and `column` are open: custom `#@` keys and `x-`-prefixed column attributes do round-trip. |
 
+### Reading
+
+A reader dispatches on content: a document whose top level is a JSON object with an `"excsv"` member is the JSON form, whatever its file name. Reading it **MUST** give the same result as reading the equivalent text document — the same checks, with the same warning and error codes (`data_row_arity_mismatch`, `rows_mismatch`, `note_unresolved`, …). Problems that exist only in JSON fail with `json_malformed` ([Error handling § JSON form](error-handling.md#json-form)). Converting to text: a bare column object writes no `#column` line; `csv` picks the dialect, defaulting to `delim=comma`, and a writer **MUST** switch `quote=none` to `quote=double` when a value contains the delimiter or the first field of a row starts with `#`; `csv.null` takes the first listed marker as `null=`.
+
 ### Dialect round-trip
 
 `data` in JSON is dialect-independent — the cells are already parsed values, so `delim`/`quote`/`encoding` are irrelevant to *reading* the JSON. They matter only to **regenerate the canonical CSV text**. Keep them in `csv` when a faithful text reproduction is required; omit for a pure data exchange.
