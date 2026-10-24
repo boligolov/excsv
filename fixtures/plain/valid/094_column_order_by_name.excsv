@@ -1,0 +1,7 @@
+#!excsv version=0.6 header=1 rows=2
+#column name=amount type=decimal unit=USD role=measure agg=sum
+#column name=order_id type=int role=id link="https://shop.example.com/orders/{$}"
+#%sum: ,,750.50
+order_id,customer,amount
+1042,Acme Corp,500.00
+1043,Globex Inc,250.50

@@ -10,7 +10,7 @@ This is where guessing ends. One `#column` line per column tells anyone — a pe
 
 Columns are optional and you can annotate as few or as many as you like. No `#column` lines at all is a perfectly valid file — you just get plain CSV with no schema. Describe the three columns that matter and skip the rest; that's fine too.
 
-You identify a column by `name` (matched to the header row) when the file has a header, or by `index` (zero-based position) when it doesn't.
+You identify a column by `name` (matched to the header row) when the file has a header, or by `index` (zero-based position) when it doesn't. With a header, the order of the `#column` lines doesn't matter: each one finds its column by name.
 
 ## The attributes
 

@@ -70,7 +70,7 @@ id,customer,amount                                                              
 
 Matching `#column` lines to physical columns:
 
-- **`header=1`**: match each `#column` to the header cell equal to its `title=`, or to its `name=` when it has no title. Header cells with no `#column` line are untyped.
+- **`header=1`**: by name. Each `#column` binds to the header cell equal to its `title=`, or to its `name=` when it has no title. The order of `#column` lines is irrelevant and may differ from the header row. Header cells with no `#column` line are untyped. A `#column` that matches no header cell describes no data (`column_name_header_mismatch` / `column_title_header_mismatch`, a warning). If two header cells hold the same text, the `#column` binds to the first one.
 - **`header=0`**: match by `index=`.
 - **Virtual computed columns** (`formula=` without `materialized=1`) don't match any position.
 

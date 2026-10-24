@@ -59,7 +59,7 @@ order_id,status,amount,created_at
       </CodeBlock>
 
       <p>
-        pandas: <code>pd.read_csv("sales.excsv", comment="#")</code>.
+        pandas: <code>pd.read_csv("sales.excsv", skiprows=10)</code> — skip the ten <code>#</code> lines by count (<code>comment="#"</code> would cut values that contain a <code>#</code>).
         Excel and <code>awk</code> see ordinary CSV. An ExCSV-aware tool also gets the schema and the sum.
       </p>
     </section>
@@ -366,11 +366,11 @@ excsv column dematerialize total data.excsv</code></pre>
             <tr><th>Tool</th><th></th></tr>
           </thead>
           <tbody>
-            <tr><td>pandas</td><td><code>pd.read_csv("sales.excsv", comment="#")</code></td></tr>
+            <tr><td>pandas</td><td><code>n = sum(l.startswith("#") for l in open("sales.excsv"))</code><br><code>pd.read_csv("sales.excsv", skiprows=n)</code> — not <code>comment="#"</code>, which cuts values at a <code>#</code></td></tr>
             <tr><td>polars</td><td><code>pl.read_csv("sales.excsv", comment_prefix="#")</code></td></tr>
             <tr><td>Excel / Tableau</td><td>Open the data section, or keep a <a href="/variants/#sidecar">sidecar</a> and open the <code>.csv</code></td></tr>
             <tr><td><code>awk</code> / <code>grep</code></td><td>Meta lines start with <code>#</code> — they skip them for free</td></tr>
-            <tr><td>ZIP</td><td><code>pd.read_csv("sales.excsv.zip", comment="#")</code> — schema also sits in the ZIP comment</td></tr>
+            <tr><td>ZIP</td><td><code>pd.read_csv("sales.excsv.zip", skiprows=n)</code> — schema also sits in the ZIP comment</td></tr>
           </tbody>
         </table>
       </div>

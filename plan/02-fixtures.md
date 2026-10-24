@@ -115,7 +115,7 @@ A shared **error kind enum** lives in the manifest header and **MUST** match the
 
 What each category needs, organized by feature domain from `01-features.md`. Counts are minimums; add more as edge cases emerge.
 
-### Plain — valid (001–093)
+### Plain — valid (001–094)
 
 001–039: dialect/header/meta/column/agg/sql/checksum/sidecar happy path. Slots 014, 015, and 033 held CSVW cases and were retired in v0.4; the numbers are not reused.
 
@@ -171,6 +171,7 @@ Warn-only cases live here (not under `invalid/`):
 | 091 | `link_duplicate` (last wins), `link_unresolved` (D10) |
 | 092 | `version=0.5` read with no warning — backward compatibility (B5) |
 | 093 | sidecar pair carrying `#note` / `link=` (A11, D9, D10) |
+| 094 | `#column` lines in a different order than the header row, partial coverage: bound by name, no warning (D1, D6, D10) |
 
 Still out: `##` round-trip preservation (if a writer opts in); on-demand 100k-row streaming file.
 

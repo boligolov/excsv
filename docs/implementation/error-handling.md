@@ -33,8 +33,8 @@ The **single normative source** for ExCSV error/warning codes. The `error_kind` 
 | `column_missing_index` | FAIL | — | `header=0` but a `#column` lacks `index=`. |
 | `column_malformed_attribute` | FAIL | — | Malformed `#column` attribute. |
 | `column_unknown_attribute` | WARN | — | Unrecognized `#column` attribute; preserved/ignored. |
-| `column_name_header_mismatch` | WARN | — | Header-row name disagrees with `#column name=`. |
-| `column_title_header_mismatch` | WARN | — | `title=` disagrees with the header-row name. |
+| `column_name_header_mismatch` | WARN | — | `header=1`: no header cell equals `#column name=` (a `#column` without `title=`). Binding is by name, never by line order. |
+| `column_title_header_mismatch` | WARN | — | `header=1`: no header cell equals `#column title=`. |
 | `duplicate_column` | WARN | — | Two `#column` for the same column; last-wins. |
 | `column_count_mismatch` | WARN | never | Schema contradicts data by count/position: `index=` ≥ physical width, or more positioned stored/materialized columns than physical width. Read proceeds; **structural mutations MUST refuse** until reconciled. |
 | `default_with_nulls` | WARN | never | Column has `default=` but its data contains nulls; the DDL default would eliminate them (describe/schema drift until rewritten). |
