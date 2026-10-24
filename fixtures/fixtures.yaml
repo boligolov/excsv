@@ -88,6 +88,8 @@ error_kinds:
   - sidecar_missing_reference
   - sidecar_reference_not_found
   - extsv_delim_mismatch
+  # JSON form
+  - json_malformed
   # ZIP
   - zip_primary_not_first
   - zip_primary_bad_name
