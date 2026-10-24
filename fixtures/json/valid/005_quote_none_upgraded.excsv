@@ -1,0 +1,4 @@
+#!excsv version=0.6 delim=comma quote=double rows=2
+label,value
+"#tag",x
+"a,b",y

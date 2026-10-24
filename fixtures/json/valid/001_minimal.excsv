@@ -1,0 +1,5 @@
+#!excsv version=0.6 rows=2
+#column name=id type=int
+id,name
+1,Ada
+2,Linus

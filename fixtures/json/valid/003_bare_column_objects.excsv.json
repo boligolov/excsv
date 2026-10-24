@@ -1,0 +1,9 @@
+{
+  "excsv": "0.6",
+  "columns": [
+    {"index": 0, "name": "city"},
+    {"index": 1, "name": "country"}
+  ],
+  "rows": 2,
+  "data": [["Lisbon", "PT"], ["Oslo", "NO"]]
+}

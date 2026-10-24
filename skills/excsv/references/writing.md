@@ -60,6 +60,7 @@ The same document as one JSON object. Only `excsv` is required by the schema, bu
 ```
 
 - **`data` has no header row.** Every physical column has a unique `index`, from 0 up. That index is its position in each row and in each `aggregates` array. A virtual `formula=` column has no `index`.
+- **Give every column a `#chart` or `formula=` uses at least a `type`.** An object with only `index` and `name` counts as undeclared, and the chart fails (`chart_unknown_column`).
 - **Types are real.** `int`/`float`/`double` are numbers, booleans are `true`/`false`, and null is `null`. `decimal` and `long` values are **strings**, so money never becomes a float.
 - **Attribute flags are booleans** (`"unique": true`, `"materialized": true`), and `enum` is an array.
 - **`rows` must equal `data.length`.** Compute `aggregates` from `data`, as for `#%`.

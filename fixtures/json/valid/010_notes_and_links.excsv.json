@@ -1,0 +1,11 @@
+{
+  "excsv": "0.6",
+  "columns": [
+    {"index": 0, "name": "id", "type": "int", "role": "id", "link": "https://shop.example.com/orders/{$}"},
+    {"index": 1, "name": "status"}
+  ],
+  "notes": [{"key": "2", "col": "status", "text": "Refund pending"}],
+  "links": [{"row": 0, "col": "status", "href": "https://shop.example.com/status/paid"}],
+  "rows": 2,
+  "data": [[1, "paid"], [2, "refund"]]
+}

@@ -1,0 +1,10 @@
+{
+  "excsv": "0.6",
+  "columns": [
+    {"index": 0, "name": "price", "type": "decimal"},
+    {"index": 1, "name": "quantity", "type": "int"},
+    {"name": "total", "type": "decimal", "formula": "price * quantity"}
+  ],
+  "rows": 2,
+  "data": [["10.00", 3], ["2.50", 4]]
+}

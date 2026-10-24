@@ -1,0 +1,6 @@
+{
+  "excsv": "0.6",
+  "columns": [{"index": 0, "name": "id", "type": "int"}],
+  "rows": 3,
+  "data": [[1], [2]]
+}

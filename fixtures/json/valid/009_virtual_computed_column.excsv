@@ -1,0 +1,7 @@
+#!excsv version=0.6 rows=2
+#column name=price type=decimal
+#column name=quantity type=int
+#column name=total type=decimal formula="price * quantity"
+price,quantity
+10.00,3
+2.50,4

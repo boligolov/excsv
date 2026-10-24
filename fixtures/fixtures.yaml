@@ -1475,3 +1475,232 @@ error_kinds:
   expect:
     parse: fail
     error_kind: pack_section_boundary_mismatch
+
+# ---------------------------------------------------------------------------
+# json — hand-written .excsv.json documents (implementation/json.md § Reading).
+# equivalent_to names the plain twin: reading both MUST give the same document
+# (runners compare the two JSON exports). Invalid ones FAIL with json_malformed
+# when the defect exists only in JSON, else with the text-form code.
+# ---------------------------------------------------------------------------
+
+- id: json/valid/001_minimal.excsv.json
+  exercises: [I5, D1]
+  equivalent_to: json/valid/001_minimal.excsv
+  expect:
+    parse: ok
+    warnings: []
+    rows: 2
+
+- id: json/valid/002_column_objects_any_order.excsv.json
+  exercises: [I5, D1, D6]
+  equivalent_to: json/valid/002_column_objects_any_order.excsv
+  expect:
+    parse: ok
+    warnings: []   # columns[] order is irrelevant: index places each object
+    rows: 2
+
+- id: json/valid/003_bare_column_objects.excsv.json
+  exercises: [I5, D1]
+  equivalent_to: json/valid/003_bare_column_objects.excsv
+  expect:
+    parse: ok
+    warnings: []   # {index, name} only: a header cell with no #column line
+    rows: 2
+
+- id: json/valid/004_csv_omitted.excsv.json
+  exercises: [I5, B1]
+  equivalent_to: json/valid/004_csv_omitted.excsv
+  expect:
+    parse: ok
+    warnings: []
+    header:
+      delim: comma
+
+- id: json/valid/005_quote_none_upgraded.excsv.json
+  exercises: [I5, G6]
+  equivalent_to: json/valid/005_quote_none_upgraded.excsv
+  expect:
+    parse: ok
+    warnings: []   # quote=none cannot hold "a,b" or a leading "#": the text form uses quote=double
+    header:
+      quote: double
+
+- id: json/valid/006_null_markers.excsv.json
+  exercises: [I5, B1]
+  equivalent_to: json/valid/006_null_markers.excsv
+  expect:
+    parse: ok
+    warnings: []   # csv.null lists markers; the first one becomes null=
+    header:
+      "null": NA
+
+- id: json/valid/007_header_false.excsv.json
+  exercises: [I5, D1]
+  equivalent_to: json/valid/007_header_false.excsv
+  expect:
+    parse: ok
+    warnings: []
+    header:
+      header: "0"
+
+- id: json/valid/008_numbers_lexical.excsv.json
+  exercises: [I5, G6]
+  equivalent_to: json/valid/008_numbers_lexical.excsv
+  expect:
+    parse: ok
+    warnings: []   # 1.50, 2e3 and 9007199254740993 keep their exact text, not a float's
+    rows: 2
+
+- id: json/valid/009_virtual_computed_column.excsv.json
+  exercises: [I5, D7]
+  equivalent_to: json/valid/009_virtual_computed_column.excsv
+  expect:
+    parse: ok
+    warnings: []
+    computed:
+      virtual: [total]
+
+- id: json/valid/010_notes_and_links.excsv.json
+  exercises: [I5, D9, D10]
+  equivalent_to: json/valid/010_notes_and_links.excsv
+  expect:
+    parse: ok
+    warnings: []
+    notes:
+      count: 1
+      resolved_rows: [1]
+    cell_links:
+      "0,id": "https://shop.example.com/orders/1"
+      "0,status": "https://shop.example.com/status/paid"
+      "1,status": null
+
+- id: json/valid/011_sql_qualified.excsv.json
+  exercises: [I5, F1, F2]
+  equivalent_to: json/valid/011_sql_qualified.excsv
+  expect:
+    parse: ok
+    warnings: []
+    sql:
+      ddl_count: 1
+      dql_count: 1
+
+- id: json/valid/012_charts.excsv.json
+  exercises: [I5, D8]
+  equivalent_to: json/valid/012_charts.excsv
+  expect:
+    parse: ok
+    warnings: []
+    charts:
+      count: 2
+      types: [bar]
+      engines: [vega]
+
+- id: json/valid/013_meta_tags.excsv.json
+  exercises: [I5, C1]
+  equivalent_to: json/valid/013_meta_tags.excsv
+  expect:
+    parse: ok
+    warnings: []
+    meta:
+      grain: one row per order
+      tags: sales,q3
+
+- id: json/valid/014_rows_mismatch.excsv.json
+  exercises: [I5, G1]
+  equivalent_to: json/valid/014_rows_mismatch.excsv
+  expect:
+    parse: ok
+    warnings: [rows_mismatch]   # the text form's code, not a JSON one
+    verify: fail
+
+- id: json/valid/015_sidecar.excsv.json
+  exercises: [I5, A11, B7]
+  equivalent_to: json/valid/015_sidecar.excsv
+  data_sibling: json/valid/015_sidecar.csv
+  expect:
+    parse: ok
+    warnings: []
+    profile: sidecar
+    header:
+      reference: 015_sidecar.csv
+    rows: 2
+
+- id: json/valid/016_dispatch_by_content.json
+  exercises: [I5, A1]
+  equivalent_to: json/valid/016_dispatch_by_content.excsv
+  expect:
+    parse: ok
+    warnings: []   # a JSON object with an "excsv" member is the JSON form, whatever the file name
+    rows: 1
+
+- id: json/invalid/001_not_json.excsv.json
+  exercises: [I5]
+  expect:
+    parse: fail
+    error_kind: json_malformed
+
+- id: json/invalid/002_column_without_index.excsv.json
+  exercises: [I5]
+  expect:
+    parse: fail
+    error_kind: json_malformed
+
+- id: json/invalid/003_duplicate_index.excsv.json
+  exercises: [I5]
+  expect:
+    parse: fail
+    error_kind: json_malformed
+
+- id: json/invalid/004_column_without_name.excsv.json
+  exercises: [I5]
+  expect:
+    parse: fail
+    error_kind: json_malformed   # csv.header is true (the default), so every physical column needs a name
+
+- id: json/invalid/005_non_scalar_cell.excsv.json
+  exercises: [I5]
+  expect:
+    parse: fail
+    error_kind: json_malformed
+
+- id: json/invalid/006_line_break_in_cell.excsv.json
+  exercises: [I5]
+  expect:
+    parse: fail
+    error_kind: json_malformed   # text rows are single-line
+
+- id: json/invalid/007_wrong_member_type.excsv.json
+  exercises: [I5]
+  expect:
+    parse: fail
+    error_kind: json_malformed   # csv.header is a string
+
+- id: json/invalid/008_formula_with_index.excsv.json
+  exercises: [I5, D7]
+  expect:
+    parse: fail
+    error_kind: formula_index_forbidden   # exists in text too, so the text code
+
+- id: json/invalid/009_chart_missing_type.excsv.json
+  exercises: [I5, D8]
+  expect:
+    parse: fail
+    error_kind: chart_missing_type
+
+- id: json/invalid/010_note_missing_text.excsv.json
+  exercises: [I5, D9]
+  expect:
+    parse: fail
+    error_kind: note_missing_text
+
+- id: json/invalid/011_data_row_arity.excsv.json
+  exercises: [I5, G6]
+  expect:
+    parse: fail
+    error_kind: data_row_arity_mismatch
+
+- id: json/invalid/012_chart_bare_column.excsv.json
+  exercises: [I5, D8]
+  expect:
+    parse: fail
+    error_kind: chart_unknown_column   # a bare {index, name} object is an undeclared column, like a header cell with no #column

@@ -1,0 +1,12 @@
+{
+  "excsv": "0.6",
+  "layout": "sidecar",
+  "columns": [
+    {"index": 0, "name": "id", "type": "int"},
+    {"index": 1, "name": "customer"},
+    {"index": 2, "name": "amount", "type": "decimal"}
+  ],
+  "aggregates": {"sum": [null, null, "750.50"]},
+  "rows": 2,
+  "reference": "015_sidecar.csv"
+}

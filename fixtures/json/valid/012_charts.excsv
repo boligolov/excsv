@@ -1,0 +1,8 @@
+#!excsv version=0.6 rows=2
+#column name=category type=string
+#column name=amount type=decimal
+#chart type=bar name=by_category x=category y=amount
+#chart-vega: {"mark":"arc","encoding":{"theta":{"field":"amount","type":"quantitative"}}}
+category,amount
+widgets,120.00
+gadgets,300.50

@@ -1,0 +1,4 @@
+#!excsv version=0.6 rows=2
+city,country
+Lisbon,PT
+Oslo,NO

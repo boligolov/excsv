@@ -1,0 +1,7 @@
+#!excsv version=0.6 rows=2
+#column name=id type=int role=id link=https://shop.example.com/orders/{$}
+#note key=2 col=status text="Refund pending"
+#link row=0 col=status href="https://shop.example.com/status/paid"
+id,status
+1,paid
+2,refund

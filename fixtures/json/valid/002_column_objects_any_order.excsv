@@ -1,0 +1,6 @@
+#!excsv version=0.6 rows=2
+#column name=id type=int
+#column name=amount type=decimal unit=USD
+id,customer,amount
+1,Acme,500.00
+2,Globex,250.50
