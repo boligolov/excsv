@@ -87,13 +87,20 @@ Channel *type* (nominal/ordinal/quantitative/temporal) is **not** restated here 
 | --- | --- | --- |
 | `title=` | quoted text | Chart title |
 | `aggregate=` | `sum`/`avg`/`min`/`max`/`count`/`count_distinct` | Overrides the column's own `agg=` for this chart only |
-| `bin=` | `1` or bin count | Bucket a continuous value (histograms) |
+| `bin=` | `0`, `1`, or an integer ≥ 2 | Bucket a continuous value (histograms) — `1` is "on, default count", not one bin; see [Modifier values](#modifier-values) |
 | `stack=` | `1`/`0`/`normalize` | Stacking for bar/area with `color=` — see [Orientation and variants](#orientation-and-variants) |
 | `sort=` | `asc`/`desc`/column name | Category ordering |
-| `limit=` | integer | Top-N cutoff (pairs with `sort=desc`) |
+| `limit=` | integer ≥ 1 | Top-N cutoff (pairs with `sort=desc`) |
 | `hole=` | `0.0`–`1.0` | Donut hole size on `type=arc` |
 
 `aggregate=`/`sort=`/`limit=`/`bin=`/`stack=`/`hole=` apply only to that one `#chart` line; they **MUST NOT** mutate the referenced column's own `#column agg=`.
+
+### Modifier values
+
+- **`bin=`** — `0` (the same as no `bin=`): no binning. `1`: bin with the renderer's default number of bins, **10** — the default of Vega-Lite's `bin: true` (`maxbins`); `bin=1` never means a single bin. An integer `n` ≥ 2: `n` bins. How the bin edges are placed (equal widths over the column's range, or Vega-Lite's rounded "nice" edges) is the renderer's choice.
+- **`limit=`** — an integer ≥ 1: keep the first `n` categories after `sort=`. `limit=0` would leave nothing to draw.
+
+`#chart` is advisory, so a value outside these (`bin=-3`, `bin=yes`, `limit=0`, `limit=2.5`) is **not** a parse error and **MUST NOT** fail the file. A renderer **SHOULD** decline to draw that chart, with a message naming the attribute and the values it takes, rather than guess.
 
 ## Orientation and variants
 
@@ -149,8 +156,15 @@ In a ZIP archive comment, `#chart` lines come after `#$dql` and before `#note` /
 A conforming implementation **MAY** provide `excsv chart FILE [--name NAME]` (list all `#chart` lines, or render one) that:
 
 1. Resolves each channel to a column via `#column`, reading already-parsed cell values from the data section.
-2. Pre-aggregates per the chart's modifiers (`aggregate=`, `bin=`, `sort=`, `limit=`, `stack=`) exactly as a BI tool building a Vega-Lite spec would.
+2. Pre-aggregates per the chart's modifiers (`aggregate=`, `bin=`, `sort=`, `limit=`, `stack=`) exactly as a BI tool building a Vega-Lite spec would — see [Modifier values](#modifier-values) and [Missing values](#missing-values).
 3. Emits a minimal chart-spec object — `{"chartType": ..., "title": ..., "labels": [...], "series": [{"values": [...]}, ...]}` — and renders it as monospace text.
+
+### Missing values
+
+Pre-aggregation follows the SQL semantics of [Aggregations § Null handling](aggregations.md#null-handling): empty cells are skipped. A group — an `x` value, or an `x` value of one `color=` series — whose rows hold no value of the measure (because it has no rows at all, or only empty cells) has **no value** for `sum`/`avg`/`min`/`max`, not 0. `count()`, `count` and `count_distinct` of such a group are 0: a count of nothing is a real zero.
+
+- On `line` and `area` a renderer **MUST** draw a missing value as missing — a gap in the line or band (in the asciicharts spec, `null` in `values`) — never as 0, which would draw a fall the data does not have. This is the common case with `color=`: a series that has no row for some `x`.
+- On marks that cannot show a gap (`bar`, `arc`, `rect`) a renderer **MAY** draw a missing value as 0 (an empty bar or cell).
 
 That spec shape is deliberately compatible with [asciicharts](https://github.com/boligolov/asciicharts) (MIT, Python 3.10+, stdlib-only), usable either as a library (`render_chart(spec)`) or its own CLI (`asciicharts.py spec.json` / stdin), so a conforming `excsv chart` can shell out to or embed it rather than write a terminal chart renderer from scratch. Suggested `type=` → asciicharts `chartType` mapping:
 

@@ -35,7 +35,9 @@ Orientation isn't a separate switch. `x=category y=amount` (dimension on `x`, me
 
 `count()` is a reserved stand-in for "number of rows" wherever a channel expects a column — handy for `y=count()` on a histogram (`type=bar bin=20 x=amount y=count()`) or a plain row count per category.
 
-A few modifiers tune the view without touching the column's own metadata: `title=`, `aggregate=` (override the column's `agg=` just for this chart), `sort=`/`limit=` (top-N), `bin=`, `stack=`, `hole=`.
+A few modifiers tune the view without touching the column's own metadata: `title=`, `aggregate=` (override the column's `agg=` just for this chart), `sort=`/`limit=` (top-N), `bin=`, `stack=`, `hole=`. `bin=20` asks for 20 bins and `bin=1` for the default 10 — it switches binning on, it never means one bin.
+
+A line or area drawn per `color=` often has an `x` where one series has no rows. That point is missing, not zero: the line breaks there instead of diving to 0. Counts are the exception — `y=count()` of no rows really is 0.
 
 ## When the vocabulary isn't enough
 
