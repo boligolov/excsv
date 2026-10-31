@@ -102,6 +102,8 @@ Channel *type* (nominal/ordinal/quantitative/temporal) is **not** restated here 
 
 `#chart` is advisory, so a value outside these (`bin=-3`, `bin=yes`, `limit=0`, `limit=2.5`) is **not** a parse error and **MUST NOT** fail the file. A renderer **SHOULD** decline to draw that chart, with a message naming the attribute and the values it takes, rather than guess.
 
+In the [JSON mirror](#json-mirror), `bin=0` is `false`, `bin=1` is `true` and `bin=<n>` is the integer `n`, so `bin` keeps its meaning through text → JSON → text.
+
 ## Orientation and variants
 
 The compact form has no explicit "horizontal" switch — orientation and variant follow from which channels are set and the referenced columns' inferred types, the same inference Vega-Lite itself uses:
