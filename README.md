@@ -1,7 +1,7 @@
 ﻿# ExCSV v0.6 — Specification
 
 > [!IMPORTANT]
-> **This repository is read-only and no longer maintained.** ExCSV continues as [Text Tables](https://texttables.dev) (`.txtab`): the specification, guide and fixtures now live in **[boligolov/txtab](https://github.com/boligolov/txtab)**, with implementations in [txtab-golang](https://github.com/boligolov/txtab-golang) and [txtab-python](https://github.com/boligolov/txtab-python). Text Tables is a new format, not a newer version of ExCSV: its tools do not read `.excsv` files.
+> **This repository is read-only and no longer maintained.** ExCSV continues as [Text Tables](https://texttables.dev) (`.txtab`), a more general take on its ideas. The specification, guide and fixtures now live in **[boligolov/txtab](https://github.com/boligolov/txtab)**, with implementations in [txtab-golang](https://github.com/boligolov/txtab-golang) and [txtab-python](https://github.com/boligolov/txtab-python).
 
 **Extended Comma-Separated Values — CSV that describes itself.**
 

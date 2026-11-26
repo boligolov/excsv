@@ -1,0 +1,50 @@
+<aside class="archive-notice" aria-label="Project status">
+  <p class="archive-notice-inner">
+    <strong>ExCSV is read-only and no longer maintained.</strong>
+    It continues as Text Tables (<code>.txtab</code>), a more general take on its ideas.
+    <a href="https://texttables.dev">Go to texttables.dev&nbsp;→</a>
+  </p>
+</aside>
+
+<style>
+  .archive-notice {
+    background: #fffbeb;
+    border-bottom: 1px solid #fcd34d;
+    color: #78350f;
+  }
+
+  :global(html[data-theme="dark"]) .archive-notice {
+    background: #1f1a0b;
+    border-bottom-color: #5c4813;
+    color: #fde68a;
+  }
+
+  .archive-notice-inner {
+    max-width: var(--max-width-wide);
+    margin: 0 auto;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .archive-notice code {
+    background: rgb(120 53 15 / 8%);
+  }
+
+  :global(html[data-theme="dark"]) .archive-notice code {
+    background: rgb(253 230 138 / 10%);
+  }
+
+  .archive-notice a {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+  }
+
+  .archive-notice a:hover {
+    color: inherit;
+    text-decoration-thickness: 2px;
+  }
+</style>
