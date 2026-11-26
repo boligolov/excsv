@@ -1,6 +1,7 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import ArchiveNotice from '../components/ArchiveNotice.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -58,6 +59,7 @@ const jsonLd = isHome && {
   </head>
   <body>
     <Header />
+    <ArchiveNotice />
     <main class:list={[{ wide }]}>
       <slot />
     </main>
