@@ -1,5 +1,8 @@
 ﻿# ExCSV v0.6 — Specification
 
+> [!IMPORTANT]
+> **This repository is read-only and no longer maintained.** ExCSV continues as [Text Tables](https://texttables.dev) (`.txtab`): the specification, guide and fixtures now live in **[boligolov/txtab](https://github.com/boligolov/txtab)**, with implementations in [txtab-golang](https://github.com/boligolov/txtab-golang) and [txtab-python](https://github.com/boligolov/txtab-python). Text Tables is a new format, not a newer version of ExCSV: its tools do not read `.excsv` files.
+
 **Extended Comma-Separated Values — CSV that describes itself.**
 
 You open a CSV export and lose the afternoon: which column is the amount, is `01720` a ZIP code or a number, is `2026-01-02` Jan-2 or Feb-1, are these *all* the rows or just the first thousand your tool showed you — and what's the total? The context that answers this lived in a README, a Slack thread, or someone's head. Never in the file. ExCSV puts it back **in the file**: dialect, column types and units, summary stats, SQL to recreate the table, and an integrity checksum — all as `#` comment lines that every existing CSV reader already ignores. Your data stays plain CSV; it just stops being anonymous.
